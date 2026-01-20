@@ -13,8 +13,8 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/app/cli/colors \
 					-Isrc-server/app/cli/loading
 			
-OPTIMIZE_FLAGS 	:= 	-0s
-DEBUG_FLAGS 	:= 	-0g -dA -dD -ggdb
+OPTIMIZE_FLAGS 	:= 	-Os
+DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb
 
 USE_DEBUG		:= 	false
 USE_OPTIMIZE	:=	true
@@ -31,12 +31,14 @@ ifeq ($(USE_OPTIMIZE),true)
 	CC_FLAGS	+=	$(OPTIMIZE_FLAGS)
 endif
 
-TARGET			:=	build/scorpionc2-server
+TARGET_DIR		:=	build/
+TARGET			:=	$(TARGET_DIR)scorpionc2-server
 SRC_ENTRYPOINT	:=	src-server/app/main.c
 
 all: help
 
 build: ## Build the project to build/scorpionc2-server
+	mkdir -p $(TARGET_DIR)
 	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT)
 
 clean: ## Remove build binary
