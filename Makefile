@@ -6,6 +6,7 @@
 #
 
 .PHONY: build clean help rebuild test
+.SILENT: build help rebuild test
 
 I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/domain/encoders/types \
