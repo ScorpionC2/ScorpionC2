@@ -4,9 +4,10 @@
 //
 
 #include <stdio.h>
+#include "cli/colors/main.h"
 
 int main() {
-    printf("[+] We're on-line\n");
+    printf(FG_GREY_DARK_BOLD "[" FG_RED_LIGHT "+" FG_GREY_DARK "]" RESET FG_WHITE_ITALIC " We're on-line\n" RESET);
     return 0;
     
 }
