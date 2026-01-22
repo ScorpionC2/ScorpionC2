@@ -5,7 +5,7 @@
 # This file uses provided code at https://gist.github.com/prwhite/8168133?permalink_comment_id=4160255#gistcomment-4160255 for the help target
 #
 
-.PHONY: build clean help rebuild
+.PHONY: build clean help rebuild test
 
 I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/domain/encoders/types \
@@ -51,3 +51,14 @@ rebuild:
 	rm -rf $(TARGET)
 	mkdir -p $(TARGET_DIR)
 	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT)
+
+
+TEST_TARGET_DIR := "/tmp/scorpion-tests/$(date --iso=seconds)"
+TEST_TARGET := $(TEST_TARGET_DIR)scorpionc2
+	
+test: ## Run the project in a tmp file
+	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
+	mkdir -p $(TEST_TARGET_DIR)
+	$(CC) $(CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
+	$(TEST_TARGET)
+	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
