@@ -3,10 +3,14 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "cli/logs/main.h"
+#pragma once
 
-int main() {
-    Logger.info("Sometimes i dream of saving the world...");
-    return 0;
-    
-}
+typedef struct {
+    void (*warn)(const char*);
+    void (*info)(const char*);
+    void (*error)(const char*);
+    void (*debug)(const char*);
+
+} LoggerInstance;
+
+extern const LoggerInstance Logger;

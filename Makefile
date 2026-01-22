@@ -12,7 +12,8 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/domain/encoders/types \
 					-Isrc-server/shared/types \
 					-Isrc-server/app/cli/colors \
-					-Isrc-server/app/cli/loading
+					-Isrc-server/app/cli/loading \
+					-Isrc-server/app/cli/logs 
 			
 OPTIMIZE_FLAGS 	:= 	-Os
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb
@@ -34,7 +35,8 @@ endif
 
 TARGET_DIR		:=	build/
 TARGET			:=	$(TARGET_DIR)scorpionc2-server
-SRC_ENTRYPOINT	:=	src-server/app/main.c
+SRC_ENTRYPOINT	:=	src-server/app/main.c \
+					src-server/app/cli/logs/main.c
 
 all: help
 
@@ -48,7 +50,7 @@ clean: ## Remove build binary
 help: ## Show this menu
 	@grep -E '^[a-z.A-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-rebuild:
+rebuild: ## Remove old build and build again
 	rm -rf $(TARGET)
 	mkdir -p $(TARGET_DIR)
 	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT)
