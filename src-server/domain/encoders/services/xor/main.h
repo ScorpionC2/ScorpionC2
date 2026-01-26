@@ -4,3 +4,7 @@
 //
 
 #pragma once
+
+#include "../../types/main.h"
+
+extern EncoderInstance XorInstance;
