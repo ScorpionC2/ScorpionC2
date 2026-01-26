@@ -4,3 +4,12 @@
 //
 
 #pragma once
+
+#include <stddef.h>
+
+typedef unsigned char uchar_t;
+typedef struct {
+    uchar_t     *b;
+    size_t      len;
+    
+} bytes_t;
