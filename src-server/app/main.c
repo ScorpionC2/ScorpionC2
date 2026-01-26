@@ -6,6 +6,9 @@
 #include "cli/logs/main.h"
 #include "cli/colors/main.h"
 #include "../shared/types/main.h"
+#include "../shared/utils/random/main.h"
+
+#include <inttypes.h>
 
 int main() {
     char name[5] = "howo";
@@ -21,6 +24,9 @@ int main() {
     Logger.warnf("Warning: %s\n", name);
     Logger.infof("Information: %s\n", name);
     Logger.errorf("Error: %s\n", name);
+    
+    Logger.infof(FG_WHITE_ITALIC "Random number: " RESET BG_BLUE FG_WHITE_ITALIC "%"PRIu32 RESET "\n", Random.rand());
+    Logger.infof(FG_WHITE_ITALIC "Random number (0-255): " RESET BG_BLUE FG_WHITE_ITALIC "%"PRIu32 RESET "\n", Random.randr(0, 255));
     
     return 0;
     
