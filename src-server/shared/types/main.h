@@ -8,8 +8,15 @@
 #include <stddef.h>
 
 typedef unsigned char uchar_t;
+typedef unsigned long ulong_t;
 typedef struct {
     uchar_t     *b;
     size_t      len;
     
 } bytes_t;
+
+typedef enum bool_t {
+    TRUE = 1,
+    FALSE = 0
+    
+} bool_t;
