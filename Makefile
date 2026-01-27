@@ -37,7 +37,10 @@ TARGET_DIR		:=	build/
 TARGET			:=	$(TARGET_DIR)scorpionc2-server
 SRC_ENTRYPOINT	:=	src-server/app/main.c \
 					src-server/app/cli/logs/main.c \
-					src-server/shared/utils/random/main.c
+					src-server/shared/utils/random/main.c \
+					src-server/shared/utils/hash/main.c \
+					src-server/domain/encoders/services/main.c \
+					src-server/domain/encoders/services/xor/main.c
 
 all: help
 
