@@ -7,10 +7,15 @@
 #include "cli/colors/main.h"
 #include "../shared/types/main.h"
 #include "../shared/utils/random/main.h"
+#include "../shared/utils/hash/main.h"
+#include "../domain/encoders/services/main.h"
 
 #include <inttypes.h>
+#include <time.h>
+#include <stdlib.h>
 
 int main() {
+    Random.seed(time(NULL));
     char name[5] = "howo";
     bytes_t nameBytes = {
         .b = (uchar_t*)"howo",
@@ -27,6 +32,28 @@ int main() {
     
     Logger.infof(FG_WHITE_ITALIC "Random number: " RESET BG_BLUE FG_WHITE_ITALIC "%"PRIu32 RESET "\n", Random.rand());
     Logger.infof(FG_WHITE_ITALIC "Random number (0-255): " RESET BG_BLUE FG_WHITE_ITALIC "%"PRIu32 RESET "\n", Random.randr(0, 255));
+    
+    bytes_t xored = Xor->encode(nameBytes);
+    Logger.bytesf(FG_WHITE_ITALIC "Xored string \"howo\": " RESET BG_GREEN FG_WHITE_ITALIC "%bh" RESET "\n", &xored);
+    
+    bytes_t unxored = Xor->decode(xored);
+    Logger.bytesf(FG_WHITE_ITALIC "Unxored string \"howo\": " RESET BG_GREEN FG_WHITE_ITALIC "%bh" RESET "\n", &unxored);
+    
+    free(xored.b);
+    free(unxored.b);
+    
+    Xor->settings->num = 16;
+    bytes_t xored16 = Xor->encode(nameBytes);
+    Logger.bytesf(FG_WHITE_ITALIC "Xored string with nonce size 16 \"howo\": " RESET BG_GREEN FG_WHITE_ITALIC "%bh" RESET "\n", &xored16);
+    
+    bytes_t unxored16 = Xor->decode(xored16);
+    Logger.bytesf(FG_WHITE_ITALIC "Unxored string with nonce size 16 \"howo\": " RESET BG_GREEN FG_WHITE_ITALIC "%bh" RESET "\n", &unxored16);
+    
+    free(xored16.b);
+    free(unxored16.b);
+
+    bytes_t djb2 = Hash.djb2(nameBytes);
+    Logger.bytesf(FG_WHITE_ITALIC "Hash for string \"howo\" (djb2): " RESET BG_PINK FG_WHITE_ITALIC "%bh" RESET "\n", &djb2);
     
     return 0;
     
