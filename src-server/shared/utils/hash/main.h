@@ -9,6 +9,11 @@
 
 typedef struct {
     bytes_t (*djb2)(bytes_t src);
+    bytes_t (*scorpion2048x)(bytes_t src);
+    bytes_t (*scorpion1024x)(bytes_t src);
+    bytes_t (*scorpion512x)(bytes_t src);
+    bytes_t (*scorpion256x)(bytes_t src);
+    bytes_t (*scorpion128x)(bytes_t src);
     
 } HashInstance;
 
