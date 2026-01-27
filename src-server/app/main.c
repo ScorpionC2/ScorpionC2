@@ -60,6 +60,9 @@ int main() {
     
     bytes_t unxoredScorpion512x = Xor->decode(xoredScorpion512x);
     Logger.bytesf(FG_WHITE_ITALIC "Unored string with hash algorithm scorpion512x \"howo\": " RESET BG_GREEN FG_WHITE_ITALIC "%bh" RESET "\n", &unxoredScorpion512x);
+    
+    free(xoredScorpion512x.b);
+    free(unxoredScorpion512x.b);
 
     bytes_t djb2 = Hash.djb2(nameBytes);
     Logger.bytesf(FG_WHITE_ITALIC "\n\nHash for string \"howo\" (djb2): " RESET BG_PURPLE FG_WHITE_ITALIC "%bh" RESET "\n", &djb2);
