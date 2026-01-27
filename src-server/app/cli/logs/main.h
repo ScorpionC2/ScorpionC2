@@ -35,6 +35,10 @@ typedef struct {
      *  %p: print pointer to anything like 0xFFFFFFFFFFFF
      * 
      *  %%: print '%' character
+     * 
+     * Notes:
+     *  %b and %bh wants pointer to bytes_t type.
+     *  %p wants pointer to anything (generic void* type)
      */
     void (*bytesf)(const char *fmt, ...);
     
