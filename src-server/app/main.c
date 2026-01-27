@@ -51,6 +51,15 @@ int main() {
     
     free(xored16.b);
     free(unxored16.b);
+    
+    Xor->settings->num = 128;
+    Xor->settings->string = "s512x";
+    
+    bytes_t xoredScorpion512x = Xor->encode(nameBytes);
+    Logger.bytesf(FG_WHITE_ITALIC "Xored string with hash algorithm scorpion512x \"howo\": " RESET BG_GREEN FG_WHITE_ITALIC "%bh" RESET "\n", &xoredScorpion512x);
+    
+    bytes_t unxoredScorpion512x = Xor->decode(xoredScorpion512x);
+    Logger.bytesf(FG_WHITE_ITALIC "Unored string with hash algorithm scorpion512x \"howo\": " RESET BG_GREEN FG_WHITE_ITALIC "%bh" RESET "\n", &unxoredScorpion512x);
 
     bytes_t djb2 = Hash.djb2(nameBytes);
     Logger.bytesf(FG_WHITE_ITALIC "\n\nHash for string \"howo\" (djb2): " RESET BG_PURPLE FG_WHITE_ITALIC "%bh" RESET "\n", &djb2);

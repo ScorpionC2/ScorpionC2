@@ -15,7 +15,19 @@
  */
 EncoderSettings XorSettings = {
     // Nonce size
-    .num = 128
+    .num = 128,
+    
+    // Algorithm
+    // 
+    // Algorithm is defined by a 5 bytes string
+    // 
+    //  djb2:   djb2
+    //  s128x:  scorpion128x
+    //  s256x:  scorpion256x
+    //  s512x:  scorpion512x
+    //  
+    // Other algorithms like scorpion1024x exists, but aren't used by their big size
+    .string = "s256x"
     
 };
 
@@ -47,6 +59,25 @@ bytes_t xor(bytes_t src, bytes_t key) {
     
 }
 
+void *getHashFunction() {
+    if (strcmp(XorSettings.string, "djb2") == 0) {
+        return Hash.djb2;
+        
+    } else if (strcmp(XorSettings.string, "s128x") == 0) {
+        return Hash.scorpion128x;
+        
+    } else if (strcmp(XorSettings.string, "s256x") == 0) {
+        return Hash.scorpion256x;
+        
+    } else if (strcmp(XorSettings.string, "s512x") == 0) {
+        return Hash.scorpion512x;
+        
+    }
+    
+    return Hash.scorpion256x;
+    
+}
+
 bytes_t XorEncode(bytes_t src) {
     uchar_t nonceRaw[XorSettings.num];
     for (int i = 0; i < XorSettings.num; i++) {
@@ -62,7 +93,8 @@ bytes_t XorEncode(bytes_t src) {
     
     memcpy(nonce.b, nonceRaw, (size_t)XorSettings.num);
     
-    bytes_t hash = Hash.djb2(nonce);
+    bytes_t (*hashFunction)(bytes_t src) = getHashFunction();
+    bytes_t hash = hashFunction(nonce);
     bytes_t xorOut = xor(src, hash);
     bytes_t out = {
         .len = XorSettings.num + src.len 
@@ -100,7 +132,8 @@ bytes_t XorDecode(bytes_t src) {
     srcWithoutXor.b = malloc(srcWithoutXor.len);
     memcpy(srcWithoutXor.b, srcCopy.b + XorSettings.num, srcWithoutXor.len);
 
-    bytes_t hash = Hash.djb2(nonce);
+    bytes_t (*hashFunction)(bytes_t src) = getHashFunction();
+    bytes_t hash = hashFunction(nonce);
     bytes_t unxor = xor(srcWithoutXor, hash);
     
     bytes_t out = {
