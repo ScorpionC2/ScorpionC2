@@ -20,3 +20,9 @@ typedef enum bool_t {
     FALSE = 0
     
 } bool_t;
+
+typedef struct {
+    char        *s;
+    size_t      len;
+    
+} string_t;

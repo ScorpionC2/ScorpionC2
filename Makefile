@@ -13,7 +13,8 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/shared/types \
 					-Isrc-server/app/cli/colors \
 					-Isrc-server/app/cli/loading \
-					-Isrc-server/app/cli/logs 
+					-Isrc-server/app/cli/logs \
+					-Isrc-server/app/cli/ui/box 
 			
 OPTIMIZE_FLAGS 	:= 	-Os
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb
@@ -40,7 +41,8 @@ SRC_ENTRYPOINT	:=	src-server/app/main.c \
 					src-server/shared/utils/random/main.c \
 					src-server/shared/utils/hash/main.c \
 					src-server/domain/encoders/services/main.c \
-					src-server/domain/encoders/services/xor/main.c
+					src-server/domain/encoders/services/xor/main.c \
+					src-server/app/cli/ui/box/main.c
 
 all: help
 
