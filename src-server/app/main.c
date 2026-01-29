@@ -5,14 +5,16 @@
 
 #include "cli/logs/main.h"
 #include "cli/colors/main.h"
+#include "cli/ui/box/main.h"
 #include "../shared/types/main.h"
-#include "../shared/utils/random/main.h"
 #include "../shared/utils/hash/main.h"
+#include "../shared/utils/random/main.h"
 #include "../domain/encoders/services/main.h"
 
 #include <inttypes.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main() {
     Random.seed(time(NULL));
@@ -88,6 +90,9 @@ int main() {
     free(scorpion512x.b);
     free(scorpion1024x.b);
     free(scorpion2048x.b);
+    
+    Logger.infoln("Gradient Box:");
+    Box.draw(10, 22, C_GREEN_LIGHT, C_GREEN_DARK);
     
     return 0;
     
