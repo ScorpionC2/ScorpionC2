@@ -38,7 +38,7 @@ bytes_t HashScorpion2048x(bytes_t src) {
     out.len = 2048;
     out.b = malloc(out.len);
     
-    for (int i = 0; i < out.len; i++) {
+    for (int i = 0; i + 3 < out.len; i++) {
         uint32_t s = (uint32_t)src.b[i % src.len];
         s = ((s << 13) ^ s) - (s >> 21);
         
@@ -82,14 +82,7 @@ bytes_t HashScorpion2048x(bytes_t src) {
         
     }
     
-    bytes_t output;
-    output.len = out.len;
-    output.b = malloc(out.len);
-    
-    memcpy(output.b, out.b, out.len);
-    
-    free(out.b);
-    return output;
+    return out;
     
 };
 
@@ -98,7 +91,7 @@ bytes_t HashScorpion1024x(bytes_t src) {
     out.len = 1024;
     out.b = malloc(out.len);
     
-    for (int i = 0; i < out.len; i++) {
+    for (int i = 0; i + 3 < out.len; i++) {
         uint32_t s = (uint32_t)src.b[i % src.len];
         s = ((s << 6) ^ s) - (s >> 21);
         
@@ -142,14 +135,7 @@ bytes_t HashScorpion1024x(bytes_t src) {
         
     }
     
-    bytes_t output;
-    output.len = out.len;
-    output.b = malloc(out.len);
-    
-    memcpy(output.b, out.b, out.len);
-    
-    free(out.b);
-    return output;
+    return out;
     
 };
 
@@ -158,7 +144,7 @@ bytes_t HashScorpion512x(bytes_t src) {
     out.len = 512;
     out.b = malloc(out.len);
     
-    for (int i = 0; i < out.len; i++) {
+    for (int i = 0; i + 3 < out.len; i++) {
         uint32_t s = (uint32_t)src.b[i % src.len];
         s = ((s << 13) ^ s) - (s >> 21);
         
@@ -202,14 +188,7 @@ bytes_t HashScorpion512x(bytes_t src) {
         
     }
     
-    bytes_t output;
-    output.len = out.len;
-    output.b = malloc(out.len);
-    
-    memcpy(output.b, out.b, out.len);
-    
-    free(out.b);
-    return output;
+    return out;
     
 };
 
@@ -218,7 +197,7 @@ bytes_t HashScorpion256x(bytes_t src) {
     out.len = 256;
     out.b = malloc(out.len);
     
-    for (int i = 0; i < out.len; i++) {
+    for (int i = 0; i + 3 < out.len; i++) {
         uint32_t s = (uint32_t)src.b[i % src.len];
         s = ((s << 13) ^ s) - (s >> 21);
         
@@ -262,14 +241,7 @@ bytes_t HashScorpion256x(bytes_t src) {
         
     }
     
-    bytes_t output;
-    output.len = out.len;
-    output.b = malloc(out.len);
-    
-    memcpy(output.b, out.b, out.len);
-    
-    free(out.b);
-    return output;
+    return out;
     
 };
 
@@ -278,7 +250,7 @@ bytes_t HashScorpion128x(bytes_t src) {
     out.len = 128;
     out.b = malloc(out.len);
     
-    for (int i = 0; i < out.len; i++) {
+    for (int i = 0; i + 3 < out.len; i++) {
         uint32_t s = (uint32_t)src.b[i % src.len];
         s = ((s << 13) ^ s) - (s >> 21);
         
@@ -316,14 +288,7 @@ bytes_t HashScorpion128x(bytes_t src) {
         
     }
     
-    bytes_t output;
-    output.len = out.len;
-    output.b = malloc(out.len);
-    
-    memcpy(output.b, out.b, out.len);
-    
-    free(out.b);
-    return output;
+    return out;
     
 };
 
