@@ -15,21 +15,16 @@ jobs:
     - name: build
       run: make build
 
-  check-leaks:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: LazyPanda07/check-memory-leaks@1.4
-      with:
-        path: build
-        name: scorpionc2-server
-        max-threads: 2500
-
   valgrind-check:
-    runs-on: uubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: Ximaz/valgrind-action@v1.2.0
+    - uses: actions/checkout@v4
+
+    - name: Build
+      run: make build
+
+    - name: Valgrind
+      uses: Ximaz/valgrind-action@v1.2.0
       with:
-        binary_path: "build/scorpionc2-server"
-    
+        binary_path: build/scorpionc2-server
