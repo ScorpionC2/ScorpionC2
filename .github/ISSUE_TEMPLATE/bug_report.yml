@@ -1,0 +1,102 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "BUG - "
+labels:
+    - bug
+assignees: []
+
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Please provide as much detail as possible.
+              Incomplete reports may be closed or delayed.
+
+    - type: textarea
+      id: description
+      attributes:
+          label: Bug description
+          description: Describe the problem clearly and concisely.
+          placeholder: What is the bug?
+      validations:
+          required: true
+
+    - type: textarea
+      id: reproduction
+      attributes:
+          label: Steps to reproduce
+          description: Exact steps required to reproduce the issue.
+          placeholder: |
+              1. Build with command X
+              2. Run binary Y
+              3. Execute function Z
+      validations:
+          required: true
+
+    - type: textarea
+      id: expected
+      attributes:
+          label: Expected behavior
+          description: Describe what should happen.
+          placeholder: Expected result
+      validations:
+          required: true
+
+    - type: textarea
+      id: actual
+      attributes:
+          label: Actual behavior
+          description: Describe what actually happens.
+          placeholder: Actual result
+      validations:
+          required: true
+
+    - type: textarea
+      id: logs
+      attributes:
+          label: Logs / stack traces
+          description: Include relevant logs, Valgrind output, stack traces, or error messages.
+          render: shell
+      validations:
+          required: false
+
+    - type: dropdown
+      id: severity
+      attributes:
+          label: Severity
+          description: Impact of the bug.
+          options:
+              - low
+              - medium
+              - high
+              - critical
+      validations:
+          required: true
+
+    - type: input
+      id: version
+      attributes:
+          label: Version or commit hash
+          description: Project version or Git commit hash.
+          placeholder: e.g. v0.4.2 or a1b2c3d
+      validations:
+          required: false
+
+    - type: input
+      id: environment
+      attributes:
+          label: Environment
+          description: Operating system, compiler, architecture, etc.
+          placeholder: e.g. Ubuntu 22.04, GCC 13.2, x86_64
+      validations:
+          required: false
+
+    - type: checkboxes
+      id: confirmation
+      attributes:
+          label: Confirmation
+          options:
+              - label: I have verified that this issue has not already been reported
+                required: true
+              - label: I can reproduce this issue consistently
+                required: false
