@@ -19,14 +19,14 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: LazyPanda07/check-memory-leaks@1.4
+    - uses: LazyPanda07/check-memory-leaks@main
       with:
         path: build
         name: scorpionc2-server
         max-threads: 2500
 
   valgrind-check:
-    runs-on: uubuntu-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: Ximaz/valgrind-action@v1.2.0
