@@ -14,7 +14,9 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/app/cli/colors \
 					-Isrc-server/app/cli/loading \
 					-Isrc-server/app/cli/logs \
-					-Isrc-server/app/cli/ui/box 
+					-Isrc-server/app/cli/ui/box \
+					-Isrc-server/app/cli/input/readMode \
+					-Isrc-server/app/cli/input/safeget \
 			
 OPTIMIZE_FLAGS 	:= 	-Os
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb
@@ -44,6 +46,7 @@ SRC_ENTRYPOINT	:=	src-server/app/main.c \
 					src-server/domain/encoders/services/xor/main.c \
 					src-server/app/cli/ui/box/main.c \
 					src-server/app/cli/input/readMode/main.c \
+					src-server/app/cli/input/safeget/main.c \
 
 all: help
 
