@@ -21,6 +21,7 @@ typedef enum bool_t {
     
 } bool_t;
 
+// string_t.s still need to end with \0 terminator
 typedef struct {
     char        *s;
     size_t      len;
