@@ -42,7 +42,8 @@ SRC_ENTRYPOINT	:=	src-server/app/main.c \
 					src-server/shared/utils/hash/main.c \
 					src-server/domain/encoders/services/main.c \
 					src-server/domain/encoders/services/xor/main.c \
-					src-server/app/cli/ui/box/main.c
+					src-server/app/cli/ui/box/main.c \
+					src-server/app/cli/input/readMode/main.c \
 
 all: help
 
