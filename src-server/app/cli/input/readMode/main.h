@@ -10,6 +10,7 @@
 typedef struct {
     void (*turnEchoMode)(bool_t _em);
     void (*turnCanonicalMode)(bool_t _cm);
+    void (*turnEchoeMode)(bool_t _eem);
     
 } TerminalModeTogglerInstance;
 
