@@ -18,7 +18,7 @@
 void turnEchoMode(bool_t _em) {
     struct termios cTerm;
     tcgetattr(stdin, &cTerm);
-    cTerm.c_cflag &= _em ? ECHO : ~ECHO;
+    cTerm.c_lflag &= _em ? ECHO : ~ECHO;
     tcsetattr(stdin, TCSAFLUSH, &cTerm);
     
 };
@@ -26,22 +26,13 @@ void turnEchoMode(bool_t _em) {
 void turnCanonicalMode(bool_t _cm) {
     struct termios cTerm;
     tcgetattr(stdin, &cTerm);
-    cTerm.c_cflag &= _cm ? ICANON : ~ICANON;
-    tcsetattr(stdin, TCSAFLUSH, &cTerm);
-    
-}
-
-void turnEchoeMode(bool_t _eem) {
-    struct termios cTerm;
-    tcgetattr(stdin, &cTerm);
-    cTerm.c_cflag &= _eem ? ECHOE : ~ECHOE;
+    cTerm.c_lflag &= _cm ? ICANON : ~ICANON;
     tcsetattr(stdin, TCSAFLUSH, &cTerm);
     
 }
 
 TerminalModeTogglerInstance TerminalModeToggler = {
     .turnCanonicalMode = turnCanonicalMode,
-    .turnEchoMode = turnEchoMode,
-    .turnEchoeMode = turnEchoeMode
+    .turnEchoMode = turnEchoMode
     
 };
