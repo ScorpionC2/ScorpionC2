@@ -1,70 +1,67 @@
-name: Bug Report
-description: Report a bug or unexpected behavior
-title: "BUG - "
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "FEATURE - "
 labels:
-    - bug
+    - enhancement
 assignees: []
 
 body:
     - type: markdown
       attributes:
           value: |
-              Please provide as much detail as possible.
-              Incomplete reports may be closed or delayed.
+              Thanks for taking the time to suggest a feature.
+              Clear and well-scoped requests have a much higher chance of being implemented.
 
     - type: textarea
-      id: description
+      id: summary
       attributes:
-          label: Bug description
-          description: Describe the problem clearly and concisely.
-          placeholder: What is the bug?
+          label: Feature summary
+          description: Briefly describe the feature or improvement.
+          placeholder: One-paragraph summary of the feature
       validations:
           required: true
 
     - type: textarea
-      id: reproduction
+      id: problem
       attributes:
-          label: Steps to reproduce
-          description: Exact steps required to reproduce the issue.
-          placeholder: |
-              1. Build with command X
-              2. Run binary Y
-              3. Execute function Z
+          label: Problem or motivation
+          description: What problem does this feature solve? Why is it needed?
+          placeholder: Describe the pain point or limitation
       validations:
           required: true
 
     - type: textarea
-      id: expected
+      id: proposal
       attributes:
-          label: Expected behavior
-          description: Describe what should happen.
-          placeholder: Expected result
+          label: Proposed solution
+          description: Describe how you think this feature should work.
+          placeholder: Detailed description of the proposed behavior or API
       validations:
           required: true
 
     - type: textarea
-      id: actual
+      id: alternatives
       attributes:
-          label: Actual behavior
-          description: Describe what actually happens.
-          placeholder: Actual result
+          label: Alternatives considered
+          description: Describe any alternative solutions or workarounds you considered.
+          placeholder: Other approaches, hacks, or existing solutions
       validations:
-          required: true
+          required: false
 
     - type: textarea
-      id: logs
+      id: impact
       attributes:
-          label: Logs / stack traces
-          description: Include relevant logs, Valgrind output, stack traces, or error messages.
-          render: shell
+          label: Impact
+          description: Who benefits from this feature and how?
+          placeholder: Users, performance, security, maintainability, DX, etc.
       validations:
           required: false
 
     - type: dropdown
-      id: severity
+      id: priority
       attributes:
-          label: Severity
-          description: Impact of the bug.
+          label: Priority
+          description: How important is this feature?
           options:
               - low
               - medium
@@ -73,21 +70,24 @@ body:
       validations:
           required: true
 
-    - type: input
-      id: version
+    - type: dropdown
+      id: scope
       attributes:
-          label: Version or commit hash
-          description: Project version or Git commit hash.
-          placeholder: e.g. v0.4.2 or a1b2c3d
+          label: Scope
+          description: Estimated impact on the codebase.
+          options:
+              - small (localized change)
+              - medium (multiple modules)
+              - large (architecture-level change)
       validations:
           required: false
 
     - type: input
-      id: environment
+      id: version
       attributes:
-          label: Environment
-          description: Operating system, compiler, architecture, etc.
-          placeholder: e.g. Ubuntu 22.04, GCC 13.2, x86_64
+          label: Related version or commit
+          description: Version or commit where this feature would be relevant.
+          placeholder: e.g. v0.5.0 or a1b2c3d
       validations:
           required: false
 
@@ -96,7 +96,7 @@ body:
       attributes:
           label: Confirmation
           options:
-              - label: I have verified that this issue has not already been reported
+              - label: I have checked that this feature was not already requested
                 required: true
-              - label: I can reproduce this issue consistently
+              - label: This feature aligns with the project goals
                 required: false
