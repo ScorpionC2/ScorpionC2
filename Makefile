@@ -17,6 +17,7 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/app/cli/ui/box \
 					-Isrc-server/app/cli/input/readMode \
 					-Isrc-server/app/cli/input/safeget \
+					-Isrc-server/infra/fs \
 			
 OPTIMIZE_FLAGS 	:= 	-Os
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb
@@ -47,6 +48,7 @@ SRC_ENTRYPOINT	:=	src-server/app/main.c \
 					src-server/app/cli/ui/box/main.c \
 					src-server/app/cli/input/readMode/main.c \
 					src-server/app/cli/input/safeget/main.c \
+					src-server/infra/fs/main.c \
 
 all: help
 
@@ -74,4 +76,20 @@ test: ## Run the project in a tmp file
 	mkdir -p $(TEST_TARGET_DIR)
 	$(CC) $(CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
 	$(TEST_TARGET)
+	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
+
+VALGRIND_PATH := "/usr/bin/valgrind"
+VALGRIND_FLAGS := 	--leak-check=summary \
+					--errors-for-leak-kinds=definite \
+					-s \
+					$(TEST_TARGET)
+					
+VALGRIND_TARGET := $(VALGRIND_PATH) $(VALGRIND_FLAGS)
+TESTV_CC_FLAGS	:= $(I_FLAGS) $(DEBUG_FLAGS)
+
+test-valgrind: ## Run the project in a tmp file and check it with valgrind
+	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
+	mkdir -p $(TEST_TARGET_DIR)
+	$(CC) $(TESTV_CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
+	$(VALGRIND_TARGET)
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)

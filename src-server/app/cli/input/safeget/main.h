@@ -10,11 +10,17 @@
 #include <stdio.h>
 
 typedef struct {    
+    // ucgetchar - Ultra-incredible-handmade galactic empire engineer's Custom GETCHAR
+    char (*ucgetchar)(FILE *stream);
+    
+    // ucfgets - Ultra-incredible-handmade galactic empire engineer's Custom FGETS
+    char* (*ucfgets)(char *dest, string_t histPath, int promptSiz);
+    
     /*
      * Return rules:
      *      .s = NULL: Can't read or can't allocate new memory for string
      */
-    string_t (*snread)(FILE *file, size_t size);
+    string_t (*ucread)(string_t histPath, int promptSize);
 
 } SafeGetInstance;
 
