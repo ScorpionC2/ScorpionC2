@@ -77,3 +77,19 @@ test: ## Run the project in a tmp file
 	$(CC) $(CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
 	$(TEST_TARGET)
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
+
+VALGRIND_PATH := "/usr/bin/valgrind"
+VALGRIND_FLAGS := 	--leak-check=summary \
+					--errors-for-leak-kinds=definite \
+					-s \
+					$(TEST_TARGET)
+					
+VALGRIND_TARGET := $(VALGRIND_PATH) $(VALGRIND_FLAGS)
+TESTV_CC_FLAGS	:= $(I_FLAGS) $(DEBUG_FLAGS)
+
+test-valgrind: ## Run the project in a tmp file and check it with valgrind
+	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
+	mkdir -p $(TEST_TARGET_DIR)
+	$(CC) $(TESTV_CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
+	$(VALGRIND_TARGET)
+	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
