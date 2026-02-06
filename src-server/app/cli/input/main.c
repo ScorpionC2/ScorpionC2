@@ -37,3 +37,8 @@ void readline(InputSettings conf, string_t *out) {
     return;
     
 };
+
+InputInstance Input = {
+    .readline = readline
+    
+};
