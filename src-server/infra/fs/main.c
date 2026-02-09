@@ -25,9 +25,9 @@ int appendFile(string_t path, bytes_t *src) {
 };
 
 int countLines(string_t path) {
-    int count;
-    int c;
-    if (!path.s || !path.len) {
+    int count = 0;
+    int c = 0;
+    if (path.s == NULL || path.len <= 0) {
         return -1;
         
     }
@@ -52,7 +52,7 @@ int countLines(string_t path) {
 }
 
 int getLine(string_t path, int line, bytes_t *out) {
-    if (!path.s || !path.len) return 1;
+    if (path.s == NULL || path.len == 0) return 1;
     int lines = countLines(path);
     if (lines < 0) {
         return 1;
@@ -96,6 +96,6 @@ int getLine(string_t path, int line, bytes_t *out) {
 FsInstance Files = {
     .countLines = countLines,
     .appendFile = appendFile,
-    // .getLine = 
+    .getLine = getLine
     
 };

@@ -8,11 +8,7 @@
 //  https://en.wikipedia.org/wiki/ANSI_escape_code
 //  https://stackoverflow.com/questions/7469139/what-is-the-equivalent-to-getch-getche-in-linux
 //  https://www.ibm.com/docs/pt-br/i/7.6.0?topic=functions-fgets-read-string
-// 
-//  TODO List:
-//      DONE  - Implement custom getchar without ECHO and CANONICAL modes
-//      INDEV - Implement custom read nor fgets above custom getchar
-//      TODO  - Adapt custom read/fgets to snread
+//
 
 #include "main.h"
 #include "../readMode/main.h"
@@ -24,45 +20,45 @@
 #include <unistd.h>
 #include <string.h>
 
-// ucgetchar - Ultra-incredible-handmade galactic empire engineer's Custom GETCHAR
-char ucgetchar(FILE *stream) {
+// ucfgets - Ultra-incredible-handmade galactic empire engineer's Custom FGETS
+char* ucfgets(string_t histPath, int promptSize) {
     TerminalModeToggler.turnCanonicalMode(FALSE);
     TerminalModeToggler.turnEchoMode(FALSE);
     
-    char ch = getchar();
-    
-    return ch;
-    
-    TerminalModeToggler.turnCanonicalMode(TRUE);
-    TerminalModeToggler.turnEchoMode(TRUE);
-    
-};
-
-// ucfgets - Ultra-incredible-handmade galactic empire engineer's Custom FGETS
-char* ucfgets(char *dest, string_t histPath, int promptSize) {
     size_t bufCap = 65536;
     size_t bufLen = 0;
     char *buf = malloc(bufCap);
     if (buf == NULL) {
-        return NULL;
+        goto cleanup_error;
         
     }
     
-    char ch;
-    long _n;
+    char ch = '\0';
     
     int currentHistLine;
     int histFileLines = Files.countLines(histPath);
     if (histFileLines < 0) {
-        return NULL;
+        goto cleanup_error;
         
     }
     
     currentHistLine = histFileLines;
 
-    for (int i = 0; (ch = ucgetchar(stdin)) != '\n'; i++) {
-        if ((bufLen + 1 + _n) > bufCap) {
-            while ((bufLen + 1 + _n) > bufCap) {
+    while (TRUE) {
+        ssize_t r = read(STDIN_FILENO, &ch, 1);
+        if (r <= 0) {
+            goto cleanup_error;
+            
+        }
+        
+        if (ch == 0xa) {
+            putchar(0xa);
+            goto cleanup;
+            
+        }
+        
+        if ((bufLen + 1) >= bufCap) {
+            while ((bufLen + 1) >= bufCap) {
                 bufCap <<= 1;
                 
             }
@@ -70,7 +66,7 @@ char* ucfgets(char *dest, string_t histPath, int promptSize) {
             char *newBuf = realloc(buf, bufCap);
             if (newBuf == NULL) {
                 free(buf);
-                return NULL;
+                goto cleanup_error;
                 
             }
             
@@ -79,18 +75,27 @@ char* ucfgets(char *dest, string_t histPath, int promptSize) {
         }
         
         if (ch == 0x1b) {
-            char ch2 = ucgetchar(stdin);
-            i++;
+            char ch2 = '\0';
+            ssize_t r2 = read(STDIN_FILENO, &ch2, 1);
+            if (r2 <= 0) {
+                goto cleanup_error;
+                
+            }
             
             if (ch2 == 0x5b) {
-                char ch3 = ucgetchar(stdin);
-                i++;
+                char ch3 = '\0';
+                ssize_t r3 = read(STDIN_FILENO, &ch3, 1);
+                if (r3 <= 0) {
+                    goto cleanup_error;
+                    
+                }
                 
                 bytes_t l;
-                char *histLine;
+                char *histLine = NULL;
                 switch (ch3) {
                     case 0x41: // Arrow up
-                        if (Files.getLine(histPath, currentHistLine + 1, &l) != 0) {
+                        if (histFileLines == 0) continue;
+                        if (Files.getLine(histPath, (currentHistLine - 1 + histFileLines) % histFileLines, &l) != 0) {
                             Logger.warnln("Can't parse hist line");
                             continue;
                             
@@ -105,17 +110,30 @@ char* ucfgets(char *dest, string_t histPath, int promptSize) {
 
                         memcpy(histLine, l.b, l.len);
                         histLine[strcspn(histLine, "\n")] = '\0';
-                        
-                        printf("\x1b[1G\x1b[%dC%s", promptSize, histLine);
-                        
-                        free(histLine);
                         free(l.b);
+                        
+                        bufLen = strlen(histLine);
+                        if (bufLen + 1 >= bufCap) {
+                            while (bufLen + 1 >= bufCap) {
+                                bufCap <<= 1;
+                            }
+                            buf = realloc(buf, bufCap);
+                        }
+                        
+                        memcpy(buf, histLine, bufLen);
+                        buf[bufLen] = '\0';
+                        free(histLine);
+                        
+                        printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
+                        fflush(stdout);
                         currentHistLine--;
                         
                         continue;
                     
                     case 0x42:
-                        if (Files.getLine(histPath, currentHistLine - 1, &l) != 0) {
+                        if (histFileLines == 0) continue;
+
+                        if (Files.getLine(histPath, (currentHistLine + 1) % histFileLines, &l) != 0) {
                             Logger.warnln("Can't parse hist line");
                             continue;
                             
@@ -130,12 +148,25 @@ char* ucfgets(char *dest, string_t histPath, int promptSize) {
                         
                         memcpy(histLine, l.b, l.len);
                         histLine[strcspn(histLine, "\n")] = '\0';
-                        
-                        printf("\x1b[1G\x1b[%dC%s", promptSize, histLine);
-                        
-                        free(histLine);
                         free(l.b);
-                        currentHistLine--;
+                        
+                        
+                        bufLen = strlen(histLine);
+                        if (bufLen + 1 >= bufCap) {
+                            while (bufLen + 1 >= bufCap) {
+                                bufCap <<= 1;
+                            }
+                            buf = realloc(buf, bufCap);
+                        }
+                        
+                        memcpy(buf, histLine, bufLen);
+                        buf[bufLen] = '\0';
+                        free(histLine);
+                        
+                        printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
+                        fflush(stdout);
+                        
+                        currentHistLine++;
                         
                         continue;
                         
@@ -144,45 +175,67 @@ char* ucfgets(char *dest, string_t histPath, int promptSize) {
 
                 }
             }
+        } else if (ch == 0x7f || ch == 0x08) {
+            if (bufLen > 0) {
+                bufLen--;
+                buf[bufLen] = '\0';
+            
+            }
+            
+            printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
+            fflush(stdout);
+            continue;
+            
         } else {
-            buf[i] = ch;
+            buf[bufLen++] = ch;
+            buf[bufLen] = '\0';
+            putc(ch, stdout);
+            fflush(stdout);
             
         }
         
-        _n++;
-        bufLen += _n;
-        
     }
     
-    dest = malloc(bufLen);
-    memcpy(dest, buf, bufLen);
+    buf[bufLen] = '\0';
     
-    free(buf);
-    return dest;
+    printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
+    fflush(stdout);
+    
+    cleanup:
+        TerminalModeToggler.turnCanonicalMode(TRUE);
+        TerminalModeToggler.turnEchoMode(TRUE);
+        return buf;
+    
+    cleanup_error:
+        TerminalModeToggler.turnCanonicalMode(TRUE);
+        TerminalModeToggler.turnEchoMode(TRUE);
+        free(buf);
+        return NULL;
     
 };
 
 string_t ucread(string_t histPath, int promptSize) {
     string_t out;
-    char *buf;
+    char *buf = ucfgets(histPath, promptSize);
     
-    if (ucfgets(buf, histPath, promptSize) == NULL) {
+    if (buf == NULL) {
         out.len = 0;
         out.s = NULL;
         return out;
         
     }
     
-    buf[strcspn(buf, "\n")] = '\0';
     out.len = strlen(buf);
-    out.s = malloc(out.len);
+    out.s = malloc(out.len + 1);
     if (out.s == NULL) {
         out.len = 0;
+        free(buf);
         return out;
         
     }
     
     memcpy(out.s, buf, out.len);
+    out.s[out.len] = '\0';
     free(buf);
     
     return out;

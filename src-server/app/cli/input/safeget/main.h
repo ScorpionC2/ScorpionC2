@@ -10,11 +10,8 @@
 #include <stdio.h>
 
 typedef struct {    
-    // ucgetchar - Ultra-incredible-handmade galactic empire engineer's Custom GETCHAR
-    char (*ucgetchar)(FILE *stream);
-    
     // ucfgets - Ultra-incredible-handmade galactic empire engineer's Custom FGETS
-    char* (*ucfgets)(char *dest, string_t histPath, int promptSiz);
+    char* (*ucfgets)(string_t histPath, int promptSiz);
     
     /*
      * Return rules:
