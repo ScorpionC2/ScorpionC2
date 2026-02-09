@@ -21,10 +21,5 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Build
-      run: make build
-
-    - name: Valgrind
-      uses: Ximaz/valgrind-action@v1.2.0
-      with:
-        binary_path: build/scorpionc2-server
+    - name: Valgrind-check
+      run: make test-valgrind
