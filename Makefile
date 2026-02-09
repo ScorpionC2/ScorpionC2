@@ -6,7 +6,7 @@
 #
 
 .PHONY: build clean help rebuild test
-.SILENT: build help rebuild test
+.SILENT: build help rebuild test test-valigrind test-debug
 
 I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/domain/encoders/types \
@@ -18,6 +18,7 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/app/cli/input/readMode \
 					-Isrc-server/app/cli/input/safeget \
 					-Isrc-server/infra/fs \
+					-Isrc-server/app/cli/input \
 			
 OPTIMIZE_FLAGS 	:= 	-Os
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
@@ -48,6 +49,7 @@ SRC_ENTRYPOINT	:=	src-server/app/main.c \
 					src-server/app/cli/ui/box/main.c \
 					src-server/app/cli/input/readMode/main.c \
 					src-server/app/cli/input/safeget/main.c \
+					src-server/app/cli/input/main.c \
 					src-server/infra/fs/main.c \
 
 all: help
