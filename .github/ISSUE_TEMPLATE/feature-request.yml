@@ -1,0 +1,102 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "FEATURE - "
+labels:
+    - enhancement
+assignees: []
+
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Thanks for taking the time to suggest a feature.
+              Clear and well-scoped requests have a much higher chance of being implemented.
+
+    - type: textarea
+      id: summary
+      attributes:
+          label: Feature summary
+          description: Briefly describe the feature or improvement.
+          placeholder: One-paragraph summary of the feature
+      validations:
+          required: true
+
+    - type: textarea
+      id: problem
+      attributes:
+          label: Problem or motivation
+          description: What problem does this feature solve? Why is it needed?
+          placeholder: Describe the pain point or limitation
+      validations:
+          required: true
+
+    - type: textarea
+      id: proposal
+      attributes:
+          label: Proposed solution
+          description: Describe how you think this feature should work.
+          placeholder: Detailed description of the proposed behavior or API
+      validations:
+          required: true
+
+    - type: textarea
+      id: alternatives
+      attributes:
+          label: Alternatives considered
+          description: Describe any alternative solutions or workarounds you considered.
+          placeholder: Other approaches, hacks, or existing solutions
+      validations:
+          required: false
+
+    - type: textarea
+      id: impact
+      attributes:
+          label: Impact
+          description: Who benefits from this feature and how?
+          placeholder: Users, performance, security, maintainability, DX, etc.
+      validations:
+          required: false
+
+    - type: dropdown
+      id: priority
+      attributes:
+          label: Priority
+          description: How important is this feature?
+          options:
+              - low
+              - medium
+              - high
+              - critical
+      validations:
+          required: true
+
+    - type: dropdown
+      id: scope
+      attributes:
+          label: Scope
+          description: Estimated impact on the codebase.
+          options:
+              - small (localized change)
+              - medium (multiple modules)
+              - large (architecture-level change)
+      validations:
+          required: false
+
+    - type: input
+      id: version
+      attributes:
+          label: Related version or commit
+          description: Version or commit where this feature would be relevant.
+          placeholder: e.g. v0.5.0 or a1b2c3d
+      validations:
+          required: false
+
+    - type: checkboxes
+      id: confirmation
+      attributes:
+          label: Confirmation
+          options:
+              - label: I have checked that this feature was not already requested
+                required: true
+              - label: This feature aligns with the project goals
+                required: false
