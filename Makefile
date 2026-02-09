@@ -20,7 +20,7 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/infra/fs \
 			
 OPTIMIZE_FLAGS 	:= 	-Os
-DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb
+DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
 
 USE_DEBUG		:= 	false
 USE_OPTIMIZE	:=	true
@@ -85,11 +85,18 @@ VALGRIND_FLAGS := 	--leak-check=summary \
 					$(TEST_TARGET)
 					
 VALGRIND_TARGET := $(VALGRIND_PATH) $(VALGRIND_FLAGS)
-TESTV_CC_FLAGS	:= $(I_FLAGS) $(DEBUG_FLAGS)
+DEBUG_CC_FLAGS	:= $(I_FLAGS) $(DEBUG_FLAGS)
 
 test-valgrind: ## Run the project in a tmp file and check it with valgrind
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
 	mkdir -p $(TEST_TARGET_DIR)
-	$(CC) $(TESTV_CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
+	$(CC) $(DEBUG_CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
 	$(VALGRIND_TARGET)
+	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
+
+test-debug: ## Run the project in a tmp file
+	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
+	mkdir -p $(TEST_TARGET_DIR)
+	$(CC) $(DEBUG_CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
+	$(TEST_TARGET)
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
