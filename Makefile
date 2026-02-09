@@ -20,7 +20,7 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/infra/fs \
 			
 OPTIMIZE_FLAGS 	:= 	-Os
-DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb
+DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
 
 USE_DEBUG		:= 	false
 USE_OPTIMIZE	:=	true
