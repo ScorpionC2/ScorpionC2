@@ -1,0 +1,111 @@
+name: Refactor / Internal Improvement
+description: Code refactoring, cleanup, or internal improvements that do not add features or fix bugs
+title: "REFACTOR - "
+labels:
+    - refactor
+assignees: []
+
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Use this template for refactors, cleanups, or internal improvements.
+              This includes changes focused on readability, maintainability, performance,
+              architecture, or technical debt — without changing external behavior.
+
+    - type: textarea
+      id: motivation
+      attributes:
+          label: Motivation / Problem
+          description: Why is this refactor needed? What problem does it solve?
+          placeholder: |
+              e.g. Code duplication, hard-to-maintain logic, unclear ownership,
+              technical debt, performance concerns, unsafe patterns, etc.
+      validations:
+          required: true
+
+    - type: textarea
+      id: scope
+      attributes:
+          label: Scope of refactor
+          description: What parts of the codebase will be affected?
+          placeholder: |
+              e.g. src/parser/, auth middleware, memory allocator, logging system
+      validations:
+          required: true
+
+    - type: textarea
+      id: current_state
+      attributes:
+          label: Current behavior / structure
+          description: Describe how the code works today and why it is problematic.
+          placeholder: |
+              Current flow, coupling issues, anti-patterns, complexity, etc.
+      validations:
+          required: true
+
+    - type: textarea
+      id: proposed_changes
+      attributes:
+          label: Proposed changes
+          description: Describe the refactor strategy or expected structural changes.
+          placeholder: |
+              e.g. Split module X, remove global state, introduce abstraction Y,
+              simplify control flow, reduce allocations, improve error handling.
+      validations:
+          required: true
+
+    - type: textarea
+      id: risks
+      attributes:
+          label: Risks / Side effects
+          description: Possible risks, regressions, or parts that require extra attention.
+          placeholder: |
+              e.g. ABI changes, performance regressions, subtle behavior changes.
+      validations:
+          required: false
+
+    - type: textarea
+      id: validation
+      attributes:
+          label: Validation strategy
+          description: How will we ensure behavior remains the same?
+          placeholder: |
+              e.g. Existing tests, new tests, benchmarks, manual verification.
+      validations:
+          required: false
+
+    - type: dropdown
+      id: impact
+      attributes:
+          label: Impact
+          description: Expected impact of this refactor.
+          options:
+              - low (mostly cosmetic / readability)
+              - medium (structural changes, limited surface)
+              - high (core components, wide impact)
+      validations:
+          required: true
+
+    - type: input
+      id: related
+      attributes:
+          label: Related issues / PRs
+          description: Reference related bugs, features, or refactors.
+          placeholder: e.g. #123, #98
+      validations:
+          required: false
+
+    - type: checkboxes
+      id: confirmation
+      attributes:
+          label: Confirmation
+          options:
+              - label: This change does not introduce new features
+                required: true
+              - label: This change does not fix a user-facing bug
+                required: true
+              - label: I understand this may require careful review and testing
+                required: true
+              - label: I have checked that this feature was not already requested
+                required: true
