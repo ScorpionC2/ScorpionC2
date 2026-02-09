@@ -13,7 +13,6 @@
 void readline(InputSettings conf, string_t *out) {
     string_t prompt = conf.prompt;
     string_t histPath = conf.histPath;
-    int histLimit = conf.histLimit;
     
     printf("%s", prompt.s);
     fflush(stdout);
@@ -24,14 +23,22 @@ void readline(InputSettings conf, string_t *out) {
         
     };
     
-    if (Files.appendFile(histPath, &inputRaw) != 0) {
+    uchar_t _nl = '\n';
+    bytes_t newLine = {
+        .len = 1,
+        .b = &_nl
+        
+    };
+    
+    if ((Files.appendFile(histPath, &inputRaw) != 0) || (Files.appendFile(histPath, &newLine))) {
         Logger.warnln("Can't write last user input to history file");
         
     }
     
     out->len = input.len;
-    out->s = malloc(out->len);
+    out->s = malloc(out->len + 1);
     memcpy(out->s, input.s, out->len);
+    out->s[out->len] = '\0';
     
     free(input.s);
     return;
