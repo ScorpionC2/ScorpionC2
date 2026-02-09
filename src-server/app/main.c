@@ -6,6 +6,7 @@
 #include "cli/logs/main.h"
 #include "cli/colors/main.h"
 #include "cli/ui/box/main.h"
+#include "cli/input/main.h"
 #include "../shared/types/main.h"
 #include "../shared/utils/hash/main.h"
 #include "../shared/utils/random/main.h"
@@ -93,6 +94,33 @@ int main() {
     
     Logger.infoln("Gradient Box:");
     Box.draw(10, 22, C_GREEN_LIGHT, C_GREEN_DARK);
+    
+    string_t hist = {
+        .s = "historyTopzera",
+        .len = strlen("historyTopzera")
+        
+    };
+    InputSettings inputConf = {
+        .histPath = hist,
+        .prompt = {
+            .s = "c2 -> ",
+            .len = 7
+            
+        },
+        .histLimit = 20000
+        
+    };
+    
+    string_t absoluteInput;
+    Input.readline(inputConf, &absoluteInput);
+    if (absoluteInput.s == NULL) {
+        return 1;
+        
+    }
+    
+    Logger.infof(FG_WHITE_ITALIC "Input: " RESET FG_WHITE_ITALIC BG_ORANGE "%s" RESET "\n", absoluteInput.s);
+    
+    free(absoluteInput.s);
     
     return 0;
     
