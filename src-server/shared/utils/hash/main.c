@@ -15,6 +15,14 @@
 #include <string.h>
 #include <stdlib.h>
 
+/*
+ *  TODO:
+ *      - Must add state to hashes to avoid low-entropy
+ *      - Must add final mixers
+ *      - Must add macros to handle diff sizes of hash
+ *
+ */
+
 bytes_t HashDjb2(bytes_t src) {
     ulong_t hash = 5381;
     
