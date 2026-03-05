@@ -5,7 +5,7 @@
 
 #include "main.h"
 #include "../../../../shared/utils/random/main.h"
-#include "../../../../shared/utils/hash/main.h"
+#include "../../../../infra/hash/main.h"
 
 #include <stdlib.h>
 #include <string.h>
