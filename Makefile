@@ -18,6 +18,7 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/app/cli/input/readMode \
 					-Isrc-server/app/cli/input/safeget \
 					-Isrc-server/infra/fs \
+					-Isrc-server/infra/hash \
 					-Isrc-server/app/cli/input \
 			
 OPTIMIZE_FLAGS 	:= 	-Os
@@ -43,7 +44,7 @@ TARGET			:=	$(TARGET_DIR)scorpionc2-server
 SRC_ENTRYPOINT	:=	src-server/app/main.c \
 					src-server/app/cli/logs/main.c \
 					src-server/shared/utils/random/main.c \
-					src-server/shared/utils/hash/main.c \
+					src-server/infra/hash/main.c \
 					src-server/domain/encoders/services/main.c \
 					src-server/domain/encoders/services/xor/main.c \
 					src-server/app/cli/ui/box/main.c \

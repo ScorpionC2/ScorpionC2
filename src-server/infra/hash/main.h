@@ -3,11 +3,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-// TODO: Move to /infra
-
 #pragma once
 
-#include "../../types/main.h"
+#include "../../shared/types/main.h"
 
 typedef struct {
     bytes_t (*djb2)(bytes_t src);
