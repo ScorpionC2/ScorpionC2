@@ -20,6 +20,7 @@ I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
 					-Isrc-server/infra/fs \
 					-Isrc-server/infra/hash \
 					-Isrc-server/app/cli/input \
+					-Isrc-server/shared/utils/math \
 			
 OPTIMIZE_FLAGS 	:= 	-Os
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
@@ -52,6 +53,7 @@ SRC_ENTRYPOINT	:=	src-server/app/main.c \
 					src-server/app/cli/input/safeget/main.c \
 					src-server/app/cli/input/main.c \
 					src-server/infra/fs/main.c \
+					src-server/shared/utils/math/main.c \
 
 all: help
 
