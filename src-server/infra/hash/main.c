@@ -146,7 +146,7 @@ bytes_t HashScorpionX(bytes_t src) {
         uint32_t currentByte = src.b[i];
 
         // Now we iterate inside the current word
-        uint32_t word = state[i];
+        uint32_t word = state[i & (wordLen - 1)];
 
         uint8_t mw0 = word & 0xFF;
         uint8_t mw1 = (word >> 8) & 0xFF;
@@ -158,7 +158,7 @@ bytes_t HashScorpionX(bytes_t src) {
         mw2 ^= mw0 * (src.b[i] & 0xFF);
         mw3 ^= mw1 ^ 0xC3;
 
-        state[i] = mw0 | (mw1 << 8) | (mw2 << 16) | (mw3 << 24);
+        state[i & wordLen - 1] = mw0 | (mw1 << 8) | (mw2 << 16) | (mw3 << 24);
 
         // Now we define [v]alue, that must be based in state and must interact with currentByte
         uint32_t v = state[i % wordLen] ^ (currentByte ^ SH(0x1180574F, seed, shiftSeed));
