@@ -53,7 +53,6 @@ SRC_ENTRYPOINT	:=	src-server/app/main.c \
 					src-server/app/cli/input/safeget/main.c \
 					src-server/app/cli/input/main.c \
 					src-server/infra/fs/main.c \
-					src-server/shared/utils/math/main.c \
 
 all: help
 
