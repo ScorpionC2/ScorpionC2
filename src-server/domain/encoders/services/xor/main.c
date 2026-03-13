@@ -10,24 +10,29 @@
 #include <stdlib.h>
 #include <string.h>
 
+scorpionSettings hashSettings = {
+    .hashSize = godzilla,
+    .seed = 0xF1FB230E,
+    .shiftSeed = 18
+};
+
 /*
  * int num: Nonce size
+ * char *string: Hash algorithm
  */
 EncoderSettings XorSettings = {
     // Nonce size
     .num = 128,
     
-    // Algorithm
+    // The Algorithm
     // 
-    // Algorithm is defined by a 5 bytes string
+    // Our algorithm is defined by a 5 bytes string
     // 
     //  djb2:   djb2
-    //  s128x:  scorpion128x
-    //  s256x:  scorpion256x
-    //  s512x:  scorpion512x
-    //  
-    // Other algorithms like scorpion1024x exists, but aren't used by their big size
-    .string = "s256x"
+    //  scox:  scorpionx
+    //
+    .string = "scox",
+    .hashScorpionSettings = &hashSettings
     
 };
 
@@ -63,18 +68,10 @@ void *getHashFunction() {
     if (strcmp(XorSettings.string, "djb2") == 0) {
         return Hash.djb2;
         
-    } else if (strcmp(XorSettings.string, "s128x") == 0) {
-        return Hash.scorpion128x;
-        
-    } else if (strcmp(XorSettings.string, "s256x") == 0) {
-        return Hash.scorpion256x;
-        
-    } else if (strcmp(XorSettings.string, "s512x") == 0) {
-        return Hash.scorpion512x;
-        
     }
-    
-    return Hash.scorpion256x;
+
+    Hash.settings = XorSettings.hashScorpionSettings;
+    return Hash.ScorpionX;
     
 }
 

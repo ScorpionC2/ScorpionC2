@@ -5,15 +5,29 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include "../../shared/types/main.h"
 
 typedef struct {
+    enum {
+        small = 128,
+        medium = 256,
+        big = 512,
+        giant = 1024,
+        godzilla = 2048,
+
+    } hashSize;
+
+    uint32_t seed;
+    uint32_t shiftSeed;
+
+} scorpionSettings;
+
+typedef struct {
     bytes_t (*djb2)(bytes_t src);
-    bytes_t (*scorpion2048x)(bytes_t src);
-    bytes_t (*scorpion1024x)(bytes_t src);
-    bytes_t (*scorpion512x)(bytes_t src);
-    bytes_t (*scorpion256x)(bytes_t src);
-    bytes_t (*scorpion128x)(bytes_t src);
+    bytes_t (*ScorpionX)(bytes_t src);
+    scorpionSettings *settings;
     
 } HashInstance;
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "../../../shared/types/main.h"
+#include "../../../infra/hash/main.h"
 #include <stdint.h>
 
 typedef struct {
@@ -33,6 +34,7 @@ typedef struct {
     double floatingPoint;
     double *floatingPointArr;
     double **ArrayOfFloatingPoint;
+    scorpionSettings *hashScorpionSettings;
 
 } EncoderSettings;
 

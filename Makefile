@@ -78,7 +78,7 @@ TEST_TARGET := $(TEST_TARGET_DIR)scorpionc2
 test: ## Run the project in a tmp file
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
 	mkdir -p $(TEST_TARGET_DIR)
-	$(CC) $(CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
+	$(CC) $(CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT) -lm
 	$(TEST_TARGET)
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
 

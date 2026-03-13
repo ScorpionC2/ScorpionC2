@@ -6,6 +6,7 @@
 #pragma once
 
 #include "../types/main.h"
+#include "../../../infra/hash/main.h"
 
 /*
  * This file must contain all encoders as pointers to their implementations.
