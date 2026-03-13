@@ -1,3 +1,8 @@
+//
+// Copyright (c) 2026-Present ScorpionC2 public-person "Lucas de Moraes Claro" and all anonymous contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
 #include "main.h"
 
 static inline uint32_t rotl(const uint32_t x, const int r) {
