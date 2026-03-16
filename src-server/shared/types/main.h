@@ -9,6 +9,8 @@
 
 typedef unsigned char uchar_t;
 typedef unsigned long ulong_t;
+typedef unsigned short ushort_t;
+typedef unsigned int uint_t;
 typedef struct {
     uchar_t     *b;
     size_t      len;
