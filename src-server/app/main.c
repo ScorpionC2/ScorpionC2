@@ -8,6 +8,12 @@
 
 #include <time.h>
 
+/*
+ * TODO List:
+ *  - Implement /src-server/infra/fs
+ *
+ */
+
 void init() {
     Random.seed(time(NULL));
     Random.seed(Random.rand());
