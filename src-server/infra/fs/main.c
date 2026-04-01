@@ -6,7 +6,6 @@
 #include "main.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 
 int appendFile(string_t path, bytes_t *src) {

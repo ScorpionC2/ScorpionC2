@@ -6,7 +6,6 @@
 #pragma once
 
 #include "../../shared/types/main.h"
-#include <stdio.h>
 
 typedef struct {    
     /*
@@ -35,7 +34,7 @@ typedef struct {
      * out values:
      *      b = NULL: Format don't found
      */
-    int (*getFmt)(string_t path, bytes_t *fmt);
+    int (*getFmt)(string_t path, bytes_t *fmt, bytes_t *out);
     
     /*
      * Return rules:
@@ -74,7 +73,7 @@ typedef struct {
     /*
      * Return rules:
      *      0: Everything right
-     *     -1: Directory do not exists
+     *     -1: Directory do not exist
      *      1: Can't delete directory
      */
     int (*rmDir)(string_t path);

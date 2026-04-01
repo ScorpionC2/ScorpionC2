@@ -8,15 +8,19 @@
 
 #include <time.h>
 
-void init() {
-    Random.seed(time(NULL));
-    Random.seed(Random.rand());
+/*
+ * TODO List:
+ *  - Implement /src-server/infra/fs
+ *  - Study networking to start implementing /src-server/infra/socket
+ *
+ */
 
+void init() {
+    Random.seed((int)time(NULL));
+    Random.seed((int)Random.rand());
 }
 
 int main() {
     init();
     return 0;
-    
 }
-
