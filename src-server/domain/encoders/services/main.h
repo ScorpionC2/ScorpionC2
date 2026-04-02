@@ -5,8 +5,7 @@
 
 #pragma once
 
-#include "../types/main.h"
-#include "../../../infra/hash/main.h"
+#include "src-server/domain/encoders/types/main.h"
 
 /*
  * This file must contain all encoders as pointers to their implementations.
@@ -24,5 +23,5 @@
  *      
  * The idea is to have all encoders in just one file, without the need to include every implementation.
  */
- 
- extern EncoderInstance *Xor;
+
+extern EncoderInstance *Xor;

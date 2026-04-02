@@ -4,17 +4,14 @@
 //
 
 #include "main.h"
-#include "../../../../shared/utils/random/main.h"
-#include "../../../../infra/hash/main.h"
+#include "src-server/infra/hash/main.h"
+#include "src-server/shared/utils/random/main.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 scorpionSettings hashSettings = {
-    .hashSize = godzilla,
-    .seed = 0xF1FB230E,
-    .shiftSeed = 18
-};
+    .hashSize = godzilla, .seed = 0xF1FB230E, .shiftSeed = 18};
 
 /*
  * int num: Nonce size
@@ -23,107 +20,94 @@ scorpionSettings hashSettings = {
 EncoderSettings XorSettings = {
     // Nonce size
     .num = 128,
-    
+
     // The Algorithm
-    // 
+    //
     // Our algorithm is defined by a 5 bytes string
-    // 
+    //
     //  djb2:   djb2
     //  scox:  scorpionx
     //
     .string = "scox",
     .hashScorpionSettings = &hashSettings
-    
+
 };
 
 bytes_t xor(bytes_t src, bytes_t key) {
     uchar_t *srcCopy = malloc(src.len);
     memcpy(srcCopy, src.b, src.len);
-    
+
     uchar_t *keyCopy = malloc(key.len);
     memcpy(keyCopy, key.b, key.len);
-    
+
     uchar_t out[src.len];
     for (int i = 0; i < src.len; i++) {
         out[i] = srcCopy[i] ^ keyCopy[(i + 1) % key.len];
         keyCopy[(i + 2) % key.len] = keyCopy[i % key.len];
-        
     }
-    
-    bytes_t output = {
-        .len = src.len,
-        .b = malloc(src.len)
-        
+
+    bytes_t output = {.len = src.len, .b = malloc(src.len)
+
     };
-    
+
     memcpy(output.b, out, src.len);
     free(srcCopy);
     free(keyCopy);
-    
+
     return output;
-    
 }
 
 void *getHashFunction() {
     if (strcmp(XorSettings.string, "djb2") == 0) {
         return Hash.djb2;
-        
     }
 
     Hash.settings = XorSettings.hashScorpionSettings;
     return Hash.ScorpionX;
-    
 }
 
 bytes_t XorEncode(bytes_t src) {
     uchar_t nonceRaw[XorSettings.num];
     for (int i = 0; i < XorSettings.num; i++) {
         nonceRaw[i] = Random.randr(0, 255);
-        
     }
-    
-    bytes_t nonce = {
-        .b = malloc(XorSettings.num),
-        .len = XorSettings.num
-        
+
+    bytes_t nonce = {.b = malloc(XorSettings.num), .len = XorSettings.num
+
     };
-    
+
     memcpy(nonce.b, nonceRaw, (size_t)XorSettings.num);
-    
+
     bytes_t (*hashFunction)(bytes_t src) = getHashFunction();
     bytes_t hash = hashFunction(nonce);
     bytes_t xorOut = xor(src, hash);
-    bytes_t out = {
-        .len = XorSettings.num + src.len 
-        
+    bytes_t out = {.len = XorSettings.num + src.len
+
     };
-    
+
     out.b = malloc(out.len);
     memcpy(out.b, nonce.b, nonce.len);
     memcpy(out.b + nonce.len, xorOut.b, xorOut.len);
-    
+
     free(hash.b);
     free(nonce.b);
     free(xorOut.b);
-    
+
     return out;
-    
 };
 
 bytes_t XorDecode(bytes_t src) {
-    bytes_t srcCopy = {
-        .len = src.len,
-        .b = malloc(src.len)
-        
+    bytes_t srcCopy = {.len = src.len, .b = malloc(src.len)
+
     };
-    
+
     memcpy(srcCopy.b, src.b, srcCopy.len);
-    
+
     bytes_t nonce;
     nonce.len = XorSettings.num;
-    nonce .b = malloc(XorSettings.num);
+    nonce.b = malloc(XorSettings.num);
     memcpy(nonce.b, srcCopy.b, XorSettings.num);
-    
+
     bytes_t srcWithoutXor;
     srcWithoutXor.len = srcCopy.len - XorSettings.num;
     srcWithoutXor.b = malloc(srcWithoutXor.len);
@@ -132,28 +116,23 @@ bytes_t XorDecode(bytes_t src) {
     bytes_t (*hashFunction)(bytes_t src) = getHashFunction();
     bytes_t hash = hashFunction(nonce);
     bytes_t unxor = xor(srcWithoutXor, hash);
-    
-    bytes_t out = {
-        .len = unxor.len,
-        .b = malloc(unxor.len)
-        
+
+    bytes_t out = {.len = unxor.len, .b = malloc(unxor.len)
+
     };
-    
+
     memcpy(out.b, unxor.b, out.len);
-    
+
     free(srcCopy.b);
     free(nonce.b);
     free(srcWithoutXor.b);
     free(hash.b);
     free(unxor.b);
-    
+
     return out;
-    
 };
 
 EncoderInstance XorInstance = {
-    .encode = XorEncode,
-    .decode = XorDecode,
-    .settings = &XorSettings
+    .encode = XorEncode, .decode = XorDecode, .settings = &XorSettings
 
 };

@@ -5,12 +5,12 @@
 
 #pragma once
 
-#include "../../../../shared/types/main.h"
+#include "src-server/shared/types/main.h"
 
 typedef struct {
     void (*turnEchoMode)(bool_t _em);
     void (*turnCanonicalMode)(bool_t _cm);
-    
+
 } TerminalModeTogglerInstance;
 
 extern TerminalModeTogglerInstance TerminalModeToggler;

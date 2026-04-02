@@ -5,17 +5,17 @@
 
 #pragma once
 
-#include "../../../shared/types/main.h"
+#include "src-server/shared/types/main.h"
 
 typedef struct {
-    string_t    prompt;
-    string_t    histPath;
-    int         histLimit;
+    string_t prompt;
+    string_t histPath;
+    int histLimit;
 
 } InputSettings;
 
 typedef struct {
-    void        (*readline)(InputSettings conf, string_t *out);
+    void (*readline)(InputSettings conf, string_t *out);
 
 } InputInstance;
 

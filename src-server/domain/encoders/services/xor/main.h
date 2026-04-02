@@ -5,6 +5,6 @@
 
 #pragma once
 
-#include "../../types/main.h"
+#include "src-server/domain/encoders/types/main.h"
 
 extern EncoderInstance XorInstance;

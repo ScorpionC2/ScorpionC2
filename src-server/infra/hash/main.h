@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#include "../../shared/types/main.h"
+#include "src-server/shared/types/main.h"
 
 typedef struct {
     enum {
@@ -28,7 +28,7 @@ typedef struct {
     bytes_t (*djb2)(bytes_t src);
     bytes_t (*ScorpionX)(bytes_t src);
     scorpionSettings *settings;
-    
+
 } HashInstance;
 
 extern HashInstance Hash;
