@@ -5,16 +5,16 @@
 
 #pragma once
 
-#include "../../shared/types/main.h"
+#include "src-server/shared/types/main.h"
 
-typedef struct {    
+typedef struct {
     /*
      * Return rules:
      *     0+:  Everything right
      *     -1:  Can't open the file
      */
     int (*countLines)(string_t path);
-    
+
     /*
      * Return rules:
      *      0:  Everything right
@@ -25,7 +25,7 @@ typedef struct {
      *      b = NULL: Line empty
      */
     int (*getLine)(string_t path, int line, bytes_t *out);
-    
+
     /*
      * Return rules:
      *      0:  Everything right
@@ -35,7 +35,7 @@ typedef struct {
      *      b = NULL: Format don't found
      */
     int (*getFmt)(string_t path, bytes_t *fmt, bytes_t *out);
-    
+
     /*
      * Return rules:
      *      0: Everything right
@@ -45,23 +45,23 @@ typedef struct {
      * out values:
      *      b = NULL: File empty
      */
-     int (*readFIle)(string_t path, bytes_t *out);
-    
+    int (*readFIle)(string_t path, bytes_t *out);
+
     /*
      * Return rules:
      *      0: Everything right
      *     -1: Can't write to file
      *      1: Can't open the file
      */
-     int (*writeFile)(string_t path, bytes_t *src);
-    
+    int (*writeFile)(string_t path, bytes_t *src);
+
     /*
      * Return rules:
      *      0: Everything right
      *      1: Can't open the file
      */
     int (*appendFile)(string_t path, bytes_t *src);
-    
+
     /*
      * Return rules:
      *      0: Everything right
@@ -69,7 +69,7 @@ typedef struct {
      *      1: Can't create directory
      */
     int (*makeDir)(string_t path);
-    
+
     /*
      * Return rules:
      *      0: Everything right

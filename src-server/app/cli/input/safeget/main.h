@@ -5,14 +5,13 @@
 
 #pragma once
 
-#include "../../../../shared/types/main.h"
+#include "src-server/shared/types/main.h"
 #include <stddef.h>
-#include <stdio.h>
 
-typedef struct {    
+typedef struct {
     // ucfgets - Ultra-incredible-handmade galactic empire engineer's Custom FGETS
-    char* (*ucfgets)(string_t histPath, int promptSiz);
-    
+    char *(*ucfgets)(string_t histPath, int promptSiz);
+
     /*
      * Return rules:
      *      .s = NULL: Can't read or can't allocate new memory for string

@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "../../../shared/types/main.h"
-#include "../../../infra/hash/main.h"
+#include "src-server/infra/hash/main.h"
+#include "src-server/shared/types/main.h"
 #include <stdint.h>
 
 typedef struct {
@@ -41,12 +41,12 @@ typedef struct {
 typedef struct {
     bytes_t (*encode)(bytes_t src);
     bytes_t (*decode)(bytes_t src);
-    
+
     /*
      * Settings must have default values for used properties
      * 
      * Settings must be well-documented
-     */ 
-     EncoderSettings *settings;
+     */
+    EncoderSettings *settings;
 
 } EncoderInstance;

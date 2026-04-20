@@ -8,19 +8,23 @@
 .PHONY: build clean help rebuild test
 .SILENT: build help rebuild test test-valigrind test-debug
 
-I_FLAGS 		:=  -Isrc-server/domain/encoders/services/xor \
-					-Isrc-server/domain/encoders/types \
-					-Isrc-server/shared/types \
-					-Isrc-server/app/cli/colors \
-					-Isrc-server/app/cli/loading \
-					-Isrc-server/app/cli/logs \
-					-Isrc-server/app/cli/ui/box \
-					-Isrc-server/app/cli/input/readMode \
-					-Isrc-server/app/cli/input/safeget \
-					-Isrc-server/infra/fs \
-					-Isrc-server/infra/hash \
-					-Isrc-server/app/cli/input \
-					-Isrc-server/shared/utils/math \
+I_FLAGS 		:=  -I. \
+								-mrdseed \
+								-mrdrnd \
+								-Isrc-server \
+								-Isrc-server/domain/encoders/services/xor \
+								-Isrc-server/domain/encoders/types \
+								-Isrc-server/shared/types \
+								-Isrc-server/app/cli/colors \
+								-Isrc-server/app/cli/loading \
+								-Isrc-server/app/cli/logs \
+								-Isrc-server/app/cli/ui/box \
+								-Isrc-server/app/cli/input/readMode \
+								-Isrc-server/app/cli/input/safeget \
+								-Isrc-server/infra/fs \
+								-Isrc-server/infra/hash \
+								-Isrc-server/app/cli/input \
+								-Isrc-server/shared/utils/math \
 			
 OPTIMIZE_FLAGS 	:= 	-Os
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
