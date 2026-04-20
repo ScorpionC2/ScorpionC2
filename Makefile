@@ -9,6 +9,8 @@
 .SILENT: build help rebuild test test-valigrind test-debug
 
 I_FLAGS 		:=  -I. \
+								-mrdseed \
+								-mrdrnd \
 								-Isrc-server \
 								-Isrc-server/domain/encoders/services/xor \
 								-Isrc-server/domain/encoders/types \
