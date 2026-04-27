@@ -5,8 +5,8 @@
 # This file uses provided code at https://gist.github.com/prwhite/8168133?permalink_comment_id=4160255#gistcomment-4160255 for the help target
 #
 
-.PHONY: build clean help rebuild test
-.SILENT: build help rebuild test test-valigrind test-debug
+.PHONY: build clean help rebuild run test
+.SILENT: build help rebuild run run-valigrind run-debug test
 
 I_FLAGS 		:=  -I. \
 								-mrdseed \
@@ -46,17 +46,19 @@ endif
 
 TARGET_DIR		:=	build/
 TARGET			:=	$(TARGET_DIR)scorpionc2-server
-SRC_ENTRYPOINT	:=	src-server/app/main.c \
-					src-server/app/cli/logs/main.c \
-					src-server/shared/utils/random/main.c \
-					src-server/infra/hash/main.c \
-					src-server/domain/encoders/services/main.c \
-					src-server/domain/encoders/services/xor/main.c \
-					src-server/app/cli/ui/box/main.c \
-					src-server/app/cli/input/readMode/main.c \
-					src-server/app/cli/input/safeget/main.c \
-					src-server/app/cli/input/main.c \
-					src-server/infra/fs/main.c \
+CORE_SRC :=		\
+							src-server/app/cli/logs/main.c \
+							src-server/shared/utils/random/main.c \
+							src-server/infra/hash/main.c \
+							src-server/domain/encoders/services/main.c \
+							src-server/domain/encoders/services/xor/main.c \
+							src-server/app/cli/ui/box/main.c \
+							src-server/app/cli/input/readMode/main.c \
+							src-server/app/cli/input/safeget/main.c \
+							src-server/app/cli/input/main.c \
+							src-server/infra/fs/main.c \
+
+SRC_ENTRYPOINT	:=	src-server/app/main.c += CORE_SRC
 
 all: help
 
@@ -76,35 +78,55 @@ rebuild: ## Remove old build and build again
 	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT)
 
 
-TEST_TARGET_DIR := "/tmp/scorpion-tests/$(date --iso=seconds)"
-TEST_TARGET := $(TEST_TARGET_DIR)scorpionc2
+RUN_TARGET_DIR := /tmp/scorpion-runs/$(shell date --iso=seconds)
+RUN_TARGET := $(RUN_TARGET_DIR)/scorpionc2
 	
-test: ## Run the project in a tmp file
-	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
-	mkdir -p $(TEST_TARGET_DIR)
-	$(CC) $(CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
-	$(TEST_TARGET)
-	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
+run: ## Run the project in a tmp file
+	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
+	mkdir -p $(RUN_TARGET_DIR)
+	$(CC) $(CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT)
+	$(RUN_TARGET)
+	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 
 VALGRIND_PATH := "/usr/bin/valgrind"
 VALGRIND_FLAGS := 	--leak-check=summary \
 					--errors-for-leak-kinds=definite \
 					-s \
-					$(TEST_TARGET)
+					$(RUN_TARGET)
 					
 VALGRIND_TARGET := $(VALGRIND_PATH) $(VALGRIND_FLAGS)
 DEBUG_CC_FLAGS	:= $(I_FLAGS) $(DEBUG_FLAGS)
 
-test-valgrind: ## Run the project in a tmp file and check it with valgrind
-	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
-	mkdir -p $(TEST_TARGET_DIR)
-	$(CC) $(DEBUG_CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
+run-valgrind: ## Run the project in a tmp file and check it with valgrind
+	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
+	mkdir -p $(RUN_TARGET_DIR)
+	$(CC) $(DEBUG_CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT)
 	$(VALGRIND_TARGET)
-	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
+	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 
-test-debug: ## Run the project in a tmp file
+run-debug: ## Run the project in a tmp file
+	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
+	mkdir -p $(RUN_TARGET_DIR)
+	$(CC) $(DEBUG_CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT)
+	$(RUN_TARGET)
+	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
+
+TEST_TARGET_DIR := /tmp/scorpion-tests/$(shell date --iso=seconds)
+TEST_TARGET := $(TEST_TARGET_DIR)/ScorpionC2-tests
+TEST_SRC := $(CORE_SRC) \
+						tests/engine/main.c \
+						tests/engine/unit/main.c \
+						tests/unit/encoders/xor.c
+
+TEST_I_FLAGS := $(I_FLAGS) \
+								-Itests/engine \
+								-Itests/engine/unit \
+								-Itests/unit/encoders \
+								-fsanitize=address -g
+
+test: ## Run the project's tests
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
 	mkdir -p $(TEST_TARGET_DIR)
-	$(CC) $(DEBUG_CC_FLAGS) -o $(TEST_TARGET) $(SRC_ENTRYPOINT)
+	$(CC) $(TEST_I_FLAGS) -o $(TEST_TARGET) $(TEST_SRC)
 	$(TEST_TARGET)
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
