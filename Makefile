@@ -58,7 +58,7 @@ CORE_SRC :=		\
 							src-server/app/cli/input/main.c \
 							src-server/infra/fs/main.c \
 
-SRC_ENTRYPOINT	:=	src-server/app/main.c += CORE_SRC
+SRC_ENTRYPOINT	:=	src-server/app/main.c $(CORE_SRC)
 
 all: help
 
