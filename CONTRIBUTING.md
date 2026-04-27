@@ -59,9 +59,10 @@ sync with your GitHub account.
 4. **_Test it_**: You can test every new implementation with:
 
 ```shell
-make test # Run the project in /tmp
-make test-valgrind # Run the project in /tmp with valgrind
-make test-debug # Run the project in /tmp with GCC debug flags
+make run # Run the project in /tmp
+make run-valgrind # Run the project in /tmp with valgrind
+make run-debug # Run the project in /tmp with GCC debug flags
+make test # Run tests
 ```
 
 ## Pull Request Workflow
@@ -106,17 +107,50 @@ While implementing your code:
 - Avoid unnecessary dependencies
 - Write clear comments when logic is complex
 
+<!-- TOC --><a name="4-test-your-implementation"></a>
 ### 4. Test your implementation
 
-Before opening a PR, run the available tests:
+All new code must be covered by unit tests.
+
+- Features must include new tests
+- Bug fixes must include a test reproducing the issue
+- Refactors must not break existing tests
+
+Pull Requests without tests may be rejected.
+
+Before opening a PR, make sure that your code runs with
 
 ```bash
+make run
+make run-valgrind
+make run-debug
 make test
-make test-valgrind
-make test-debug
 ```
 
 Your code **must not introduce memory leaks or crashes**.
+
+### 4.5 Test Engine Guidelines
+
+The internal test engine is minimal and low-level by design.
+
+Keep in mind:
+
+- Tests should stop if memory errors happens
+- Tests are executed automatically via constructor registration
+- Avoid global state when writing tests
+- Do not rely on execution order between tests
+- Keep assertions explicit and simple
+- Prefer multiple small tests over one large test
+
+Bad example:
+
+- One test validating multiple unrelated behaviors
+- One file validating more than one module, service, infrastructure abstraction or app module
+
+Good example:
+
+- One test per function or edge case
+- One file that validates one module, service, infrastructure abstraction or app module
 
 ### 5. Commit your changes
 
@@ -165,20 +199,17 @@ Possible outcomes:
 
 Please be patient during review and respond to feedback.
 
-### 8. Checking
 
-Before merging, your code will be 
+### 8. Merge
 
-### 9. Merge
-
-Once approved, a maintainer will merge the PR into `dev`.
+Once approved, a maintainer will merge the PR into `dev`, and later, he shall merge the PR into `main`.
 
 ## Commit Convention
 
 Our commit convention will be explained down here:
 
 ```
-<type>(<non-optional-scope): Message started with past-tense verb
+<type>(<non-optional-scope>): Message started with past-tense verb
 ```
 
 Examples directly from git history:
@@ -218,7 +249,6 @@ Example:
 ```c
 if (condition) {
     doSomething();
-    
 }
 ````
 
@@ -231,69 +261,10 @@ Opening braces must stay on the **same line** as the statement.
 ```c
 if (x > y) {
     doSomething();
-
-}
-```
-
-Closing braces should usually be preceded by a **blank line**.
-
-Example:
-
-```c
-if (x != y) {
-    int modY = mod(y);
-    doSmt(x, modY);
-    
 }
 ```
 
 This improves readability and visually separates the block ending.
-
----
-
-Closing braces followed by closing braces don't need a blank line.
-
-Example:
-
-```c
-if (x && y) {
-    if (x != y) {
-        int modY = mod(y);
-        doSmt(x, modY);
-        
-    }
-}
-```
-
-This improves readability and visually separates the block ending.
-
----
-
-### Blank Lines and Block Separation
-
-Blank lines are used to separate **logical steps inside a block**.
-
-Example:
-
-```c
-int main() {
-    int modY = mod(y);
-    if (doSmt(x, modY) == 0) {
-        if (x > y) {
-            doAnything(x);
-            
-        }
-    }
-
-    return 0;
-    
-}
-```
-
-Guidelines:
-
-* Use blank lines between **major steps**
-* Leave a blank line before a closing brace if it haven't another closing brace before itself
 
 ---
 
@@ -331,7 +302,6 @@ typedef struct {
     string_t prompt;
     string_t histPath;
     int histLimit;
-
 } InputSettings;
 ```
 
@@ -378,7 +348,6 @@ typedef struct {
     string_t prompt;
     string_t histPath;
     int histLimit;
-
 } InputSettings;
 ```
 
@@ -391,7 +360,6 @@ Function pointers must be clearly declared inside structs.
 ```c
 typedef struct {
     void (*readline)(InputSettings conf, string_t *out);
-
 } InputInstance;
 ```
 
@@ -424,7 +392,6 @@ Example:
 ```c
 if (Files.appendFile(histPath, &inputRaw) != 0) {
     Logger.warnln("Can't write last user input to history file");
-
 }
 ```
 
@@ -456,7 +423,7 @@ Header files must:
 
 ## Testing
 
-ScorpionC2 currently does not have a full automated test suite.
+ScorpionC2 have a custom testing engine (look at [Test your implementation](#4-test-your-implementation)), that you should use to test your custom implementations before sending any Pull Requests
 
 Before submitting a Pull Request, contributors must ensure that the code compiles
 and runs correctly using the provided Make targets.
@@ -464,9 +431,10 @@ and runs correctly using the provided Make targets.
 Run the following commands:
 
 ```bash
+make run
+make run-valgrind
+make run-debug
 make test
-make test-valgrind
-make test-debug
 ````
 
 These commands validate that:
@@ -487,3 +455,4 @@ Please follow the responsible disclosure process described in [SECURITY](SECURIT
 ## License
 
 By contributing you agree that your contributions will be licensed under the project license.
+
