@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 typedef struct {
+    short shortNum;
     int num;
     int *numArr;
     int **ArrayOfNumArr;
