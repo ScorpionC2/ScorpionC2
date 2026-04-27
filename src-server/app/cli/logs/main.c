@@ -93,8 +93,7 @@ void errorf(const char *fmt, ...) {
     vsprintf(buf, fmt, arg);
     va_end(arg);
 
-    printf(BG_YELLOW FG_RED_BOLD "[*]" RESET BG_YELLOW FG_RED_ITALIC
-                                 " %s" RESET,
+    printf(BG_YELLOW_DARK FG_RED_BOLD "[*]" RESET FG_RED_ITALIC " %s" RESET,
            buf);
     free(buf);
 }
