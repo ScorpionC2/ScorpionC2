@@ -9,7 +9,27 @@
 #include "tests/engine/main.h"
 #include "tests/engine/unit/main.h"
 
+#include <iso646.h>
 #include <stdlib.h>
+
+#define _XOR_SIZE_HELPER(size)                                                 \
+    scorpionSettings old = *Xor->settings->hashScorpionSettings;               \
+    Xor->settings->hashScorpionSettings->hashSize = size;                      \
+                                                                               \
+    uchar_t rawSource[5] = {0xff, 0xf3, 0x0a, 0x00, 0x61};                     \
+    bytes_t source = {.b = (uchar_t *)rawSource, .len = sizeof(rawSource)};    \
+                                                                               \
+    bytes_t encodedSource = Xor->encode(source);                               \
+    bytes_t decodedSource = Xor->decode(encodedSource);                        \
+                                                                               \
+    *Xor->settings->hashScorpionSettings = old;                                \
+                                                                               \
+    bool_t out = TEST_EQUAL_BYTES(source, decodedSource);                      \
+                                                                               \
+    free(encodedSource.b);                                                     \
+    free(decodedSource.b);                                                     \
+                                                                               \
+    return out;
 
 bool_t xor_base(void) {
     uchar_t rawSource[5] = {0xff, 0xf3, 0x0a, 0x00, 0x61};
@@ -101,8 +121,23 @@ bool_t xor_changeTrashSize(void) {
     return out;
 }
 
+bool_t xor_hashSizeSmall(void){_XOR_SIZE_HELPER(small)}
+
+bool_t xor_hashSizeMedium(void){_XOR_SIZE_HELPER(medium)}
+
+bool_t xor_hashSizeBig(void){_XOR_SIZE_HELPER(big)}
+
+bool_t xor_hashSizeGiant(void){_XOR_SIZE_HELPER(giant)}
+
+bool_t xor_hashSizeGodzilla(void){_XOR_SIZE_HELPER(godzilla)}
+
 TESTS_UNIT_REGISTER(xor_base, "Xor Test");
 TESTS_UNIT_REGISTER(xor_changeNonceLen, "Xor With Changed Nonce Size");
 TESTS_UNIT_REGISTER(xor_changeHashAlgorithm, "Xor With Changed Hash Algorithm");
 TESTS_UNIT_REGISTER(xor_ensureNonceRandomness, "Xor Ensure Nonce Randomness");
 TESTS_UNIT_REGISTER(xor_changeTrashSize, "Xor With Changed Trash Size");
+TESTS_UNIT_REGISTER(xor_hashSizeSmall, "Xor With Small Size Hash");
+TESTS_UNIT_REGISTER(xor_hashSizeMedium, "Xor With Medium Size Hash");
+TESTS_UNIT_REGISTER(xor_hashSizeBig, "Xor With Big Size Hash");
+TESTS_UNIT_REGISTER(xor_hashSizeGiant, "Xor With Giant Size Hash");
+TESTS_UNIT_REGISTER(xor_hashSizeGodzilla, "Xor With Godzilla Size Hash");
