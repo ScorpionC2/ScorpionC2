@@ -116,17 +116,18 @@ TEST_TARGET := $(TEST_TARGET_DIR)/ScorpionC2-tests
 TEST_SRC := $(CORE_SRC) \
 						tests/engine/main.c \
 						tests/engine/unit/main.c \
-						tests/unit/encoders/xor.c
+						tests/unit/encoders/xor.c \
+						tests/unit/hash/djb2.c
 
 TEST_I_FLAGS := $(I_FLAGS) \
 								-Itests/engine \
 								-Itests/engine/unit \
 								-Itests/unit/encoders \
-								-fsanitize=address -g
+								-Itests/unit/hash
 
 test: ## Run the project's tests
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
 	mkdir -p $(TEST_TARGET_DIR)
-	$(CC) $(TEST_I_FLAGS) -o $(TEST_TARGET) $(TEST_SRC)
+	$(CC) -fsanitize=address -g $(TEST_I_FLAGS) -o $(TEST_TARGET) $(TEST_SRC)
 	$(TEST_TARGET)
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
