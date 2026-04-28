@@ -37,9 +37,31 @@ scorpionSettings settings = {
 };
 
 static inline uint32_t seed_helper(uint32_t x, uint32_t seed, uint32_t shift) {
-    x ^= (x >> shift & 0x1F) * seed;
+    uint32_t y = x;
+    uint32_t nseed = (seed << (shift & 0x1F)) ^ ((x >> 1) * 0x11F11E1D);
+
+    x ^= (x >> (shift & 0x1F)) * (seed | 0x849012FD);
+    y ^= (x >> (shift & 0x1F)) ^ ((seed << 1) ^ (x * seed));
     x ^= seed;
-    return (x >> shift & 0x1F) & 0xFFFFFFFF;
+
+    nseed ^= x * (seed << (shift & 0x1F));
+    nseed ^= seed;
+
+    x ^= y;
+    y *= seed ^ (x << 29);
+    x *= 0xB83910FA;
+    x ^= y;
+
+    return x & 0xFFFFFFFF;
+}
+
+static inline uint32_t fmix32(uint32_t h) {
+    h ^= h >> 16;
+    h *= 0x85ebca6b;
+    h ^= h >> 13;
+    h *= 0xc2b2ae35;
+    h ^= h >> 16;
+    return h;
 }
 
 bytes_t HashScorpionX(bytes_t src) {
@@ -231,6 +253,7 @@ bytes_t HashScorpionX(bytes_t src) {
         x = ((x << 19) ^ x) - (x >> 8);
         x ^= x >> 15;
         x += SH(0xABCDEF0A, seed, shiftSeed);
+        x *= rotr(x ^ SH(0x27D4EB2F, seed, shiftSeed), 14);
         x = rotl(x, 13);
         x ^= SH(0xABCDEF0A, seed, shiftSeed) << ((x & 0x1C) + 4);
         x ^= x >> 16;
@@ -243,6 +266,7 @@ bytes_t HashScorpionX(bytes_t src) {
 
         state[idx] ^= x << 5;
         state[(i + x) & (wordLen - 1)] ^= x >> 4;
+        state[(i + 1 + x) & (wordLen - 1)] *= rotr(x, 5);
         state[(i ^ x) & (wordLen - 1)] ^= x >> 3;
     }
 
@@ -288,6 +312,11 @@ bytes_t HashScorpionX(bytes_t src) {
             state[r] += state[(i + r - 7) & (wordLen - 1)] & 0xF;
             state[r] *= 0x9E3779B1;
             state[r] ^= state[r] >> 16;
+        }
+
+        // This sub-block will ensure that high bits influence low bits
+        for (int i = 0; i < wordLen; i++) {
+            state[i] ^= state[(i + 1) & (wordLen - 1)] >> 1;
         }
     }
 
