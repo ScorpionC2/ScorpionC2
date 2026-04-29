@@ -4,6 +4,7 @@
 //
 
 #include "main.h"
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,7 +74,12 @@ int getLine(string_t path, int line, bytes_t *out) {
 
     fclose(file);
 
-    lineBuf[strcspn(lineBuf, "\n")] = '\0';
+    size_t _idx = strcspn(lineBuf, "\n");
+    if (_idx >= sizeof(lineBuf)) {
+        // I shall use directly into lineBuf[strcspn(lineBuf, "\n")] but SonarQube defines it as a possible BoF
+        lineBuf[_idx] = '\0';
+    }
+
     out->len = strlen(lineBuf) + 1;
     out->b = malloc(out->len);
     memcpy(out->b, lineBuf, out->len);
