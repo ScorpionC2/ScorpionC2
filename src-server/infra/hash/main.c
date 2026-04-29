@@ -36,6 +36,15 @@ scorpionSettings settings = {
 
 };
 
+static inline uint32_t fmix32(uint32_t h) {
+    h ^= h >> 16;
+    h *= 0x85ebca6b;
+    h ^= h >> 13;
+    h *= 0xc2b2ae35;
+    h ^= h >> 16;
+    return h;
+}
+
 static inline uint32_t seed_helper(uint32_t x, uint32_t seed, uint32_t shift) {
     uint32_t y = x;
     uint32_t nseed = (seed << (shift & 0x1F)) ^ ((x >> 1) * 0x11F11E1D);
@@ -46,22 +55,15 @@ static inline uint32_t seed_helper(uint32_t x, uint32_t seed, uint32_t shift) {
 
     nseed ^= x * (seed << (shift & 0x1F));
     nseed ^= seed;
+    nseed = fmix32(nseed);
 
     x ^= y;
     y *= seed ^ (x << 29);
     x *= 0xB83910FA;
+    x ^= nseed;
     x ^= y;
 
     return x & 0xFFFFFFFF;
-}
-
-static inline uint32_t fmix32(uint32_t h) {
-    h ^= h >> 16;
-    h *= 0x85ebca6b;
-    h ^= h >> 13;
-    h *= 0xc2b2ae35;
-    h ^= h >> 16;
-    return h;
 }
 
 bytes_t HashScorpionX(bytes_t src) {
@@ -225,7 +227,6 @@ bytes_t HashScorpionX(bytes_t src) {
         state[idx] += 1;
 
         // Modify next word
-        uint32_t wordIdx = state[(idx + 1) & (wordLen - 1)];
         uint16_t mw0Idx = word & 0xFFFF;
         uint16_t mw1Idx = (word >> 16) & 0xFFFF;
 
@@ -502,7 +503,8 @@ bytes_t HashScorpionX(bytes_t src) {
 
                 mw0 = rotl8(mw0, 20);
                 mw0 ^= (mw0 >> 4);
-                mw0 = rotr8(state[(i + 37) & (wordLen - 1)] & 0xFF, 2);
+                mw0 *= SH(0xBAEF2124, seed, shiftSeed);
+                mw0 ^= rotr8(state[(i + 37) & (wordLen - 1)] & 0xFF, 2);
                 mw0 ^= (mw0 << 5) | (mw0 >> 7);
 
                 uint8_t mw0x =
