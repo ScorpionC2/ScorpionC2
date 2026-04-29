@@ -21,51 +21,81 @@
 // Last upgrades (aka rdseed and rdrand use) is very inspired by my friend's video: https://youtu.be/fyBr9iKZrZo?si=eBSlXBXzTRLL4isi
 //
 
-#include "main.h"
+#include "src-server/shared/utils/random/main.h"
+#include "src-server/shared/utils/math/main.h"
 #include <immintrin.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <time.h>
 #include <unistd.h>
 
+#define _RDRAND_MAX_RETRIES 24
+#define _RDSEED_MAX_RETRIES 24
+#define CHECK(x, cap)                                                          \
+    if ((x) > (cap))                                                           \
+        break;                                                                 \
+    else                                                                       \
+        (x)++;
+
 uint32_t seed_g = 1;
 
-void Randomseed(int seed) {
-    // clang-format off
-    seed_g = ((uint32_t)seed ^ ((((uint32_t)getpid() * (seed ^ ((uint32_t)time(NULL) >> 5))) * (time(NULL) * 571205793)) >> 9));
-    // clang-format on
-}
+unsigned long long getRDRAND() {
+    unsigned long long rdrand_val = 0;
+    size_t count = 0;
+
+    while (_rdrand64_step(&rdrand_val) == 0) {
+        CHECK(count, _RDRAND_MAX_RETRIES)
+    }
+
+    return rdrand_val;
+};
+
+unsigned long long getRDSEED() {
+    unsigned long long rdseed_val = 0;
+    size_t count = 0;
+
+    while (_rdseed64_step(&rdseed_val) == 0) {
+        CHECK(count, _RDRAND_MAX_RETRIES)
+    }
+
+    return rdseed_val;
+};
+
+void Randomseed(int seed) { seed_g = seed; }
 
 uint32_t Randomrseed(int seed) {
-    // clang-format off
-    return ((((seed * (time(NULL) ^ (uint32_t)getpid())) ^ (uint32_t)(seed / (uint32_t)getpid()) + (time(NULL) - (uint32_t)getpid())) * 2677735761u)) % (((((seed * seed) ^ seed) - 25) + 569821785) >> (seed % 8));
-    // clang-format on
+    uint32_t pid = (uint32_t)getpid();
+    uint32_t gid = (uint32_t)getgid();
+    uint32_t timeNow = time(NULL);
+    unsigned long long rdseed = getRDSEED();
+
+    uint32_t out = rdseed;
+    out ^= rotl(out, pid);
+    out *= gid;
+    out ^= rotr(out, timeNow);
+    out <<= rdseed & 0x1F;
+    out ^= rotr(rdseed, (gid & 0x1F));
+
+    seed_g = rdseed ^ out;
+
+    return out;
 }
 
 uint32_t Randomrand() {
-    uint32_t s = seed_g;
+    uint32_t s = Randomrseed(seed_g ^ 0x6C656574);
     if (seed_g == 1) {
-        seed_g ^= (seed_g * 257219671) + 0x9E3779B9;
-        s = Randomrseed(seed_g ^ (3290751 * seed_g) +
-                                     (Randomrseed(seed_g * 49091339) >> 15));
+        uint32_t rdrand = getRDRAND();
+        uint32_t rdseed = getRDSEED();
+
+        seed_g = rdrand;
+        seed_g ^= rdseed;
+        seed_g *= 0xDEADBEEF;
+        seed_g ^= rotl(seed_g, (rdseed & 0x1F));
+
+        s = rotr(seed_g, 19);
+        seed_g = Randomrseed(s);
     }
 
-    // clang-format off
-    unsigned long long rdrand_val;
-    unsigned long long rdseed_val;
-    int count_seed = 0;
-    int count_rand = 0;
-
-    #define MAX_RETRIES 24
-    #define CHECK(x) if (x > 24) break;
-
-    while (_rdseed64_step(&rdseed_val) == 0) {CHECK(count_seed)}
-    while (_rdrand64_step(&rdrand_val) == 0) {CHECK(count_rand)}
-
-    #undef MAX_RETRIES
-    #undef CHECK
-    // clang-format on
-
-    seed_g ^= ((s << rdrand_val) * (s ^ rdseed_val));
     s = ((s << 13) ^ s) - (s >> 21);
 
     uint32_t n = s;
@@ -73,28 +103,29 @@ uint32_t Randomrand() {
     n += s;
     n = ((n << 14) ^ n) - (n >> 20);
 
-    uint32_t x = n;
-    x = (x * (x * 15731) + 2821160599);
-    x += n;
-    x = ((x << 19) ^ x) - (x >> 8);
-    x += 0x9E3779B9;
+    uint32_t out;
+    for (int i = 0; i < 8; i++) {
+        uint32_t old = n;
 
-    uint32_t y = x;
-    y = (y * (y * y * 15731 + 789221) + 771171059);
-    y ^= y >> 16;
+        uint32_t a = n ^ 0x0539;
+        uint32_t b = rotr(n, 15);
+        uint32_t c = rotl(a, b) ^ 0x1337;
 
-    uint32_t z = y;
-    z = (uint32_t)((z * 2650005761u) ^ z);
+        a += b;
+        c ^= a;
+        c = rotl(c, 16);
 
-    uint32_t a = z;
-    a = (a * (a * 0x9E3679B8u + a + (uint32_t)4322699887));
+        b += c;
+        a ^= b;
+        a = rotl(a, 12);
 
-    uint32_t b = a;
-    b = b * b * 0x9E3779B9u + b + 0x7F4A7C15u;
-    b ^= b >> 28;
-
-    uint32_t out = b ^ (b >> 8) ^ (b >> 16) ^ (b >> 24);
-    seed_g ^= out + 0x9E3779B9;
+        out = a;
+        out ^= b;
+        out *= rotl(out, old);
+        out ^= n;
+        out *= rotr(out, 17);
+        out ^= c;
+    }
 
     return out;
 };
@@ -109,7 +140,7 @@ uint32_t Randomrandr(int min, int max) {
 
     } while (x >= limit);
 
-    return (x % range) + min;
+    return (x & (range - 1)) + min;
 }
 
 const RandomInstance Random = {

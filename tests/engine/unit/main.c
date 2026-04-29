@@ -72,7 +72,7 @@ void runUnitTests(uint32_t *ac) {
                                          "%s" RESET " " FG_WHITE_ITALIC
                                          "failed:" RESET " " FG_YELLOW_ITALIC
                                          "Can't run a NULL function" RESET "\n",
-                         curTest.name);
+                         curTest.name.s);
             continue;
         }
 
@@ -83,14 +83,14 @@ void runUnitTests(uint32_t *ac) {
                                          "%s" RESET " " FG_WHITE_ITALIC
                                          "failed:" RESET " " FG_YELLOW_ITALIC
                                          "The test returned FALSE" RESET "\n",
-                         curTest.name);
+                         curTest.name.s);
             continue;
         }
 
         Logger.infof(FG_GREEN_ITALIC "Successfuly" FG_WHITE_ITALIC
                                      " run test" RESET " " FG_CYAN_ITALIC
                                      "%s" RESET "\n",
-                     curTest.name);
+                     curTest.name.s);
     }
 }
 

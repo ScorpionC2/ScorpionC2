@@ -75,7 +75,7 @@ int getLine(string_t path, int line, bytes_t *out) {
     fclose(file);
 
     size_t _idx = strcspn(lineBuf, "\n");
-    if (_idx >= sizeof(lineBuf)) {
+    if (_idx < sizeof(lineBuf)) {
         // I shall use directly into lineBuf[strcspn(lineBuf, "\n")] but SonarQube defines it as a possible BoF
         lineBuf[_idx] = '\0';
     }
