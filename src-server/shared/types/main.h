@@ -12,20 +12,19 @@ typedef unsigned long ulong_t;
 typedef unsigned short ushort_t;
 typedef unsigned int uint_t;
 typedef struct {
-    uchar_t     *b;
-    size_t      len;
-    
+    uchar_t *b;
+    size_t len;
+
 } bytes_t;
 
 typedef enum bool_t {
     TRUE = 1,
     FALSE = 0
-    
+
 } bool_t;
 
-// string_t.s still need to end with \0 terminator
 typedef struct {
-    char        *s;
-    size_t      len;
-    
+    char *s;
+    size_t len;
+
 } string_t;
