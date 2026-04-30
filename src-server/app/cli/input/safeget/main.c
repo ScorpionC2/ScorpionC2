@@ -81,12 +81,15 @@ void _parseHist(char ch, int *curHistL, int histFileLines, string_t histPath,
     if (Files.getLine(histPath, histLineProcessed, &l) != 0)
         return;
 
-    *outLine = malloc(l.len);
-    if (*outLine == NULL)
+    char *tmp = malloc(l.len);
+    if (tmp == NULL)
         return;
 
-    memcpy(*outLine, l.b, l.len);
+    memcpy(tmp, l.b, l.len);
     free(l.b);
+
+    free(*outLine);
+    *outLine = tmp;
 
     return;
 }
@@ -141,8 +144,6 @@ int _handleCharacter(char ch, int *curHistL, int histFileLines,
         case 0x0A: { // New line
             putchar(0x0A);
             return 1;
-
-            break;
         }
 
         case 0x1B: { // Start of arrow payload
