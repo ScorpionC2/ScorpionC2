@@ -116,6 +116,7 @@ int _handleArrows(int *curHistL, int histFileLines, string_t histPath,
 
     *bufLen = strlen(histL);
     if (_checkBuf(buf, bufLen, bufCap) == FALSE) {
+        free(histL);
         return -1;
     }
 
