@@ -64,8 +64,11 @@ int getLine(string_t path, int line, bytes_t *out) {
 
     int count = 1;
     char lineBuf[1024];
+    bool_t found = FALSE;
+
     while (fgets(lineBuf, sizeof(lineBuf), file) != NULL) {
         if (count == line) {
+            found = TRUE;
             break;
         }
 
@@ -74,10 +77,15 @@ int getLine(string_t path, int line, bytes_t *out) {
 
     fclose(file);
 
-    size_t _idx = strcspn(lineBuf, "\n");
-    if (_idx < sizeof(lineBuf)) {
-        // I shall use directly into lineBuf[strcspn(lineBuf, "\n")] but SonarQube defines it as a possible BoF
-        lineBuf[_idx] = '\0';
+    if (!found) {
+        out->len = 0;
+        out->b = NULL;
+        return -1;
+    }
+
+    char *p = memchr(lineBuf, '\n', sizeof(lineBuf));
+    if (p != NULL) {
+        *p = '\0';
     }
 
     out->len = strlen(lineBuf) + 1;
