@@ -15,7 +15,8 @@
 #include <termios.h>
 #include <unistd.h>
 
-static bool_t echoModeOn, canonicalModeOn = FALSE;
+static bool_t echoModeOn = FALSE;
+static bool_t canonicalModeOn = FALSE;
 
 void turnMode(uint_t mode) {
     struct termios cTerm;

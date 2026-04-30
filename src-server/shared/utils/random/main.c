@@ -63,7 +63,7 @@ unsigned long long getRDSEED() {
 
 void Randomseed(int seed) { seed_g = seed; }
 
-uint32_t Randomrseed(int seed) {
+uint32_t Randomrseed(uint32_t seed) {
     uint32_t pid = (uint32_t)getpid();
     uint32_t gid = (uint32_t)getgid();
     uint32_t timeNow = time(NULL);
@@ -73,7 +73,7 @@ uint32_t Randomrseed(int seed) {
     out ^= rotl(out, pid);
     out *= gid;
     out ^= rotr(out, timeNow);
-    out <<= rdseed & 0x1F;
+    out <<= seed & 0x1F;
     out ^= rotr(rdseed, (gid & 0x1F));
 
     seed_g = rdseed ^ out;

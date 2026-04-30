@@ -198,7 +198,7 @@ char *ucfgets(string_t histPath, int promptSize) {
     size_t bufLen = 0;
     char *buf = malloc(bufCap);
     if (buf == NULL) {
-        TOGGLE_TERMINAL_MODE;
+        TOGGLE_TERMINAL_MODE
         return NULL;
     }
 
@@ -216,7 +216,7 @@ char *ucfgets(string_t histPath, int promptSize) {
 
     while (TRUE) {
         if (_parseStdin(&ch) <= 0) {
-            TOGGLE_TERMINAL_MODE;
+            TOGGLE_TERMINAL_MODE
             free(buf);
             return NULL;
         }
@@ -243,6 +243,9 @@ char *ucfgets(string_t histPath, int promptSize) {
                 free(buf);
                 return NULL;
             }
+
+            default:
+                break;
         }
     }
 };

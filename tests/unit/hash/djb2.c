@@ -20,9 +20,9 @@ bool_t djb2_base(void) {
     bytes_t hashedSource = Hash.djb2(source);
     bytes_t hashedSource_1 = Hash.djb2(source);
 
-    bool_t out = TEST_EQUAL_BYTES(hashedSource, hashedSource_1);
+    bool_t out = TEST_EQUAL_BYTES(hashedSource, hashedSource_1)
 
-    free(hashedSource.b);
+        free(hashedSource.b);
     free(hashedSource_1.b);
 
     return out;
@@ -43,15 +43,15 @@ bool_t djb2_similarPayloadsColision(void) {
     bytes_t hashedSouce = Hash.djb2(source);
     bytes_t hashedModSource = Hash.djb2(modSource);
 
-    bool_t out = TEST_UNEQUAL_BYTES(hashedSouce, hashedModSource);
+    bool_t out = TEST_UNEQUAL_BYTES(hashedSouce, hashedModSource)
 
-    free(hashedSouce.b);
+        free(hashedSouce.b);
     free(hashedModSource.b);
 
     return out;
 }
 
-// For contributors: TODO: Write a hash test suite
+// For contributors: needed to Write a hash-specific test suite
 
 TESTS_UNIT_REGISTER(djb2_base, "DJB2 Hash");
 TESTS_UNIT_REGISTER(djb2_similarPayloadsColision,

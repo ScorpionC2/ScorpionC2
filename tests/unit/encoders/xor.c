@@ -24,9 +24,9 @@
                                                                                \
     *Xor->settings->hashScorpionSettings = old;                                \
                                                                                \
-    bool_t out = TEST_EQUAL_BYTES(source, decodedSource);                      \
+    bool_t out = TEST_EQUAL_BYTES(source, decodedSource)                       \
                                                                                \
-    free(encodedSource.b);                                                     \
+        free(encodedSource.b);                                                 \
     free(decodedSource.b);                                                     \
                                                                                \
     return out;
@@ -38,9 +38,9 @@ bool_t xor_base(void) {
     bytes_t encodedSource = Xor->encode(source);
     bytes_t decodedSource = Xor->decode(encodedSource);
 
-    bool_t out = TEST_EQUAL_BYTES(source, decodedSource);
+    bool_t out = TEST_EQUAL_BYTES(source, decodedSource)
 
-    free(encodedSource.b);
+        free(encodedSource.b);
     free(decodedSource.b);
 
     return out;
@@ -58,9 +58,9 @@ bool_t xor_changeNonceLen(void) {
 
     Xor->settings->num = oldNonceLen;
 
-    bool_t out = TEST_EQUAL_BYTES(source, decodedSource);
+    bool_t out = TEST_EQUAL_BYTES(source, decodedSource)
 
-    free(encodedSource.b);
+        free(encodedSource.b);
     free(decodedSource.b);
 
     return out;
@@ -78,9 +78,9 @@ bool_t xor_changeHashAlgorithm(void) {
 
     Xor->settings->string = oldHashAlgorithm;
 
-    bool_t out = TEST_EQUAL_BYTES(source, decodedSource);
+    bool_t out = TEST_EQUAL_BYTES(source, decodedSource)
 
-    free(encodedSource.b);
+        free(encodedSource.b);
     free(decodedSource.b);
 
     return out;
@@ -93,9 +93,9 @@ bool_t xor_ensureNonceRandomness(void) {
     bytes_t encodedSource = Xor->encode(source);
     bytes_t encodedSource_2 = Xor->encode(source);
 
-    bool_t out = TEST_UNEQUAL_BYTES(source, encodedSource_2);
+    bool_t out = TEST_UNEQUAL_BYTES(source, encodedSource_2)
 
-    free(encodedSource.b);
+        free(encodedSource.b);
     free(encodedSource_2.b);
 
     return out;
@@ -113,9 +113,9 @@ bool_t xor_changeTrashSize(void) {
 
     Xor->settings->shortNum = oldTrashSize;
 
-    bool_t out = TEST_EQUAL_BYTES(source, decodedSource);
+    bool_t out = TEST_EQUAL_BYTES(source, decodedSource)
 
-    free(encodedSource.b);
+        free(encodedSource.b);
     free(decodedSource.b);
 
     return out;
