@@ -143,42 +143,48 @@ void bytesf(const char *fmt, ...) {
             continue;
         }
 
-        if (*(p + 1) == 'b') {
-            bytes_t *bytes = va_arg(args, bytes_t *);
-            if (*(p + 2) == 'h') {
-                printf("[%#x", bytes->b[0]);
+        switch (*(p + 1)) {
+            case 'b': {
+                bytes_t *bytes = va_arg(args, bytes_t *);
+
+                const char _fmtBH[] = "%#x";
+                const char _fmtB[] = "%x";
+
+                const char *fmt = (char *)_fmtB;
+                if (*(p + 2) == 'h')
+                    fmt = (char *)_fmtBH;
+
+                printf(strcat("[", fmt), bytes->b[0]);
                 for (int i = 1; i < bytes->len; i++) {
-                    printf(", %#x", bytes->b[i]);
+                    printf(", %x", bytes->b[i]);
                 }
 
                 printf("]");
                 fflush(stdout);
-                p += 2;
+                p++;
+
                 continue;
             }
 
-            printf("[%x", bytes->b[0]);
-            for (int i = 1; i < bytes->len; i++) {
-                printf(", %x", bytes->b[i]);
+            case 'p': {
+                void *ptr = va_arg(args, void *);
+                printf("%p", ptr);
+                fflush(stdout);
+                p++;
+
+                continue;
             }
 
-            printf("]");
-            fflush(stdout);
-            p++;
-            continue;
+            case '%': {
+                printf("%%");
+                fflush(stdout);
+                p++;
 
-        } else if (*(p + 1) == 'p') {
-            void *ptr = va_arg(args, void *);
-            printf("%p", ptr);
-            fflush(stdout);
-            p++;
-            continue;
+                continue;
+            }
 
-        } else if (*(p + 1) == '%') {
-            printf("%%");
-            fflush(stdout);
-            p++;
-            continue;
+            default:
+                break;
         }
     }
 }
