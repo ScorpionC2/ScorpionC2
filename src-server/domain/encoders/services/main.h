@@ -10,14 +10,14 @@
 /*
  * This file must contain all encoders as pointers to their implementations.
  * Example:
- *      // main.h
+ *      main.h:
  *      
  *      extern EncoderInstance *Xor;
  * 
  *      
- *      // main.c
+ *      main.c:
  *      
- *      #include "xor/main.h" // this main.h declares extern XorInstance.
+ *      #include "xor/main.h": this main.h declares extern XorInstance.
  *      
  *      const EncoderInstance *Xor = &XorInstance;
  *      
