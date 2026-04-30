@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void registerUnitTest(struct UnitTest *test) {
+void registerUnitTest(const struct UnitTest *test) {
     // Prevent writing to null ptr
     if (unitTests == NULL) {
         unitTests =
@@ -47,7 +47,7 @@ void registerUnitTest(struct UnitTest *test) {
     return;
 };
 
-void runUnitTests(uint32_t *ac) {
+void runUnitTests(const uint32_t *ac) {
     if (unitTestsSize <= 0) {
         Logger.errorf(RESET FG_WHITE_ITALIC
                       "Can't run a invalid quantity of unit tests:" RESET

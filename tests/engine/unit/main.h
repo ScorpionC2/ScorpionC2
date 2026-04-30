@@ -18,8 +18,8 @@ extern size_t unitTestsIndex;
 extern size_t unitTestsSize;
 extern struct UnitTest *unitTests;
 
-void registerUnitTest(struct UnitTest *test);
-void runUnitTests(uint32_t *ac);
+void registerUnitTest(const struct UnitTest *test);
+void runUnitTests(const uint32_t *ac);
 
 #define TESTS_UNIT_REGISTER(f, n)                                              \
     static void __reg_unit_test_##f(void) __attribute__((constructor));        \
