@@ -60,7 +60,7 @@ typedef struct {
      *      0: Everything right
      *      1: Can't open the file
      */
-    int (*appendFile)(string_t path, bytes_t *src);
+    int (*appendFile)(string_t path, const bytes_t *src);
 
     /*
      * Return rules:

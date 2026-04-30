@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-int appendFile(string_t path, bytes_t *src) {
+int appendFile(string_t path, const bytes_t *src) {
     if (!path.s || !path.len)
         return 1;
     FILE *file = fopen(path.s, "ab+");
@@ -25,7 +25,6 @@ int appendFile(string_t path, bytes_t *src) {
 
 int countLines(string_t path) {
     int count = 0;
-    int c = 0;
     if (path.s == NULL || path.len <= 0) {
         return -1;
     }
@@ -35,7 +34,7 @@ int countLines(string_t path) {
         return -1;
     }
 
-    for (c = fgetc(file); c != EOF; c = fgetc(file)) {
+    for (int c = fgetc(file); c != EOF; c = fgetc(file)) {
         if (c == '\n') {
             count++;
         }
