@@ -123,7 +123,7 @@ int _handleArrows(int *curHistL, int histFileLines, string_t histPath,
     return 0;
 };
 
-inline void _refreshStdout(int promptSize, char *buf) {
+void _refreshStdout(int promptSize, char *buf) {
     printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
     fflush(stdout);
 }
