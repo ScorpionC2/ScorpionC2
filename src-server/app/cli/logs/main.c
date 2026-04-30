@@ -56,7 +56,7 @@ void warnf(const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
-    };
+    }
 
     va_list arg;
     va_start(arg, fmt);
@@ -71,7 +71,7 @@ void infof(const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
-    };
+    }
 
     va_list arg;
     va_start(arg, fmt);
@@ -86,7 +86,7 @@ void errorf(const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
-    };
+    }
 
     va_list arg;
     va_start(arg, fmt);
@@ -102,7 +102,7 @@ void debugf(const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
-    };
+    }
 
     va_list arg;
     va_start(arg, fmt);
@@ -187,7 +187,7 @@ void fwarnf(FILE *file, const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
-    };
+    }
 
     va_list arg;
     va_start(arg, fmt);
@@ -202,7 +202,7 @@ void finfof(FILE *file, const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
-    };
+    }
 
     va_list arg;
     va_start(arg, fmt);
@@ -217,7 +217,7 @@ void ferrorf(FILE *file, const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
-    };
+    }
 
     va_list arg;
     va_start(arg, fmt);
@@ -235,7 +235,7 @@ void fdebugf(FILE *file, const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
-    };
+    }
 
     va_list arg;
     va_start(arg, fmt);
