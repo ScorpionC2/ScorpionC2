@@ -154,7 +154,8 @@ void bytesf(const char *fmt, ...) {
                 if (*(p + 2) == 'h')
                     fmt = (char *)_fmtBH;
 
-                printf(strcat("[", fmt), bytes->b[0]);
+                char prefix[32] = "[";
+                printf(strcat(prefix, fmt), bytes->b[0]);
                 for (int i = 1; i < bytes->len; i++) {
                     printf(", %x", bytes->b[i]);
                 }
