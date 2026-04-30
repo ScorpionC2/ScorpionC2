@@ -150,12 +150,12 @@ void bytesf(const char *fmt, ...) {
                 const char _fmtBH[] = "%#x";
                 const char _fmtB[] = "%x";
 
-                const char *fmt = (char *)_fmtB;
+                const char *printfFmt = (const char *)_fmtB;
                 if (*(p + 2) == 'h')
-                    fmt = (char *)_fmtBH;
+                    printfFmt = (const char *)_fmtBH;
 
-                char prefix[32] = "[";
-                printf(strcat(prefix, fmt), bytes->b[0]);
+                printf("[");
+                printf(printfFmt, bytes->b[0]);
                 for (int i = 1; i < bytes->len; i++) {
                     printf(", %x", bytes->b[i]);
                 }
