@@ -145,7 +145,7 @@ void bytesf(const char *fmt, ...) {
 
         switch (*(p + 1)) {
             case 'b': {
-                bytes_t *bytes = va_arg(args, bytes_t *);
+                const bytes_t *bytes = va_arg(args, bytes_t *);
 
                 const char _fmtBH[] = "%#x";
                 const char _fmtB[] = "%x";
