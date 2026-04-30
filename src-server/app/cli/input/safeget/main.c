@@ -15,21 +15,191 @@
 #include "src-server/app/cli/logs/main.h"
 #include "src-server/infra/fs/main.h"
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#define TOGGLE_TERMINAL_MODE                                                   \
+    TerminalModeToggler.turnMode(ECHO_MODE | CANONICAL_MODE);
+
+ssize_t _parseStdin(char *ch) { return read(STDIN_FILENO, ch, 1); }
+
+bool_t _checkBuf(char **buf, size_t *bufLen, size_t *bufCap) {
+    if ((*bufLen + 1) >= *bufCap) {
+        while ((*bufLen + 1) >= *bufCap) {
+            if (*bufCap > SIZE_MAX / 2)
+                return FALSE;
+
+            *bufCap <<= 1; // Times two optimized
+        }
+
+        // Here i can directly assign the new reallocated buffer to buf, but if i do that
+        // and the realloc fails, the caller won't know if the buf should be freed or not
+        char *newBuf = realloc(*buf, *bufCap);
+        if (newBuf == NULL) {
+            return FALSE;
+        }
+
+        *buf = newBuf;
+    }
+
+    return TRUE;
+}
+
+/*
+ * This function should only be called after getting the pressed arrow
+ */
+void _parseHist(char ch, int *curHistL, int histFileLines, string_t histPath,
+                char **outLine) {
+    if (histFileLines == 0)
+        return;
+
+    int histLineProcessed = 0;
+    switch (ch) {
+        case 0x41: { // Arrow UP, must get the previous line
+            histLineProcessed =
+                ((*curHistL)-- - 1 + histFileLines) % histFileLines;
+
+            break;
+        }
+
+        case 0x42: { // Arrow Down
+            histLineProcessed =
+                ((*curHistL)++ + 1 + histFileLines) % histFileLines;
+
+            break;
+        }
+
+        default: {
+            return;
+        }
+    }
+
+    bytes_t l;
+    if (Files.getLine(histPath, histLineProcessed, &l) != 0)
+        return;
+
+    char *tmp = malloc(l.len);
+    if (tmp == NULL)
+        return;
+
+    memcpy(tmp, l.b, l.len);
+    free(l.b);
+
+    free(*outLine);
+    *outLine = tmp;
+
+    return;
+}
+
+/*
+ * This function should only be called if the two previous character is 0x1B and 0x5B
+ *
+ * Return values:
+ *   0: If can continue
+ *  -1: Error
+ */
+int _handleArrows(int *curHistL, int histFileLines, string_t histPath,
+                  size_t *bufLen, char **buf, size_t *bufCap) {
+    char ch = 0x00;
+    if (_parseStdin(&ch) <= 0) {
+        return -1;
+    }
+
+    char *histL = NULL;
+    _parseHist(ch, curHistL, histFileLines, histPath, &histL);
+
+    if (histL == NULL)
+        return 0;
+
+    *bufLen = strlen(histL);
+    if (_checkBuf(buf, bufLen, bufCap) == FALSE) {
+        free(histL);
+        return -1;
+    }
+
+    memcpy(*buf, histL, *bufLen);
+    (*buf)[*bufLen] = '\0';
+    free(histL);
+
+    return 0;
+};
+
+void _refreshStdout(int promptSize, char *buf) {
+    printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
+    fflush(stdout);
+}
+
+/*
+ * Return values:
+ *   0: If can continue
+ *   1: End of buffer (like newLine)
+ *  -1: Error (free buf, toggle terminal mode and return NULL)
+ */
+int _handleCharacter(char ch, int *curHistL, int histFileLines,
+                     string_t histPath, size_t *bufLen, size_t *bufCap,
+                     char **buf, int promptSize) {
+    switch (ch) {
+        case 0x0A: { // New line
+            putchar(0x0A);
+            return 1;
+        }
+
+        case 0x1B: { // Start of arrow payload
+            char ch2 = 0x00;
+            if (_parseStdin(&ch2) <= 0)
+                return -1;
+
+            if (ch2 == 0x5B) {
+                if (_handleArrows(curHistL, histFileLines, histPath, bufLen,
+                                  buf, bufCap) < 0)
+                    return -1;
+
+                _refreshStdout(promptSize, *buf);
+                return 0;
+            }
+
+            break;
+        }
+
+        case 0x7F:
+        case 0x08: {
+            if (*bufLen > 0) {
+                (*bufLen)--;
+                (*buf)[*bufLen] = '\0';
+            }
+
+            _refreshStdout(promptSize, *buf);
+
+            break;
+        }
+
+        default: {
+            (*buf)[(*bufLen)++] = ch;
+            (*buf)[*bufLen] = '\0';
+
+            putc(ch, stdout);
+            fflush(stdout);
+
+            break;
+        }
+    }
+
+    return 0;
+};
+
 // ucfgets - Ultra-incredible-handmade galactic empire engineer's Custom FGETS
 char *ucfgets(string_t histPath, int promptSize) {
-    TerminalModeToggler.turnCanonicalMode(FALSE);
-    TerminalModeToggler.turnEchoMode(FALSE);
+    TOGGLE_TERMINAL_MODE
 
     size_t bufCap = 65536;
     size_t bufLen = 0;
     char *buf = malloc(bufCap);
     if (buf == NULL) {
-        goto cleanup_error;
+        TOGGLE_TERMINAL_MODE;
+        return NULL;
     }
 
     char ch = '\0';
@@ -37,170 +207,44 @@ char *ucfgets(string_t histPath, int promptSize) {
     int currentHistLine;
     int histFileLines = Files.countLines(histPath);
     if (histFileLines < 0) {
-        goto cleanup_error;
+        free(buf);
+        TOGGLE_TERMINAL_MODE
+        return NULL;
     }
 
     currentHistLine = histFileLines;
 
     while (TRUE) {
-        ssize_t r = read(STDIN_FILENO, &ch, 1);
-        if (r <= 0) {
-            goto cleanup_error;
+        if (_parseStdin(&ch) <= 0) {
+            TOGGLE_TERMINAL_MODE;
+            free(buf);
+            return NULL;
         }
 
-        if (ch == 0xa) {
-            putchar(0xa);
-            goto cleanup;
+        if (_checkBuf(&buf, &bufLen, &bufCap) == FALSE) {
+            free(buf);
+            TOGGLE_TERMINAL_MODE
+            return NULL;
         }
 
-        if ((bufLen + 1) >= bufCap) {
-            while ((bufLen + 1) >= bufCap) {
-                bufCap <<= 1;
+        switch (_handleCharacter(ch, &currentHistLine, histFileLines, histPath,
+                                 &bufLen, &bufCap, &buf, promptSize)) {
+            case 0: {
+                continue;
             }
 
-            char *newBuf = realloc(buf, bufCap);
-            if (newBuf == NULL) {
+            case 1: {
+                TOGGLE_TERMINAL_MODE
+                return buf;
+            }
+
+            case -1: {
+                TOGGLE_TERMINAL_MODE
                 free(buf);
-                goto cleanup_error;
+                return NULL;
             }
-
-            buf = newBuf;
-        }
-
-        if (ch == 0x1b) {
-            char ch2 = '\0';
-            ssize_t r2 = read(STDIN_FILENO, &ch2, 1);
-            if (r2 <= 0) {
-                goto cleanup_error;
-            }
-
-            if (ch2 == 0x5b) {
-                char ch3 = '\0';
-                ssize_t r3 = read(STDIN_FILENO, &ch3, 1);
-                if (r3 <= 0) {
-                    goto cleanup_error;
-                }
-
-                bytes_t l;
-                char *histLine = NULL;
-                switch (ch3) {
-                    case 0x41: // Arrow up
-                        if (histFileLines == 0)
-                            continue;
-                        if (Files.getLine(
-                                histPath,
-                                (currentHistLine - 1 + histFileLines) %
-                                    histFileLines,
-                                &l) != 0) {
-                            Logger.warnln("Can't parse hist line");
-                            continue;
-                        }
-
-                        histLine = malloc(l.len);
-                        if (histLine == NULL) {
-                            Logger.warnln("Can't malloc");
-                            continue;
-                        }
-
-                        memcpy(histLine, l.b, l.len);
-                        histLine[strcspn(histLine, "\n")] = '\0';
-                        free(l.b);
-
-                        bufLen = strlen(histLine);
-                        if (bufLen + 1 >= bufCap) {
-                            while (bufLen + 1 >= bufCap) {
-                                bufCap <<= 1;
-                            }
-                            buf = realloc(buf, bufCap);
-                        }
-
-                        memcpy(buf, histLine, bufLen);
-                        buf[bufLen] = '\0';
-                        free(histLine);
-
-                        printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
-                        fflush(stdout);
-                        currentHistLine--;
-
-                        continue;
-
-                    case 0x42:
-                        if (histFileLines == 0)
-                            continue;
-
-                        if (Files.getLine(histPath,
-                                          (currentHistLine + 1) % histFileLines,
-                                          &l) != 0) {
-                            Logger.warnln("Can't parse hist line");
-                            continue;
-                        }
-
-                        histLine = malloc(l.len);
-                        if (histLine == NULL) {
-                            Logger.warnln("Can't malloc");
-                            continue;
-                        }
-
-                        memcpy(histLine, l.b, l.len);
-                        histLine[strcspn(histLine, "\n")] = '\0';
-                        free(l.b);
-
-                        bufLen = strlen(histLine);
-                        if (bufLen + 1 >= bufCap) {
-                            while (bufLen + 1 >= bufCap) {
-                                bufCap <<= 1;
-                            }
-                            buf = realloc(buf, bufCap);
-                        }
-
-                        memcpy(buf, histLine, bufLen);
-                        buf[bufLen] = '\0';
-                        free(histLine);
-
-                        printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
-                        fflush(stdout);
-
-                        currentHistLine++;
-
-                        continue;
-
-                    default:
-                        continue;
-                }
-            }
-        } else if (ch == 0x7f || ch == 0x08) {
-            if (bufLen > 0) {
-                bufLen--;
-                buf[bufLen] = '\0';
-            }
-
-            printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
-            fflush(stdout);
-            continue;
-
-        } else {
-            buf[bufLen++] = ch;
-            buf[bufLen] = '\0';
-            putc(ch, stdout);
-            fflush(stdout);
         }
     }
-
-    buf[bufLen] = '\0';
-
-    printf("\x1b[1G\x1b[%dC%s\x1b[K", promptSize, buf);
-    fflush(stdout);
-
-cleanup:
-    TerminalModeToggler.turnCanonicalMode(TRUE);
-    TerminalModeToggler.turnEchoMode(TRUE);
-    return buf;
-
-cleanup_error:
-    TerminalModeToggler.turnCanonicalMode(TRUE);
-    TerminalModeToggler.turnEchoMode(TRUE);
-    free(buf);
-    return NULL;
 };
 
 string_t ucread(string_t histPath, int promptSize) {

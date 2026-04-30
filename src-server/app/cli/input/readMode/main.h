@@ -7,10 +7,12 @@
 
 #include "src-server/shared/types/main.h"
 
+#define ECHO_MODE (1 << 0)
+#define CANONICAL_MODE (1 << 1)
+
 typedef struct {
-    void (*turnEchoMode)(bool_t _em);
-    void (*turnCanonicalMode)(bool_t _cm);
+    void (*turnMode)(uint_t mode);
 
-} TerminalModeTogglerInstance;
+} TerminalModeChangerInstance;
 
-extern TerminalModeTogglerInstance TerminalModeToggler;
+extern TerminalModeChangerInstance TerminalModeToggler;

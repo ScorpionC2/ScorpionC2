@@ -8,31 +8,30 @@
 //  https://www.reddit.com/r/C_Programming/comments/1ipbyp4/canonical_vs_non_canonical_mode_of_inputs/
 //  https://stackoverflow.com/questions/59922972/how-to-stop-echo-in-terminal-using-c
 //  https://pubs.opengroup.org/onlinepubs/009696799/functions/tcsetattr.html
-// 
+//
 
-#include "main.h"
+#include "src-server/shared/types/main.h"
+#include "src-server/app/cli/input/readMode/main.h"
 #include <termios.h>
+#include <unistd.h>
 
-#define stdin 1
+static bool_t echoModeOn, canonicalModeOn = FALSE;
 
-void turnEchoMode(bool_t _em) {
+void turnMode(uint_t mode) {
     struct termios cTerm;
-    tcgetattr(stdin, &cTerm);
-    cTerm.c_lflag &= _em ? ECHO : ~ECHO;
-    tcsetattr(stdin, TCSAFLUSH, &cTerm);
-    
+    tcgetattr(STDIN_FILENO, &cTerm);
+
+    if (mode & ECHO_MODE) {
+        echoModeOn = !echoModeOn;
+        cTerm.c_lflag ^= ECHO;
+    }
+
+    if (mode & CANONICAL_MODE) {
+        canonicalModeOn = !canonicalModeOn;
+        cTerm.c_lflag ^= ICANON;
+    }
+
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &cTerm);
 };
 
-void turnCanonicalMode(bool_t _cm) {
-    struct termios cTerm;
-    tcgetattr(stdin, &cTerm);
-    cTerm.c_lflag &= _cm ? ICANON : ~ICANON;
-    tcsetattr(stdin, TCSAFLUSH, &cTerm);
-    
-}
-
-TerminalModeTogglerInstance TerminalModeToggler = {
-    .turnCanonicalMode = turnCanonicalMode,
-    .turnEchoMode = turnEchoMode
-    
-};
+TerminalModeChangerInstance TerminalModeToggler = {.turnMode = turnMode};
