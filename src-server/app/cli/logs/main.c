@@ -173,26 +173,35 @@ logger_fprintf(FILE *file, const char *fmt, ...) {
     va_end(arg);
 }
 
-const LoggerInstance Logger = {.debug = debug,
-                               .warn = warn,
-                               .info = info,
-                               .error = error,
-                               .print = logger_print,
-                               .debugln = debugln,
-                               .warnln = warnln,
-                               .infoln = infoln,
-                               .errorln = errorln,
-                               .println = logger_println,
-                               .debugf = f_debugf,
-                               .warnf = f_warnf,
-                               .infof = f_infof,
-                               .errorf = f_errorf,
-                               .printf = logger_printf,
-                               .bytesf = bytesf,
-                               .fdebugf = f_fdebugf,
-                               .fwarnf = f_fwarnf,
-                               .finfof = f_finfof,
-                               .ferrorf = f_ferrorf,
-                               .fprintf = logger_fprintf
-
+const LoggerInstance Logger = {
+    .plain =
+        {
+            .debug = debug,
+            .error = error,
+            .info = info,
+            .print = logger_print,
+            .warn = warn,
+        },
+    .newLine =
+        {
+            .debugln = debugln,
+            .errorln = errorln,
+            .infoln = infoln,
+            .println = logger_println,
+            .warnln = warnln,
+        },
+    .fmt =
+        {
+            .bytesf = bytesf,
+            .debugf = f_debugf,
+            .errorf = f_errorf,
+            .infof = f_infof,
+            .printf = logger_printf,
+            .warnf = f_warnf,
+        },
+    .file = {.fdebugf = f_fdebugf,
+             .ferrorf = f_ferrorf,
+             .finfof = f_finfof,
+             .fprintf = logger_fprintf,
+             .fwarnf = f_fwarnf},
 };
