@@ -42,7 +42,7 @@ rgb_t parseRgb(const char *color) {
     return out;
 };
 
-void draw(int h, int w, char color1[15], char color2[15]) {
+void draw(int h, int w, const char color1[15], const char color2[15]) {
     rgb_t ccolor1 = parseRgb(color1);
     rgb_t ccolor2 = parseRgb(color2);
 
