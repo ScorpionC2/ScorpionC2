@@ -35,14 +35,14 @@ typedef struct {
 
 } rgb_td;
 
-rgb_t parseRgb(char *color) {
+rgb_t parseRgb(const char *color) {
     rgb_t out;
     sscanf(color, "%d;%d;%d", &out.R, &out.G, &out.B);
 
     return out;
 };
 
-void draw(int h, int w, char color1[15], char color2[15]) {
+void draw(int h, int w, const char color1[15], const char color2[15]) {
     rgb_t ccolor1 = parseRgb(color1);
     rgb_t ccolor2 = parseRgb(color2);
 
@@ -123,6 +123,4 @@ void draw(int h, int w, char color1[15], char color2[15]) {
            color.G, color.B);
 };
 
-const BoxxerInstance Box = {.draw = draw
-
-};
+const BoxxerInstance Box = {.draw = draw};
