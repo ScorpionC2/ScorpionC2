@@ -102,8 +102,10 @@ bool_t xor_ensureNonceRandomness(void) {
         return FALSE;
 
     nonceB.b = malloc(nonceB.len);
-    if (nonceB.b == NULL)
+    if (nonceB.b == NULL) {
+        free(nonceA.b);
         return FALSE;
+    }
 
     memcpy(nonceA.b, encodedSource.b, nonceA.len);
     memcpy(nonceB.b, encodedSource_2.b, nonceB.len);
