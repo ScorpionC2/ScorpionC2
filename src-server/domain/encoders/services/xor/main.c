@@ -3,13 +3,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-/*
- * TODO: List
- *  - Add 64 trash bytes to formed payload
- *  - Change the nonce to xored nonce:
- *      New payload: [4 bytes to unxor nonce][xored nonce][payload][trash]
- */
-
 #include "main.h"
 #include "src-server/infra/hash/main.h"
 #include "src-server/shared/utils/random/main.h"
@@ -104,7 +97,7 @@ bytes_t XorEncode(bytes_t src) {
 
     // Xor using src and hash
     bytes_t xorOut = xor(src, hash);
-    bytes_t out = {.len = XorSettings.num + src.len + XorSettings.shortNum};
+    bytes_t out = {.len = XorSettings.num + src.len + XorSettings.shortNum + 4};
 
     // Init trash and copy
     uchar_t trashRaw[XorSettings.shortNum];
@@ -116,16 +109,32 @@ bytes_t XorEncode(bytes_t src) {
     trash.b = malloc(trash.len);
     memcpy(trash.b, trashRaw, trash.len);
 
+    // Init and copy nonceKey
+    uchar_t nonceKeyRaw[4];
+    for (int i = 0; i < sizeof(nonceKeyRaw); i++) {
+        nonceKeyRaw[i] = Random.randr(0, 255);
+    }
+
+    bytes_t nonceKey = {.len = sizeof(nonceKeyRaw)};
+    nonceKey.b = malloc(nonceKey.len);
+    memcpy(nonceKey.b, nonceKeyRaw, nonceKey.len);
+
+    // Xor nonce
+    bytes_t nonceXor = xor(nonce, nonceKey);
+
     // Initialize out.b and copy everything
     out.b = malloc(out.len);
-    memcpy(out.b, nonce.b, nonce.len);
-    memcpy(out.b + nonce.len, xorOut.b, xorOut.len);
-    memcpy(out.b + nonce.len + xorOut.len, trash.b, trash.len);
+    memcpy(out.b, nonceKey.b, nonceKey.len);
+    memcpy(out.b + nonceKey.len, nonceXor.b, nonceXor.len);
+    memcpy(out.b + nonceKey.len + nonce.len, xorOut.b, xorOut.len);
+    memcpy(out.b + nonceKey.len + nonce.len + xorOut.len, trash.b, trash.len);
 
     free(hash.b);
     free(nonce.b);
     free(xorOut.b);
     free(trash.b);
+    free(nonceKey.b);
+    free(nonceXor.b);
 
     return out;
 };
@@ -139,17 +148,26 @@ bytes_t XorDecode(bytes_t src) {
     bytes_t nonce;
     nonce.len = XorSettings.num;
     nonce.b = malloc(XorSettings.num);
-    memcpy(nonce.b, srcCopy.b, XorSettings.num);
+    memcpy(nonce.b, srcCopy.b + 4, XorSettings.num);
+
+    // Unxor nonce
+    bytes_t nonceKey;
+    nonceKey.len = 4;
+    nonceKey.b = malloc(nonceKey.len);
+    memcpy(nonceKey.b, srcCopy.b, nonceKey.len);
+
+    bytes_t nonceUnxored = xor(nonce, nonceKey);
 
     // Init unxored src and copy the src without nonce and trash
     bytes_t srcWithoutXor;
-    srcWithoutXor.len = srcCopy.len - XorSettings.num - XorSettings.shortNum;
+    srcWithoutXor.len =
+        srcCopy.len - XorSettings.num - XorSettings.shortNum - 4;
     srcWithoutXor.b = malloc(srcWithoutXor.len);
-    memcpy(srcWithoutXor.b, srcCopy.b + XorSettings.num, srcWithoutXor.len);
+    memcpy(srcWithoutXor.b, srcCopy.b + XorSettings.num + 4, srcWithoutXor.len);
 
     // Get hash and hash the nonce
     bytes_t (*hashFunction)(bytes_t src) = getHashFunction();
-    bytes_t hash = hashFunction(nonce);
+    bytes_t hash = hashFunction(nonceUnxored);
 
     // Xor the src without nonce (i need to change this shit name btw); Init and copy the result to out
     bytes_t unxor = xor(srcWithoutXor, hash);
@@ -162,6 +180,8 @@ bytes_t XorDecode(bytes_t src) {
     free(srcWithoutXor.b);
     free(hash.b);
     free(unxor.b);
+    free(nonceKey.b);
+    free(nonceUnxored.b);
 
     return out;
 };
