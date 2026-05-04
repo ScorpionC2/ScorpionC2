@@ -52,7 +52,7 @@ void debugln(const char *self) {
 
 void logger_println(const char *self) { printf("%s\n", self); }
 
-void warnf(const char *fmt, ...) {
+__attribute__((format(printf, 1, 2))) void warnf(const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
@@ -67,7 +67,7 @@ void warnf(const char *fmt, ...) {
     free(buf);
 }
 
-void infof(const char *fmt, ...) {
+__attribute__((format(printf, 1, 2))) void infof(const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
@@ -82,7 +82,7 @@ void infof(const char *fmt, ...) {
     free(buf);
 }
 
-void errorf(const char *fmt, ...) {
+__attribute__((format(printf, 1, 2))) void errorf(const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
@@ -98,7 +98,7 @@ void errorf(const char *fmt, ...) {
     free(buf);
 }
 
-void debugf(const char *fmt, ...) {
+__attribute__((format(printf, 1, 2))) void debugf(const char *fmt, ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
@@ -113,7 +113,7 @@ void debugf(const char *fmt, ...) {
     free(buf);
 }
 
-void logger_printf(const char *fmt, ...) {
+__attribute__((format(printf, 1, 2))) void logger_printf(const char *fmt, ...) {
     va_list arg;
     va_start(arg, fmt);
     vprintf(fmt, arg);
@@ -190,7 +190,8 @@ void bytesf(const char *fmt, ...) {
     }
 }
 
-void fwarnf(FILE *file, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void fwarnf(FILE *file, const char *fmt,
+                                                  ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
@@ -205,7 +206,8 @@ void fwarnf(FILE *file, const char *fmt, ...) {
     free(buf);
 }
 
-void finfof(FILE *file, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void finfof(FILE *file, const char *fmt,
+                                                  ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
@@ -220,7 +222,8 @@ void finfof(FILE *file, const char *fmt, ...) {
     free(buf);
 }
 
-void ferrorf(FILE *file, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void ferrorf(FILE *file, const char *fmt,
+                                                   ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
@@ -238,7 +241,8 @@ void ferrorf(FILE *file, const char *fmt, ...) {
     free(buf);
 }
 
-void fdebugf(FILE *file, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void fdebugf(FILE *file, const char *fmt,
+                                                   ...) {
     char *buf = malloc(strlen(fmt) * 4);
     if (buf == NULL) {
         return;
@@ -253,7 +257,8 @@ void fdebugf(FILE *file, const char *fmt, ...) {
     free(buf);
 }
 
-void logger_fprintf(FILE *file, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void
+logger_fprintf(FILE *file, const char *fmt, ...) {
     va_list arg;
     va_start(arg, fmt);
     vfprintf(file, fmt, arg);
