@@ -7,6 +7,7 @@
 #include "src-server/infra/hash/main.h"
 #include "src-server/shared/utils/random/main.h"
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -47,7 +48,7 @@ bytes_t xor(bytes_t src, bytes_t key) {
 
     // Initialize out and iterate over it
     uchar_t out[src.len];
-    for (int i = 0; i < src.len; i++) {
+    for (size_t i = 0; i < src.len; i++) {
         // Out[i] = src[i] xored to key[i + 1] (length fallback)
         out[i] = srcCopy[i] ^ keyCopy[(i + 1) % key.len];
 
@@ -92,7 +93,7 @@ bytes_t XorEncode(bytes_t src) {
     memcpy(nonce.b, nonceRaw, (size_t)XorSettings.num);
 
     // Get hash function and create a hash based in nonce
-    bytes_t (*hashFunction)(bytes_t src) = getHashFunction();
+    bytes_t (*hashFunction)(bytes_t source) = getHashFunction();
     bytes_t hash = hashFunction(nonce);
 
     // Xor using src and hash
@@ -111,7 +112,7 @@ bytes_t XorEncode(bytes_t src) {
 
     // Init and copy nonceKey
     uchar_t nonceKeyRaw[4];
-    for (int i = 0; i < sizeof(nonceKeyRaw); i++) {
+    for (size_t i = 0; i < sizeof(nonceKeyRaw); i++) {
         nonceKeyRaw[i] = Random.randr(0, 255);
     }
 
@@ -166,7 +167,7 @@ bytes_t XorDecode(bytes_t src) {
     memcpy(srcWithoutXor.b, srcCopy.b + XorSettings.num + 4, srcWithoutXor.len);
 
     // Get hash and hash the nonce
-    bytes_t (*hashFunction)(bytes_t src) = getHashFunction();
+    bytes_t (*hashFunction)(bytes_t source) = getHashFunction();
     bytes_t hash = hashFunction(nonceUnxored);
 
     // Xor the src without nonce (i need to change this shit name btw); Init and copy the result to out

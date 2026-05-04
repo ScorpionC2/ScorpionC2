@@ -112,7 +112,7 @@ void bytesf(const char *fmt, ...) {
 
                 printf("[");
                 printf(printfFmt, bytes->b[0]);
-                for (int i = 1; i < bytes->len; i++) {
+                for (size_t i = 1; i < bytes->len; i++) {
                     printf(", %x", bytes->b[i]);
                 }
 

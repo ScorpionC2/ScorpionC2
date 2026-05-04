@@ -186,7 +186,7 @@ bytes_t HashScorpionX(bytes_t src) {
     }
 
     // Second block of iteration, this will modify the state[i] and state[i + 1] based on currentByte and src.b[i + 1]
-    for (int i = 0; i < src.len; i++) {
+    for (size_t i = 0; i < src.len; i++) {
         // Here we define the currentByte
         uint32_t currentByte = src.b[i];
 
@@ -203,7 +203,7 @@ bytes_t HashScorpionX(bytes_t src) {
         mw2 ^= mw0 * (src.b[i] & 0xFF);
         mw3 ^= mw1 ^ 0xC3;
 
-        state[i & wordLen - 1] = mw0 | (mw1 << 8) | (mw2 << 16) | (mw3 << 24);
+        state[i & (wordLen - 1)] = mw0 | (mw1 << 8) | (mw2 << 16) | (mw3 << 24);
 
         // Now we define [v]alue, that must be based in state and must interact with currentByte
         uint32_t v = state[i % wordLen] ^
@@ -316,8 +316,8 @@ bytes_t HashScorpionX(bytes_t src) {
         }
 
         // This sub-block will ensure that high bits influence low bits
-        for (int i = 0; i < wordLen; i++) {
-            state[i] ^= state[(i + 1) & (wordLen - 1)] >> 1;
+        for (int ii = 0; ii < wordLen; ii++) {
+            state[ii] ^= state[(ii + 1) & (wordLen - 1)] >> 1;
         }
     }
 
@@ -532,8 +532,8 @@ bytes_t HashScorpionX(bytes_t src) {
                        << ((mw1 - 1) & 8);
 
                 uint8_t mw1x =
-                    (((mw1 * 200202) & sizeof(uint8_t)) ^ mw1 - 2)
-                    << rotl8(mw1, ((mw1 ^ SH(0x9998, seed, shiftSeed))) & 8);
+                    (((mw1 * 200202) & sizeof(uint8_t)) ^ (mw1 - 2))
+                    << rotl8(mw1, (mw1 ^ SH(0x9998, seed, shiftSeed)) & 8);
                 for (int it = 0; it < 15; it++) {
                     uint8_t oldX = mw1x;
                     uint8_t x = (mw1x * rotl8(mw1x, 3)) ^ (mw1x << 28);
