@@ -275,6 +275,4 @@ string_t ucread(string_t histPath, int promptSize) {
     return out;
 };
 
-SafeGetInstance SafeGet = {.ucread = ucread, .ucfgets = ucfgets
-
-};
+SafeGetInstance SafeGet = {.ucread = ucread, .ucfgets = ucfgets};

@@ -22,9 +22,7 @@ void readline(InputSettings conf, string_t *out) {
     };
 
     uchar_t _nl = '\n';
-    bytes_t newLine = {.len = 1, .b = &_nl
-
-    };
+    bytes_t newLine = {.len = 1, .b = &_nl};
 
     if ((Files.appendFile(histPath, &inputRaw) != 0) ||
         (Files.appendFile(histPath, &newLine))) {
