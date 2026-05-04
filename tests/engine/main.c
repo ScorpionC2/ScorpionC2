@@ -12,19 +12,19 @@
 #include <stdint.h>
 
 bool_t run(void) {
-    Logger.infoln(FG_WHITE_ITALIC "Starting" RESET " " FG_CYAN_ITALIC
-                                  "Unit Tests" RESET);
+    Logger.newLine.infoln(FG_WHITE_ITALIC "Starting" RESET " " FG_CYAN_ITALIC
+                                          "Unit Tests" RESET);
 
     uint32_t unitAccumulator = 0;
     runUnitTests(&unitAccumulator);
-    Logger.infof(FG_CYAN_ITALIC "%" PRIu32 FG_WHITE_ITALIC
-                                " Unit Tests failed" RESET "\n",
-                 unitAccumulator);
+    Logger.fmt.infof(FG_CYAN_ITALIC "%" PRIu32 FG_WHITE_ITALIC
+                                    " Unit Tests failed" RESET "\n",
+                     unitAccumulator);
 
     return unitAccumulator == 0 ? TRUE : FALSE;
 }
 
 int main(void) {
-    Logger.infoln(FG_WHITE_ITALIC "Starting Tests" RESET);
+    Logger.newLine.infoln(FG_WHITE_ITALIC "Starting Tests" RESET);
     return run() == FALSE;
 }

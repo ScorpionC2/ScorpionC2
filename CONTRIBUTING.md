@@ -391,7 +391,7 @@ Example:
 
 ```c
 if (Files.appendFile(histPath, &inputRaw) != 0) {
-    Logger.warnln("Can't write last user input to history file");
+    Logger.newLine.warnln("Can't write last user input to history file");
 }
 ```
 

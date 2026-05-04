@@ -14,10 +14,10 @@ void registerUnitTest(const struct UnitTest *test) {
         unitTests =
             (struct UnitTest *)malloc(unitTestsSize * sizeof(struct UnitTest));
         if (unitTests == NULL) {
-            Logger.errorf(RESET FG_WHITE_ITALIC "Can't malloc:" RESET
-                                                " " FG_YELLOW_ITALIC "%s" RESET
-                                                "\n",
-                          strerror(errno));
+            Logger.fmt.errorf(RESET FG_WHITE_ITALIC "Can't malloc:" RESET
+                                                    " " FG_YELLOW_ITALIC
+                                                    "%s" RESET "\n",
+                              strerror(errno));
             return;
         }
     }
@@ -27,19 +27,20 @@ void registerUnitTest(const struct UnitTest *test) {
         unitTestsSize <<= 1; // unitTestsSize *= 2
         unitTests = realloc(unitTests, unitTestsSize * sizeof(struct UnitTest));
         if (unitTests == NULL) {
-            Logger.errorf(RESET FG_WHITE_ITALIC "Can't realloc:" RESET
-                                                " " FG_YELLOW_ITALIC "%s" RESET
-                                                "\n",
-                          strerror(errno));
+            Logger.fmt.errorf(RESET FG_WHITE_ITALIC "Can't realloc:" RESET
+                                                    " " FG_YELLOW_ITALIC
+                                                    "%s" RESET "\n",
+                              strerror(errno));
             return;
         }
     }
 
     // Prevent using a null new test
     if (test == NULL) {
-        Logger.errorln(FG_WHITE_ITALIC "Can't create a null unit test:" RESET
-                                       " " FG_YELLOW_ITALIC
-                                       "Received NULL pointer as test" RESET);
+        Logger.newLine.errorln(FG_WHITE_ITALIC
+                               "Can't create a null unit test:" RESET
+                               " " FG_YELLOW_ITALIC
+                               "Received NULL pointer as test" RESET);
         return;
     }
 
@@ -49,18 +50,19 @@ void registerUnitTest(const struct UnitTest *test) {
 
 void runUnitTests(const uint32_t *ac) {
     if (unitTestsSize <= 0) {
-        Logger.errorf(RESET FG_WHITE_ITALIC
-                      "Can't run a invalid quantity of unit tests:" RESET
-                      " " FG_YELLOW_ITALIC "Attempt to "
-                      "run %u tests" RESET "\n",
-                      unitTestsSize);
+        Logger.fmt.errorf(RESET FG_WHITE_ITALIC
+                          "Can't run a invalid quantity of unit tests:" RESET
+                          " " FG_YELLOW_ITALIC "Attempt to "
+                          "run %u tests" RESET "\n",
+                          unitTestsSize);
         return;
     }
 
     if (unitTests == NULL) {
-        Logger.errorf(RESET FG_WHITE_ITALIC
-                      "Can't run unit tests:" RESET " " FG_YELLOW_ITALIC
-                      "Attempt to run unit tests by a NULL pointer" RESET "\n");
+        Logger.fmt.errorf(RESET FG_WHITE_ITALIC
+                          "Can't run unit tests:" RESET " " FG_YELLOW_ITALIC
+                          "Attempt to run unit tests by a NULL pointer" RESET
+                          "\n");
         return;
     }
 
@@ -68,29 +70,31 @@ void runUnitTests(const uint32_t *ac) {
         struct UnitTest curTest = unitTests[i];
         if (curTest.func == NULL) {
             ac++;
-            Logger.warnf(FG_WHITE_ITALIC "Test" RESET " " FG_CYAN_ITALIC
-                                         "%s" RESET " " FG_WHITE_ITALIC
-                                         "failed:" RESET " " FG_YELLOW_ITALIC
-                                         "Can't run a NULL function" RESET "\n",
-                         curTest.name.s);
+            Logger.fmt.warnf(FG_WHITE_ITALIC
+                             "Test" RESET " " FG_CYAN_ITALIC "%s" RESET
+                             " " FG_WHITE_ITALIC "failed:" RESET
+                             " " FG_YELLOW_ITALIC
+                             "Can't run a NULL function" RESET "\n",
+                             curTest.name.s);
             continue;
         }
 
         bool_t result = curTest.func();
         if (result == FALSE) {
             ac++;
-            Logger.warnf(FG_WHITE_ITALIC "Test" RESET " " FG_CYAN_ITALIC
-                                         "%s" RESET " " FG_WHITE_ITALIC
-                                         "failed:" RESET " " FG_YELLOW_ITALIC
-                                         "The test returned FALSE" RESET "\n",
-                         curTest.name.s);
+            Logger.fmt.warnf(FG_WHITE_ITALIC
+                             "Test" RESET " " FG_CYAN_ITALIC "%s" RESET
+                             " " FG_WHITE_ITALIC "failed:" RESET
+                             " " FG_YELLOW_ITALIC
+                             "The test returned FALSE" RESET "\n",
+                             curTest.name.s);
             continue;
         }
 
-        Logger.infof(FG_GREEN_ITALIC "Successfuly" FG_WHITE_ITALIC
-                                     " run test" RESET " " FG_CYAN_ITALIC
-                                     "%s" RESET "\n",
-                     curTest.name.s);
+        Logger.fmt.infof(FG_GREEN_ITALIC "Successfuly" FG_WHITE_ITALIC
+                                         " run test" RESET " " FG_CYAN_ITALIC
+                                         "%s" RESET "\n",
+                         curTest.name.s);
     }
 }
 
