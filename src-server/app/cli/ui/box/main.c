@@ -123,6 +123,4 @@ void draw(int h, int w, const char color1[15], const char color2[15]) {
            color.G, color.B);
 };
 
-const BoxxerInstance Box = {.draw = draw
-
-};
+const BoxxerInstance Box = {.draw = draw};

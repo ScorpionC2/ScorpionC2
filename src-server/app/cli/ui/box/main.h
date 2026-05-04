@@ -21,7 +21,7 @@ typedef struct {
     //
     // Input colors must be smt like:
     //      C_WHITE_BASE that expands to "255;255;255"
-    void (*draw)(int h, int w, char color1[15], char color2[15]);
+    void (*draw)(int h, int w, const char color1[15], const char color2[15]);
 
 } BoxxerInstance;
 
