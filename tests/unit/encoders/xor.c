@@ -11,6 +11,7 @@
 
 #include <iso646.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define _XOR_SIZE_HELPER(size)                                                 \
     scorpionSettings old = *Xor->settings->hashScorpionSettings;               \
@@ -93,10 +94,27 @@ bool_t xor_ensureNonceRandomness(void) {
     bytes_t encodedSource = Xor->encode(source);
     bytes_t encodedSource_2 = Xor->encode(source);
 
-    bool_t out = TEST_UNEQUAL_BYTES(source, encodedSource_2)
+    bytes_t nonceA = {.len = Xor->settings->num};
+    bytes_t nonceB = {.len = Xor->settings->num};
 
-        free(encodedSource.b);
+    nonceA.b = malloc(nonceA.len);
+    if (nonceA.b == NULL)
+        return FALSE;
+
+    nonceB.b = malloc(nonceB.len);
+    if (nonceB.b == NULL)
+        return FALSE;
+
+    memcpy(nonceA.b, encodedSource.b, nonceA.len);
+    memcpy(nonceB.b, encodedSource_2.b, nonceB.len);
+
+    free(encodedSource.b);
     free(encodedSource_2.b);
+
+    bool_t out = TEST_UNEQUAL_BYTES(nonceA, nonceB)
+
+        free(nonceA.b);
+    free(nonceB.b);
 
     return out;
 }
