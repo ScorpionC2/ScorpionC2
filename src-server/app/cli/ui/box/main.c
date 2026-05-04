@@ -35,7 +35,7 @@ typedef struct {
 
 } rgb_td;
 
-rgb_t parseRgb(char *color) {
+rgb_t parseRgb(const char *color) {
     rgb_t out;
     sscanf(color, "%d;%d;%d", &out.R, &out.G, &out.B);
 
