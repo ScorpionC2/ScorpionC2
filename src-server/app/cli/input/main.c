@@ -26,7 +26,7 @@ void readline(InputSettings conf, string_t *out) {
 
     if ((Files.appendFile(histPath, &inputRaw) != 0) ||
         (Files.appendFile(histPath, &newLine))) {
-        Logger.warnln("Can't write last user input to history file");
+        Logger.newLine.warnln("Can't write last user input to history file");
     }
 
     out->len = input.len;
