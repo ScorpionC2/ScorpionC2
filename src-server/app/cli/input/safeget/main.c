@@ -26,7 +26,7 @@
 
 ssize_t _parseStdin(char *ch) { return read(STDIN_FILENO, ch, 1); }
 
-bool_t _checkBuf(char **buf, size_t *bufLen, size_t *bufCap) {
+bool_t _checkBuf(char **buf, const size_t *bufLen, size_t *bufCap) {
     if ((*bufLen + 1) >= *bufCap) {
         while ((*bufLen + 1) >= *bufCap) {
             if (*bufCap > SIZE_MAX / 2)
