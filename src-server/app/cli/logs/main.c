@@ -9,8 +9,6 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 void warn(const char *self) {
     printf(FG_YELLOW_BOLD "[!]" RESET FG_YELLOW_ITALIC " %s" RESET, self);
@@ -52,68 +50,26 @@ void debugln(const char *self) {
 
 void logger_println(const char *self) { printf("%s\n", self); }
 
-void warnf(const char *fmt, ...) {
-    char *buf = malloc(strlen(fmt) * 4);
-    if (buf == NULL) {
-        return;
+#define _FORMATF_HELPER(name, x)                                               \
+    __attribute__((format(printf, 1, 2))) void f_##name(const char *fmt,       \
+                                                        ...) {                 \
+        va_list arg;                                                           \
+        va_start(arg, fmt);                                                    \
+                                                                               \
+        printf(x);                                                             \
+        vprintf(fmt, arg);                                                     \
+        printf(RESET);                                                         \
+                                                                               \
+        va_end(arg);                                                           \
     }
 
-    va_list arg;
-    va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
-    va_end(arg);
+_FORMATF_HELPER(warnf, FG_YELLOW_BOLD "[!]" RESET FG_GREY_DARK_ITALIC " ")
+_FORMATF_HELPER(infof, FG_GREEN "[?]" RESET FG_GREEN_ITALIC " ")
+_FORMATF_HELPER(errorf, BG_YELLOW_DARK FG_RED_BOLD
+                "[*]" RESET BG_YELLOW FG_RED_ITALIC " ")
+_FORMATF_HELPER(debugf, FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " ")
 
-    printf(FG_YELLOW_BOLD "[!]" RESET FG_YELLOW_ITALIC " %s" RESET, buf);
-    free(buf);
-}
-
-void infof(const char *fmt, ...) {
-    char *buf = malloc(strlen(fmt) * 4);
-    if (buf == NULL) {
-        return;
-    }
-
-    va_list arg;
-    va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
-    va_end(arg);
-
-    printf(FG_GREEN "[?]" FG_GREEN_ITALIC " %s" RESET, buf);
-    free(buf);
-}
-
-void errorf(const char *fmt, ...) {
-    char *buf = malloc(strlen(fmt) * 4);
-    if (buf == NULL) {
-        return;
-    }
-
-    va_list arg;
-    va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
-    va_end(arg);
-
-    printf(BG_YELLOW_DARK FG_RED_BOLD "[*]" RESET FG_RED_ITALIC " %s" RESET,
-           buf);
-    free(buf);
-}
-
-void debugf(const char *fmt, ...) {
-    char *buf = malloc(strlen(fmt) * 4);
-    if (buf == NULL) {
-        return;
-    }
-
-    va_list arg;
-    va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
-    va_end(arg);
-
-    printf(FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " %s" RESET, buf);
-    free(buf);
-}
-
-void logger_printf(const char *fmt, ...) {
+__attribute__((format(printf, 1, 2))) void logger_printf(const char *fmt, ...) {
     va_list arg;
     va_start(arg, fmt);
     vprintf(fmt, arg);
@@ -190,70 +146,27 @@ void bytesf(const char *fmt, ...) {
     }
 }
 
-void fwarnf(FILE *file, const char *fmt, ...) {
-    char *buf = malloc(strlen(fmt) * 4);
-    if (buf == NULL) {
-        return;
+#define _F_FORMATF_HELPER(name, x)                                             \
+    __attribute__((format(printf, 2, 3))) void f_##name(                       \
+        FILE *file, const char *fmt, ...) {                                    \
+        va_list arg;                                                           \
+        va_start(arg, fmt);                                                    \
+                                                                               \
+        fprintf(file, x);                                                      \
+        vfprintf(file, fmt, arg);                                              \
+        fprintf(file, RESET);                                                  \
+                                                                               \
+        va_end(arg);                                                           \
     }
 
-    va_list arg;
-    va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
-    va_end(arg);
+_F_FORMATF_HELPER(fwarnf, FG_YELLOW_BOLD "[!]" RESET FG_GREY_DARK_ITALIC " ")
+_F_FORMATF_HELPER(finfof, FG_GREEN "[?]" RESET FG_GREEN_ITALIC " ")
+_F_FORMATF_HELPER(ferrorf, BG_YELLOW_DARK FG_RED_BOLD
+                  "[*]" RESET BG_YELLOW FG_RED_ITALIC " ")
+_F_FORMATF_HELPER(fdebugf, FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " ")
 
-    fprintf(file, FG_YELLOW_BOLD "[!]" RESET FG_YELLOW_ITALIC " %s" RESET, buf);
-    free(buf);
-}
-
-void finfof(FILE *file, const char *fmt, ...) {
-    char *buf = malloc(strlen(fmt) * 4);
-    if (buf == NULL) {
-        return;
-    }
-
-    va_list arg;
-    va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
-    va_end(arg);
-
-    fprintf(file, FG_GREEN "[?]" FG_GREEN_ITALIC " %s" RESET, buf);
-    free(buf);
-}
-
-void ferrorf(FILE *file, const char *fmt, ...) {
-    char *buf = malloc(strlen(fmt) * 4);
-    if (buf == NULL) {
-        return;
-    }
-
-    va_list arg;
-    va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
-    va_end(arg);
-
-    fprintf(file,
-            BG_YELLOW FG_RED_BOLD "[*]" RESET BG_YELLOW FG_RED_ITALIC
-                                  " %s" RESET,
-            buf);
-    free(buf);
-}
-
-void fdebugf(FILE *file, const char *fmt, ...) {
-    char *buf = malloc(strlen(fmt) * 4);
-    if (buf == NULL) {
-        return;
-    }
-
-    va_list arg;
-    va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
-    va_end(arg);
-
-    fprintf(file, FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " %s" RESET, buf);
-    free(buf);
-}
-
-void logger_fprintf(FILE *file, const char *fmt, ...) {
+__attribute__((format(printf, 2, 3))) void
+logger_fprintf(FILE *file, const char *fmt, ...) {
     va_list arg;
     va_start(arg, fmt);
     vfprintf(file, fmt, arg);
@@ -270,16 +183,16 @@ const LoggerInstance Logger = {.debug = debug,
                                .infoln = infoln,
                                .errorln = errorln,
                                .println = logger_println,
-                               .debugf = debugf,
-                               .warnf = warnf,
-                               .infof = infof,
-                               .errorf = errorf,
+                               .debugf = f_debugf,
+                               .warnf = f_warnf,
+                               .infof = f_infof,
+                               .errorf = f_errorf,
                                .printf = logger_printf,
                                .bytesf = bytesf,
-                               .fdebugf = fdebugf,
-                               .fwarnf = fwarnf,
-                               .finfof = finfof,
-                               .ferrorf = ferrorf,
+                               .fdebugf = f_fdebugf,
+                               .fwarnf = f_fwarnf,
+                               .finfof = f_finfof,
+                               .ferrorf = f_ferrorf,
                                .fprintf = logger_fprintf
 
 };
