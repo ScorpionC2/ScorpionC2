@@ -12,6 +12,7 @@
 #include "main.h"
 
 #include "src-server/shared/utils/math/main.h"
+#include "src-server/shared/utils/mixers/main.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,56 +37,9 @@ scorpionSettings settings = {
 
 };
 
-static inline uint32_t fmix32(uint32_t h) {
-    h ^= h >> 16;
-    h *= 0x85ebca6b;
-    h ^= h >> 13;
-    h *= 0xc2b2ae35;
-    h ^= h >> 16;
-    return h;
-}
-
-static inline uint32_t seed_helper(uint32_t x, uint32_t seed, uint32_t shift) {
-    uint32_t y = x;
-    uint32_t nseed = (seed << (shift & 0x1F)) ^ ((x >> 1) * 0x11F11E1D);
-
-    x ^= (x >> (shift & 0x1F)) * (seed | 0x849012FD);
-    y ^= (x >> (shift & 0x1F)) ^ ((seed << 1) ^ (x * seed));
-    x ^= seed;
-
-    nseed ^= x * (seed << (shift & 0x1F));
-    nseed ^= seed;
-    nseed = fmix32(nseed);
-
-    x ^= y;
-    y *= seed ^ (x << 29);
-    x *= 0xB83910FA;
-    x ^= nseed;
-    x ^= y;
-
-    return x & 0xFFFFFFFF;
-}
-
-bytes_t HashScorpionX(bytes_t src) {
-    if (src.b == NULL || src.len <= 0) {
-        return (bytes_t){.b = NULL, .len = 0
-
-        };
-    }
-
-    int hashLen = Hash.settings->hashSize ? Hash.settings->hashSize : 128;
-    int wordLen = hashLen / 4;
-    int miniWordLen = wordLen / 8;
-    uint32_t seed = Hash.settings->seed ? Hash.settings->seed : 0x2F1FFDDD;
-    uint32_t shiftSeed =
-        Hash.settings->shiftSeed ? Hash.settings->shiftSeed & 0x1F : 16;
-
 #define SH seed_helper
 
-    bytes_t out;
-    out.len = hashLen;
-    out.b = malloc(out.len);
-
+uint32_t *_getState(int wordLen) {
     // 512 is the higher wordLen value because max hashSize is 2048 and 2048 / 4 = 512
     static const uint32_t stateConst[512] = {
         0x2D88371A, 0x1DE48F52, 0x69A2BA8B, 0x58EFA8C9, 0x2F946493, 0x83A8C45E,
@@ -178,177 +132,101 @@ bytes_t HashScorpionX(bytes_t src) {
     };
 
     uint32_t *state = malloc(wordLen * sizeof(uint32_t));
+    if (state == NULL)
+        return NULL;
+
     memcpy(state, stateConst, wordLen * sizeof(uint32_t));
 
-    // First block of iteration, this will apply seeding to state
-    for (int i = 0; i < wordLen; i++) {
-        state[i] = SH(state[i], seed, shiftSeed);
-    }
+    return state;
+}
 
-    // Second block of iteration, this will modify the state[i] and state[i + 1] based on currentByte and src.b[i + 1]
+void _seedState(int wordLen, uint32_t *state, const scorpionSettings *ctx) {
+    for (int i = 0; i < wordLen; i++) {
+        state[i] = seed_helper(state[i], ctx->seed, ctx->shiftSeed);
+    }
+}
+
+void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
     for (size_t i = 0; i < src.len; i++) {
         // Here we define the currentByte
         uint32_t currentByte = src.b[i];
+        uint32_t *word = &state[i & (wordLen - 1)];
 
         // Now we iterate inside the current word
-        uint32_t word = state[i & (wordLen - 1)];
+        const struct minimix_src indexes = {
+            .src = {
+                currentByte,
+                src.b[(i + 2) % src.len],
+                src.b[(i + 30) % src.len]
+            }
+        };
 
-        uint8_t mw0 = word & 0xFF;
-        uint8_t mw1 = (word >> 8) & 0xFF;
-        uint8_t mw2 = (word >> 16) & 0xFF;
-        uint8_t mw3 = (word >> 24) & 0xFF;
-
-        mw0 ^= rotl8((src.b[(i + 2) % src.len] << 8), 3) + mw2;
-        mw1 ^= rotr8((src.b[i] << 16), 5) + src.b[(i + 30) % src.len];
-        mw2 ^= mw0 * (src.b[i] & 0xFF);
-        mw3 ^= mw1 ^ 0xC3;
-
-        state[i & (wordLen - 1)] = mw0 | (mw1 << 8) | (mw2 << 16) | (mw3 << 24);
+        minimix32(indexes, word);
 
         // Now we define [v]alue, that must be based in state and must interact with currentByte
-        uint32_t v = state[i % wordLen] ^
-                     (currentByte ^ SH(0x1180574F, seed, shiftSeed));
-        v = rotr(v, currentByte & 31);
-        v -= (SH(0xBB8F574F, seed, shiftSeed) >> 8);
-        v = rotl(v, 17);
-
         // The idx (index) is the state's index that we'll modify
-        uint32_t idx = (state[i % wordLen] ^
-                        ((v << 9) ^ SH(0xFFF1FF2F, seed, shiftSeed))) &
-                       (wordLen - 1);
+        uint32_t v = fmix32(state[i & (wordLen - 1)]);
+        uint32_t idx = state[i % wordLen] ^ ((v << 9) ^ 0xFFF1FF2F);
 
-        // Modify the state index
-        state[idx] ^= ((currentByte < 28) ^ SH(0xBFF8FF3F, seed, shiftSeed) ^
-                       SH(0x3333333F, seed, shiftSeed)) ^
-                      SH(0x448312FD, seed, shiftSeed);
-        state[idx] +=
-            SH(0x0539, seed, shiftSeed) * SH(0x0ACE55ED, seed, shiftSeed);
-        state[idx] = rotr(state[idx], 29);
-        state[idx] += 1;
+        // Modify the state index and next word
+        arxmix32(state, (int*)&idx, (int*)&i, wordLen);
 
-        // Modify next word
-        uint16_t mw0Idx = word & 0xFFFF;
-        uint16_t mw1Idx = (word >> 16) & 0xFFFF;
+        const struct minimix_src secondIndexes = {
+            .src = {
+                src.b[i % src.len],
+                src.b[(i + 16) % src.len],
+                src.b[(i + 39) % src.len]
+            }
+        };
 
-        mw0Idx += rotl16(mw1Idx, 7) ^ 0xBEEF;
-        mw1Idx ^= rotr16(mw0Idx, 11) * src.b[(i + 78) % src.len];
-        mw0Idx ^= src.b[i] & 0xFFFF;
-        mw1Idx ^= (state[idx] >> 16) & 0xFFFF;
+        minimix32(secondIndexes, word);
 
-        state[idx] = mw0Idx | (mw1Idx << 16);
-
-        state[idx] +=
-            (state[(idx + 6) & (wordLen - 1)] ^
-             SH(0x00700800, seed, shiftSeed)) |
-            ((SH(0x79412FBD, seed, shiftSeed) < 5) ^ src.b[(i + 2) % src.len]);
-
-        // Modify the next state index
-        state[(idx + 78) & (wordLen - 1)] += state[idx];
+        state[(idx + 78) & (wordLen - 1)] += state[idx & (wordLen - 1)];
 
         uint32_t x = currentByte ^ state[(idx + 2) & (wordLen - 1)];
-
-        x = rotr(x, state[(idx + 1) & (wordLen - 1)] & 31);
-        x = (x ^ (x ^ SH(0x67912, seed, shiftSeed)) ^
-             SH(0x75087501, seed, shiftSeed));
-        x ^= state[idx];
-        x = ((x << 19) ^ x) - (x >> 8);
-        x ^= x >> 15;
-        x += SH(0xABCDEF0A, seed, shiftSeed);
-        x *= rotr(x ^ SH(0x27D4EB2F, seed, shiftSeed), 14);
-        x = rotl(x, 13);
-        x ^= SH(0xABCDEF0A, seed, shiftSeed) << ((x & 0x1C) + 4);
-        x ^= x >> 16;
+        smallmix32(&x);
 
         uint32_t spread = currentByte * 0x9E3779B1;
-
-        state[(idx + 7) & (wordLen - 1)] ^= spread;
-        state[(idx + 17) & (wordLen - 1)] += rotl(spread, 11);
-        state[(idx + 31) & (wordLen - 1)] ^= rotl(spread, 17);
-
-        state[idx] ^= x << 5;
-        state[(i + x) & (wordLen - 1)] ^= x >> 4;
-        state[(i + 1 + x) & (wordLen - 1)] *= rotr(x, 5);
-        state[(i ^ x) & (wordLen - 1)] ^= x >> 3;
+        flavourmix32(&state[(idx + (88 * i)) & (wordLen - 1)], spread);
     }
+}
 
-    /*
-     * Third block of iteration, this will mix the state without touching the source
-     *
-     * The goal of this is flush the state to increase diffusion, basing the entire
-     * output in first <wordLen> entries in state
-     *
-     */
+void _mixState(int wordLen, int miniWordLen, uint32_t *state, const int *index) {
+    int i = *index;
+
+    for (int r = 0; r < wordLen; r++)
+        arraymix32(state, &r, wordLen, &i, miniWordLen);
+}
+
+bytes_t HashScorpionX(bytes_t src) {
+    if (src.b == NULL || src.len <= 0)
+        return (bytes_t){NULL, 0};
+
+    int hashLen = Hash.settings->hashSize ? Hash.settings->hashSize : 128;
+    int wordLen = hashLen / 4;
+    int miniWordLen = wordLen / 8;
+    uint32_t seed = Hash.settings->seed ? Hash.settings->seed : 0x2F1FFDDD;
+    uint32_t shiftSeed =
+        Hash.settings->shiftSeed ? Hash.settings->shiftSeed & 0x1F : 16;
+
+    bytes_t out;
+    out.len = hashLen;
+    out.b = malloc(out.len);
+
+    uint32_t *state = _getState(wordLen);
+    if (state == NULL)
+        return (bytes_t){NULL, 0};
+
+    _seedState(wordLen, state, Hash.settings);
+    _mixStateWithSrc(src, state, wordLen);
+
     for (int i = 0; i < miniWordLen; i++) {
-        for (int r = 0; r < wordLen; r++) {
-            state[r] ^= state[(r + i + 1) & (wordLen - 1)];
-            state[r] =
-                rotl(state[r], state[(r + i + 1) & (miniWordLen - 1)] & 31);
-            state[r] = rotl(state[r], 16);
-            state[r] ^= SH(0x838383FF, seed, shiftSeed);
-            state[r] += state[(r + 44) & (wordLen - 1)];
-            state[r] ^=
-                state[i & (wordLen - 1)] * SH(0x9E37D9BF, seed, shiftSeed);
-            state[r] += 1;
-        }
+        _mixState(wordLen, miniWordLen, state, &i);
+        multiarxmix32(state, wordLen, &i, src);
     }
 
-    /*
-     * Fourth block of iteration, this will mix the entire state again
-     *
-     * The goal of this iteration is increase dependencie by other bytes of hash, so if one byte changes,
-     * every other changes too
-     *
-     */
-    for (int i = 0; i < (miniWordLen * 2); i++) {
-        for (int r = 0; r < wordLen; r++) {
-            state[r] += state[(r + 82) & (wordLen - 1)];
-            state[r] ^= state[(i + 19) & (wordLen - 1)];
-            state[r] = rotr(state[r], state[(i + 83) & (wordLen - 1)] & 31);
-            state[r] ^= state[(r + 52) & (wordLen - 1)] ^
-                        (state[(i + 24) & (wordLen - 1)]
-                         << (state[(r + 31) & (wordLen - 1)] & 31
-
-                             ));
-
-            state[r] += state[(i + r - 7) & (wordLen - 1)] & 0xF;
-            state[r] *= 0x9E3779B1;
-            state[r] ^= state[r] >> 16;
-        }
-
-        // This sub-block will ensure that high bits influence low bits
-        for (int ii = 0; ii < wordLen; ii++) {
-            state[ii] ^= state[(ii + 1) & (wordLen - 1)] >> 1;
-        }
-    }
-
-    /*
-     * Fifth block of iteration, this will mix the entire state again but using input
-     *
-     * The goal of this is make every word affected by multiple input bytes
-     *
-     */
-    for (int i = 0; i < miniWordLen; i++) {
-        for (int r = 0; r < wordLen; r++) {
-            uint32_t currentByte =
-                src.b[i % src.len] ^ SH(0xAB808DF1, seed, shiftSeed);
-            uint32_t mix =
-                currentByte ^ (currentByte >> (src.b[(i + 1) % src.len] & 31));
-
-            uint32_t a = state[i % wordLen];
-            uint32_t b = state[(i + 9) & (wordLen - 1)];
-            uint32_t c = state[(i + 18) & (wordLen - 1)];
-
-            a += mix;
-            b ^= a;
-            c += b;
-
-            a = (a << 13) | (a >> 19);
-
-            state[i % wordLen] = a;
-            state[(i + 12) & (wordLen - 1)] = b;
-            state[(i + 67) & (wordLen - 1)] = c;
-        }
-    }
+    for (int i = 0; i < (miniWordLen * 2); i++)
+        dependency32(wordLen, state, &i);
 
     /*
      * Sixth block of iteration, this is a finalizer for the state
@@ -503,17 +381,19 @@ bytes_t HashScorpionX(bytes_t src) {
 
                 mw0 = rotl8(mw0, 20);
                 mw0 ^= (mw0 >> 4);
-                mw0 *= SH(0xBAEF2124, seed, shiftSeed);
+                mw0 *= seed_helper(0xBAEF2124, seed, shiftSeed);
                 mw0 ^= rotr8(state[(i + 37) & (wordLen - 1)] & 0xFF, 2);
                 mw0 ^= (mw0 << 5) | (mw0 >> 7);
 
                 uint8_t mw0x =
-                    (mw0 << 7) ^ (mw0 * (mw0 ^ SH(0x2BDA, seed, shiftSeed)));
+                    (mw0 << 7) ^
+                    (mw0 * (mw0 ^ seed_helper(0x2BDA, seed, shiftSeed)));
                 for (int it = 0; it < 15; it++) {
                     uint8_t oldX = mw0x;
 
                     uint8_t x =
-                        (mw0x << ((mw0 ^ SH(0x6FAA, seed, shiftSeed)) & 8)) ^
+                        (mw0x << ((mw0 ^ seed_helper(0x6FAA, seed, shiftSeed)) &
+                                  8)) ^
                         mw0;
                     x ^= x >> 6;
                     x *= 0x2C6D;
@@ -528,12 +408,12 @@ bytes_t HashScorpionX(bytes_t src) {
                 mw1 = rotr8(mw1, 5);
                 mw1 ^= (mw1 << 6) ^ rotl8(mw1, 7);
                 mw1 += 1;
-                mw1 ^= (mw1 ^ SH(0x0539, seed, shiftSeed - 1))
+                mw1 ^= (mw1 ^ seed_helper(0x0539, seed, shiftSeed - 1))
                        << ((mw1 - 1) & 8);
 
                 uint8_t mw1x =
-                    (((mw1 * 200202) & sizeof(uint8_t)) ^ (mw1 - 2))
-                    << rotl8(mw1, (mw1 ^ SH(0x9998, seed, shiftSeed)) & 8);
+                    (((mw1 * 200202) & sizeof(uint8_t)) ^ (mw1 - 2)) << rotl8(
+                        mw1, (mw1 ^ seed_helper(0x9998, seed, shiftSeed)) & 8);
                 for (int it = 0; it < 15; it++) {
                     uint8_t oldX = mw1x;
                     uint8_t x = (mw1x * rotl8(mw1x, 3)) ^ (mw1x << 28);
@@ -568,7 +448,8 @@ bytes_t HashScorpionX(bytes_t src) {
 
                 uint8_t mw5x =
                     (mw2 *
-                     (mw3 >> (mw2 ^ SH(0x1C4D, seed << 9, shiftSeed)) & 8)) ^
+                     (mw3 >> (mw2 ^ seed_helper(0x1C4D, seed << 9, shiftSeed)) &
+                      8)) ^
                     (mw2 << (mw3 & 8));
                 for (int it = 0; it < 30; it++) {
                     uint8_t oldX = mw5x;
@@ -718,8 +599,9 @@ bytes_t HashScorpionX(bytes_t src) {
 
     // Last block of iteration, this will create the output
     for (int i = 0; i < wordLen; i++) {
-        uint32_t v = state[i & (wordLen - 1)] ^
-                     (i * SH(0x9E3F09B9 << (seed & 0x1F), seed, shiftSeed));
+        uint32_t v =
+            state[i & (wordLen - 1)] ^
+            (i * seed_helper(0x9E3F09B9 << (seed & 0x1F), seed, shiftSeed));
         uint32_t oldV = v;
 
         v ^= state[(i + 1) & (wordLen - 1)];
