@@ -153,8 +153,15 @@ void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
         uint32_t *word = &state[i & (wordLen - 1)];
 
         // Now we iterate inside the current word
-        minimix32((uint32_t[]){currentByte, src.b[(i + 2) % src.len],
-                             src.b[(i + 30) % src.len]}, word);
+        const struct minimix_src indexes = {
+            .src = {
+                currentByte,
+                src.b[(i + 2) % src.len],
+                src.b[(i + 30) % src.len]
+            }
+        };
+
+        minimix32(indexes, word);
 
         // Now we define [v]alue, that must be based in state and must interact with currentByte
         // The idx (index) is the state's index that we'll modify
@@ -163,7 +170,16 @@ void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
 
         // Modify the state index and next word
         arxmix32(state, (int*)&idx, (int*)&i, wordLen);
-        minimix32((uint32_t[3]){src.b[i % src.len], src.b[(i + 16) % src.len], src.b[(i + 39) % src.len]}, word);
+
+        const struct minimix_src secondIndexes = {
+            .src = {
+                src.b[i % src.len],
+                src.b[(i + 16) % src.len],
+                src.b[(i + 39) % src.len]
+            }
+        };
+
+        minimix32(secondIndexes, word);
 
         state[(idx + 78) & (wordLen - 1)] += state[idx & (wordLen - 1)];
 

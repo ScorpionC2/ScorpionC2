@@ -25,8 +25,8 @@ void arxmix8(uint8_t *word, uint32_t srcWord) {
     *word ^= rotr8(*word, old);
 }
 
-void minimix32(const uint32_t src[static 3], uint32_t *pword) {
-    uint32_t curByte = src[0];
+void minimix32(const struct minimix_src src, uint32_t *pword) {
+    uint32_t curByte = src.src[0];
     uint32_t word = *pword;
 
     uint8_t mw0 = word & 0xFF;
@@ -34,14 +34,14 @@ void minimix32(const uint32_t src[static 3], uint32_t *pword) {
     uint8_t mw2 = (word >> 16) & 0xFF;
     uint8_t mw3 = (word >> 24) & 0xFF;
 
-    mw0 ^= rotl8(src[1], 3) + mw2;
-    mw1 ^= rotr8(curByte, 5) + src[2];
+    mw0 ^= rotl8(src.src[1], 3) + mw2;
+    mw1 ^= rotr8(curByte, 5) + src.src[2];
     mw2 ^= mw0 * (curByte & 0xFF);
     mw3 ^= mw1 ^ 0xC3;
 
-    arxmix8(&mw0, src[1]);
-    arxmix8(&mw1, src[0]);
-    arxmix8(&mw2, src[2]);
+    arxmix8(&mw0, src.src[1]);
+    arxmix8(&mw1, src.src[0]);
+    arxmix8(&mw2, src.src[2]);
     arxmix8(&mw3, word);
 
     *pword = mw0 | (mw1 << 8) | (mw2 << 16) | (mw3 << 24);
@@ -68,10 +68,12 @@ void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i, i
     state[*index] = rotl(state[*index], state[(*index + i + 1) & (miniWordLen - 1)] & 31);
     state[*index] = rotl(state[*index], 16);
 
-    uint32_t indexes[3] = {
-        state[(*index + i + 2) & (wordLen - 1)],
-        state[(*index + i + 10) & (wordLen - 1)],
-        state[(*index + i + 21) & (wordLen - 1)]
+    const struct minimix_src indexes = {
+        .src = {
+            state[(*index + i + 2) & (wordLen - 1)],
+            state[(*index + i + 10) & (wordLen - 1)],
+            state[(*index + i + 21) & (wordLen - 1)]
+        }
     };
 
     minimix32(indexes, &state[*index]);

@@ -38,7 +38,11 @@ static inline uint32_t seed_helper(uint32_t x, uint32_t seed, uint32_t shift) {
     return x & 0xFFFFFFFF;
 }
 
-void minimix32(const uint32_t src[static 3], uint32_t *pword);
+struct minimix_src {
+    uint32_t src[3];
+};
+
+void minimix32(const struct minimix_src src, uint32_t *pword);
 void arxmix32(uint32_t *state, const int *_r, const int *_i, int wordLen);
 void arxmix8(uint8_t *word, uint32_t srcWord);
 void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i, int miniWordLen);
