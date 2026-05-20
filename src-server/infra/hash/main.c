@@ -140,7 +140,7 @@ uint32_t *_getState(int wordLen) {
     return state;
 }
 
-void _seedState(int wordLen, uint32_t *state, scorpionSettings *ctx) {
+void _seedState(int wordLen, uint32_t *state, const scorpionSettings *ctx) {
     for (int i = 0; i < wordLen; i++) {
         state[i] = seed_helper(state[i], ctx->seed, ctx->shiftSeed);
     }
@@ -175,7 +175,7 @@ void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
     }
 }
 
-void _mixState(int wordLen, int miniWordLen, uint32_t *state, int *index) {
+void _mixState(int wordLen, int miniWordLen, uint32_t *state, const int *index) {
     int i = *index;
 
     for (int r = 0; r < wordLen; r++)

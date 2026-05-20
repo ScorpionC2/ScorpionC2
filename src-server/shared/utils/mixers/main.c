@@ -47,7 +47,7 @@ void minimix32(const uint32_t src[static 3], uint32_t *pword) {
     *pword = mw0 | (mw1 << 8) | (mw2 << 16) | (mw3 << 24);
 }
 
-void arxmix32(uint32_t *state, int *_r, int *_i, int wordLen) {
+void arxmix32(uint32_t *state, const int *_r, const int *_i, int wordLen) {
     int r = *_r;
     int i = *_i;
 
@@ -61,7 +61,7 @@ void arxmix32(uint32_t *state, int *_r, int *_i, int wordLen) {
     state[r & (wordLen - 1)] ^= state[r & (wordLen - 1)] >> 16;
 }
 
-void arraymix32(uint32_t *state, int *index, int wordLen, int *_i, int miniWordLen) {
+void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i, int miniWordLen) {
     int i = *_i;
 
     state[*index] ^= state[(*index + i + 1) & (wordLen - 1)];
@@ -82,7 +82,7 @@ void arraymix32(uint32_t *state, int *index, int wordLen, int *_i, int miniWordL
     state[*index] += 1;
 }
 
-void multiarxmix32(uint32_t *state, int wordLen, int *_i, bytes_t src) {
+void multiarxmix32(uint32_t *state, int wordLen, const int *_i, bytes_t src) {
     int i = *_i;
 
     for (int r = 0; r < wordLen; r++) {
