@@ -163,9 +163,9 @@ void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
 
         // Modify the state index and next word
         arxmix32(state, (int*)&idx, (int*)&i, wordLen);
-        minimix32((uint32_t*)&src.b[i % src.len], word);
+        minimix32((uint32_t[3]){src.b[i % src.len], src.b[(i + 16) % src.len], src.b[(i + 39) % src.len]}, word);
 
-        state[(idx + 78) & (wordLen - 1)] += state[idx];
+        state[(idx + 78) & (wordLen - 1)] += state[idx & (wordLen - 1)];
 
         uint32_t x = currentByte ^ state[(idx + 2) & (wordLen - 1)];
         smallmix32(&x);
@@ -202,10 +202,10 @@ bytes_t HashScorpionX(bytes_t src) {
         return (bytes_t){NULL, 0};
 
     _seedState(wordLen, state, Hash.settings);
-    _mixStateWithSrc(src, state, wordLen, Hash.settings);
+    _mixStateWithSrc(src, state, wordLen);
 
     for (int i = 0; i < miniWordLen; i++) {
-        _mixState(wordLen, miniWordLen, state, Hash.settings, &i);
+        _mixState(wordLen, miniWordLen, state, &i);
         multiarxmix32(state, wordLen, &i, src);
     }
 
