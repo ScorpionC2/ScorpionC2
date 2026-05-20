@@ -210,7 +210,7 @@ bytes_t HashScorpionX(bytes_t src) {
     }
 
     for (int i = 0; i < (miniWordLen * 2); i++)
-        dependency32(wordLen, miniWordLen, state, &i);
+        dependency32(wordLen, state, &i);
 
     /*
      * Sixth block of iteration, this is a finalizer for the state

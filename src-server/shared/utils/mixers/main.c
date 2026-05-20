@@ -25,7 +25,7 @@ void arxmix8(uint8_t *word, uint32_t srcWord) {
     *word ^= rotr8(*word, old);
 }
 
-void minimix32(uint32_t src[3], uint32_t *pword) {
+void minimix32(const uint32_t src[static 3], uint32_t *pword) {
     uint32_t curByte = src[0];
     uint32_t word = *pword;
 
@@ -89,11 +89,12 @@ void multiarxmix32(uint32_t *state, int wordLen, int *_i, bytes_t src) {
         uint32_t currentByte = src.b[i % src.len] ^ 0xAB808DF1;
         uint32_t mix = currentByte ^ rotl(currentByte, src.b[(i + 1) % src.len]);
 
+        flavourmix32(&state[r & (wordLen - 1)], mix);
         arxmix32(state, &r, &i, wordLen);
     }
 }
 
-void dependency32(int wordLen, int miniWordLen, uint32_t *state, int *index) {
+void dependency32(int wordLen, uint32_t *state, int *index) {
     for (int r = 0; r < wordLen; r++)
         arxmix32(state, &r, index, wordLen);
 
