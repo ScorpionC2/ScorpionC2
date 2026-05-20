@@ -47,6 +47,6 @@ void arxmix32(uint32_t *state, const int *_r, const int *_i, int wordLen);
 void arxmix8(uint8_t *word, uint32_t srcWord);
 void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i, int miniWordLen);
 void multiarxmix32(uint32_t *state, int wordLen, const int *_i, bytes_t src);
-void dependency32(int wordLen, uint32_t *state, int *index);
+void dependency32(int wordLen, uint32_t *state, const int *index);
 void smallmix32(uint32_t *word);
 void flavourmix32(uint32_t *word, uint32_t flavour);

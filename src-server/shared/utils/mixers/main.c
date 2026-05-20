@@ -96,7 +96,7 @@ void multiarxmix32(uint32_t *state, int wordLen, const int *_i, bytes_t src) {
     }
 }
 
-void dependency32(int wordLen, uint32_t *state, int *index) {
+void dependency32(int wordLen, uint32_t *state, const int *index) {
     for (int r = 0; r < wordLen; r++)
         arxmix32(state, &r, index, wordLen);
 
