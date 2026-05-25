@@ -198,6 +198,30 @@ void _mixState(int wordLen, int miniWordLen, uint32_t *state, const int *index) 
         arraymix32(state, &r, wordLen, &i, miniWordLen);
 }
 
+void _finalizer(int wordLen, uint32_t *state) {
+    uint32_t mask = wordLen - 1;
+
+    for (int i = 0; i < wordLen; i++) {
+        struct minimix_src mixSrc = {
+            .src = { 
+                state[(i + 83) & mask],
+                state[(i + 17) & mask],
+                state[(i + 27) & mask]
+            }
+        };
+        
+        minimix32(mixSrc, &state[i]);
+
+        uint16_t a = state[i] & 0xFFFF;
+        uint16_t b = (state[(i + 5) & mask] >> 16) & 0xFFFF;
+
+        minimix16(mixSrc, &a);
+        minimix16(mixSrc, &b);
+
+        state[i] = a | b;
+    }
+}
+
 bytes_t HashScorpionX(bytes_t src) {
     if (src.b == NULL || src.len <= 0)
         return (bytes_t){NULL, 0};
@@ -245,104 +269,6 @@ bytes_t HashScorpionX(bytes_t src) {
             uint32_t wordB = state[(mmfhe + 83) & maskK];
             uint32_t wordC = state[(mmfhe + 17) & maskK];
             uint32_t wordD = state[(mmfhe + 27) & maskK];
-
-            // Split wordA/B/C/D in 16-bit words
-            uint16_t mA0 = wordA & 0xFFFF;
-            uint16_t mA1 = (wordA >> 16) & 0xFFFF;
-            uint16_t mB0 = wordB & 0xFFFF;
-            uint16_t mB1 = (wordB >> 16) & 0xFFFF;
-            uint16_t mC0 = wordC & 0xFFFF;
-            uint16_t mC1 = (wordC >> 16) & 0xFFFF;
-            uint16_t mD0 = wordD & 0xFFFF;
-            uint16_t mD1 = (wordD >> 16) & 0xFFFF;
-
-            // Mix 16-bit words
-            mA0 += mB1;
-            mB0 ^= mA0;
-            mD0 ^= mD1;
-            mD0 ^= rotl16(mA1, 14);
-            mA0 ^= rotr16(mC0, 11);
-            mC0 = rotr16(mD0, 15);
-            mC1 ^= mC0;
-            mC0 ^= mA0;
-
-            // Split each 16-bit words into 8-bit words
-            uint8_t xA00 = mA0 & 0xFF;
-            uint8_t xA01 = (mA0 >> 8) & 0xFF;
-            uint8_t xA10 = mA1 & 0xFF;
-            uint8_t xA11 = (mA1 >> 8) & 0xFF;
-
-            uint8_t xB00 = mB0 & 0xFF;
-            uint8_t xB01 = (mB0 >> 8) & 0xFF;
-            uint8_t xB10 = mB1 & 0xFF;
-            uint8_t xB11 = (mB1 >> 8) & 0xFF;
-
-            uint8_t xC00 = mC0 & 0xFF;
-            uint8_t xC01 = (mC0 >> 8) & 0xFF;
-            uint8_t xC10 = mC1 & 0xFF;
-            uint8_t xC11 = (mC1 >> 8) & 0xFF;
-
-            uint8_t xD00 = mD0 & 0xFF;
-            uint8_t xD01 = (mD0 >> 8) & 0xFF;
-            uint8_t xD10 = mD1 & 0xFF;
-            uint8_t xD11 = (mD1 >> 8) & 0xFF;
-
-            // Reverse the order
-            uint8_t ww[16] = {xD11, xD10, xD01, xD00, xC11, xC10, xC01, xC00,
-                              xB11, xB10, xB01, xB00, xA11, xA10, xA01, xA00};
-
-            // Build new, shuffled, 16-bit words
-            uint16_t w[8] = {xA00 | xD01, xA10 | xD11, xB00 | xC01,
-                             xB10 | xC11, xC00 | xB01, xC10 | xB11,
-                             xD00 | xA01, xD10 | xA11};
-
-            // Mix new 16-bit words
-            for (int itt = 0; itt < 8; itt++) {
-                uint16_t old = w[itt];
-                w[itt] =
-                    (uint16_t)ww[itt * 2] | ((uint16_t)ww[itt * 2 + 1] << 8);
-                w[itt] ^= old;
-            }
-
-            for (int itt = 0; itt < 8; itt++) {
-                w[itt] ^= w[(itt + 3) % 8] >> 7;
-                w[itt] += (w[(itt + 5) % 8] << 3);
-                w[itt] ^= (w[(itt + 1) % 8] * 0x9E37);
-                w[itt] = (w[itt] << 5) | (w[itt] >> 11);
-            }
-
-            for (int itt = 0; itt < 8; itt++) {
-                w[itt] ^= w[(itt + 2) % 8];
-                w[itt] += w[(itt + 7) % 8] * 0x85EB;
-                w[itt] ^= w[(itt + 4) % 8] >> 4;
-            }
-
-            // Rebuild 8-bit reversed words
-            for (int itt = 0; itt < 8; itt++) {
-                ww[itt * 2] = (uint8_t)(w[itt] & 0xFF);
-                ww[itt * 2 + 1] = (uint8_t)(w[itt] >> 8);
-            }
-
-            // Interact with original 16-bit words
-            mA0 ^= xA00 | xA01;
-            mA1 ^= xA10 | xA11;
-            mB0 ^= xB00 | xB01;
-            mB1 ^= xB10 | xB11;
-            mC0 ^= xC00 | xC01;
-            mC1 ^= xC10 | xC11;
-            mD0 ^= xD00 | xD01;
-            mD1 ^= xD10 | xD11;
-
-            // Rebuild the 32-bit words
-            wordA = mA0 | mA1;
-            wordB = mB0 | mB1;
-            wordC = mC0 | mC1;
-            wordD = mD0 | mD1;
-
-            state[mmfhe] = wordA;
-            state[(mmfhe + 83) & maskK] = wordB;
-            state[(mmfhe + 17) & maskK] = wordC;
-            state[(mmfhe + 27) & maskK] = wordD;
         }
 
         // ARX
