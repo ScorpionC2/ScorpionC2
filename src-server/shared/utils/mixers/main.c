@@ -47,6 +47,32 @@ void minimix32(const struct minimix_src src, uint32_t *pword) {
     *pword = mw0 | (mw1 << 8) | (mw2 << 16) | (mw3 << 24);
 }
 
+void minimix16(const struct minimix_src src, uint16_t *pword) {
+    uint32_t curByte = src.src[0];
+    uint16_t word = *pword;
+
+    uint16_t nWord = rotl16(src.src[1], src.src[2]);
+    flavourmix16(&nWord, 0x9FB6);
+
+    uint8_t mw0 = word & 0xFF;
+    uint8_t mw1 = (word >> 8) & 0xFF;
+    uint8_t mnw0 = nWord & 0xFF;
+    uint8_t mnw1 = (nWord >> 8) & 0xFF;
+
+    mw0 ^= rotr8(src.src[1], 4) + mnw1;
+    mw1 ^= rotl8(curByte, 3) + src.src[2];
+    mnw0 ^= mw0 * (curByte & 0xFF);
+    mnw1 ^= mw1 ^ 0xBB;
+
+    arxmix8(&mw0, src.src[1]);
+    arxmix8(&mw1, src.src[0]);
+    arxmix8(&mnw0, src.src[2]);
+    arxmix8(&mnw1, word);
+
+    *pword = summarize16(mw0 | (mw1 << 8) | (mnw0 << 16) | (mnw1 << 24));
+
+}
+
 void arxmix32(uint32_t *state, const int *_r, const int *_i, int wordLen) {
     int r = *_r;
     int i = *_i;
@@ -123,6 +149,24 @@ void smallmix32(uint32_t *word) {
     *word = w;
 };
 
+void smallmix16(uint16_t *word) {
+    uint16_t w = *word;
+
+    for (int i = 0; i < 16; i++) {
+        w ^= 0x1337;
+        w *= rotr16(w, 0xDEAD);
+        w ^= rotl16(w, 0xBEEF);
+
+        w *= w ^ rotl16(w, 0x0539);
+        w ^= w * rotr16(w, 0xF00F);
+        w *= w >> (rotl16(w, 0xABCD) & 0xF);
+
+        w ^= *word;
+    }
+
+    *word = w;
+}
+
 void flavourmix32(uint32_t *word, uint32_t flavour) {
     uint32_t w = *word;
 
@@ -144,4 +188,63 @@ void flavourmix32(uint32_t *word, uint32_t flavour) {
     }
 
     *word = w;
+}
+
+void flavourmix16(uint16_t *word, uint16_t flavour) {
+    uint16_t w = *word;
+
+    for (int i = 0; i < 16; i++) {
+        smallmix16(&w);
+        smallmix16(&flavour);
+
+        w ^= flavour;
+        w *= rotr16(flavour, w);
+        w ^= rotl16(w, flavour);
+
+        flavour ^= *word;
+
+        w *= w ^ rotr16(flavour, 0xDEAD);
+        w ^= w * rotl16(flavour, w);
+        w *= w << (rotr16(flavour, 0x1337) & 0xF);
+
+        w ^= *word;
+    }
+
+    *word = w;
+};
+
+uint16_t summarize16(uint32_t word) {
+    uint16_t a = word & 0xFFFF;
+    uint16_t b = (word >> 16) & 0xFFFF;
+
+    smallmix16(&a);
+    smallmix16(&b);
+
+    uint8_t a0 = a & 0xFF;
+    uint8_t a1 = (a >> 8) & 0xFF;
+    uint8_t b0 = b & 0xFF;
+    uint8_t b1 = (b >> 8) & 0xFF;
+
+    arxmix8(&a0, word);
+    arxmix8(&a1, word);
+    arxmix8(&b0, word);
+    arxmix8(&b1, word);
+
+    uint16_t out = 0;
+
+    for (int i = 7; i >= 1; i -= 2) {
+        out <<= 1;
+        out |= (a0 >> i) & 1;
+
+        out <<= 1;
+        out |= (b1 >> i) & 1;
+
+        out <<= 1;
+        out |= (a1 >> i) & 1;
+
+        out <<= 1;
+        out |= (b0 >> i) & 1;
+    }
+
+    return out;
 }
