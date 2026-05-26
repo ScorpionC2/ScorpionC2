@@ -267,42 +267,6 @@ bytes_t HashScorpionX(bytes_t src) {
 
     _finalizer(wordLen, state);
 
-    // This block will be implemented in _finalizer later
-    /*
-     * Sixth block of iteration, this is a finalizer for the state
-     *
-     * The goal of this is to destroy internal correlations by mixing some well-tested algorithms/methods in the My custom One
-     *
-     */
-//    for (int i = 0; i < 2; i++) {
-//        uint32_t mask = wordLen - 1;
-//
-//        // Mix miniWords From Hash Edge
-//            // Already in _finalizer
-//
-//        // ARX
-//        for (int arx = 0; arx < wordLen; arx++) {
-//            uint32_t old = state[arx];
-//
-//            uint32_t a = state[arx];
-//            uint32_t b = state[(arx + 1) & mask];
-//            uint32_t c = state[(arx + 2) & mask];
-//
-//            a += b;
-//            c ^= a;
-//            c = rotl(c, 16);
-//
-//            b += c;
-//            a ^= b;
-//            a = rotl(a, 12);
-//
-//            state[arx] = a;
-//            state[(arx + 1) & mask] = b;
-//            state[(arx + 2) & mask] = c;
-//
-//            state[arx] ^= old;
-//        }
-//
 //        // Cross words mixing
 //        for (int cwm = 0; cwm < wordLen; cwm++) {
 //            uint32_t old = state[cwm];
@@ -448,41 +412,6 @@ bytes_t HashScorpionX(bytes_t src) {
 //            state[ms] ^= old;
 //        }
 //
-//        // Word self-mixing
-//        for (int wsm = 0; wsm < wordLen; wsm++) {
-//            for (int m = 0; m < miniWordLen; m++) {
-//                uint32_t old = state[wsm];
-//                uint32_t word = state[wsm];
-//
-//                word ^= word << 13;
-//                word ^= word >> 17;
-//                word -= word << 23;
-//                word = rotl(word, 16);
-//                word = rotr(word, 22);
-//
-//                uint32_t curWord = word;
-//                word = rotr(word, ((word << 29) & m) ^
-//                                      ((curWord >> 11) | (word << (m & 0x1F))));
-//                word ^=
-//                    rotl(curWord, ((word << 29) & m) ^
-//                                      ((curWord >> 11) | (word << (m & 0x1F))));
-//                word ^= (curWord << (word & 0x1F));
-//
-//                state[wsm] = word;
-//                state[wsm] ^= old;
-//            }
-//        }
-//
-//        // Butterfly mixing
-//        for (int bm = 0; bm < wordLen; bm++) {
-//            uint32_t old = state[bm];
-//
-//            state[bm] ^= state[(wordLen - bm - 1) & mask];
-//            state[(bm + 1) & mask] += state[(wordLen / 2 + bm + 1) & mask];
-//
-//            state[bm] ^= old;
-//        }
-//
 //        // Bit avalanche injection
 //        for (int bai = 0; bai < wordLen; bai++) {
 //            uint32_t old = state[bai];
@@ -520,17 +449,6 @@ bytes_t HashScorpionX(bytes_t src) {
 //
 //            state[ls] ^= old;
 //        }
-//
-//        // Non-linear mix
-//        for (int nlm = 0; nlm < wordLen; nlm++) {
-//            uint32_t old = state[nlm];
-//
-//            state[nlm] ^= (state[nlm] << 7) & (state[(nlm + 3) & mask]);
-//            state[nlm] += (state[(nlm + 1) & mask] ^ ~state[(nlm + 2) & mask]);
-//
-//            state[nlm] ^= old;
-//        }
-//    }
 
     // Last block of iteration, this will create the output
     for (int i = 0; i < wordLen; i++) {
