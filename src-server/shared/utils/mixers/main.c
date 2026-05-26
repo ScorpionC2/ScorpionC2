@@ -16,18 +16,19 @@ void arxmix8(uint8_t *word, uint32_t srcWord) {
 
     uint8_t old = *word;
 
-    *word += rotl8(msw0, *word);
+    *word ^= rotl8(msw0, *word);
     *word ^= rotr8(msw1, *word);
-    *word *= msw2 ^ rotl8(*word, msw0);
+    *word += msw2 ^ rotl8(*word, msw0);
     *word ^= msw3 * rotr8(msw1, *word + 1);
     *word *= rotl8(*word, msw0);
 
-    *word ^= rotr8(*word, old);
+    *word ^= old;
 }
 
 void minimix32(const struct minimix_src src, uint32_t *pword) {
     uint32_t curByte = src.src[0];
     uint32_t word = *pword;
+    word *= 0x39D652DB;
 
     uint8_t mw0 = word & 0xFF;
     uint8_t mw1 = (word >> 8) & 0xFF;
@@ -35,9 +36,9 @@ void minimix32(const struct minimix_src src, uint32_t *pword) {
     uint8_t mw3 = (word >> 24) & 0xFF;
 
     mw0 ^= rotl8(src.src[1], 3) + mw2;
-    mw1 ^= rotr8(curByte, 5) + src.src[2];
+    mw1 *= rotr8(curByte, src.src[2] & 31);
     mw2 ^= mw0 * (curByte & 0xFF);
-    mw3 ^= mw1 ^ 0xC3;
+    mw3 += mw1 ^ 0xC3;
 
     arxmix8(&mw0, src.src[1]);
     arxmix8(&mw1, src.src[0]);
@@ -69,7 +70,7 @@ void minimix16(const struct minimix_src src, uint16_t *pword) {
     arxmix8(&mnw0, src.src[2]);
     arxmix8(&mnw1, word);
 
-    *pword = summarize16(mw0 | (mw1 << 8) | (mnw0 << 16) | (mnw1 << 24));
+    *pword = summarize16(mw0 | (uint32_t)(mw1 << 8) | (uint32_t)(mnw0 << 16) | (uint32_t)(mnw1 << 24));
 
 }
 
@@ -79,20 +80,21 @@ void arxmix32(uint32_t *state, const int *_r, const int *_i, int wordLen) {
 
     state[r & (wordLen - 1)] += state[(r + 82) & (wordLen - 1)];
     state[r & (wordLen - 1)] ^= state[(i + 19) & (wordLen - 1)];
-    state[r & (wordLen - 1)] = rotr(state[r & (wordLen - 1)], state[(i + 83) & (wordLen - 1)] & 31);
-    state[r & (wordLen - 1)] ^= state[(r + 52) & (wordLen - 1)] ^ rotr(state[(i + 24) & (wordLen - 1)], state[(r + 31) & (wordLen - 1)]);
+    state[r & (wordLen - 1)] *= rotr((state[r & (wordLen - 1)]), (state[(i + 83) & (wordLen - 1)] & 31));
+    state[r & (wordLen - 1)] ^= state[(r + 52) & (wordLen - 1)] ^ rotr((state[(i + 24) & (wordLen - 1)]), (state[(r + 31) & (wordLen - 1)] & 31));
 
-    state[r & (wordLen - 1)] += state[(i + r + 7) & (wordLen - 1)] & 0xF;
+    state[r & (wordLen - 1)] += state[(i + r + 7) & (wordLen - 1)];
     state[r & (wordLen - 1)] *= 0x9E3779B1;
     state[r & (wordLen - 1)] ^= state[r & (wordLen - 1)] >> 16;
 }
 
 void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i, int miniWordLen) {
     int i = *_i;
+    uint32_t mask = wordLen - 1;
 
-    state[*index] ^= state[(*index + i + 1) & (wordLen - 1)];
-    state[*index] = rotl(state[*index], state[(*index + i + 1) & (miniWordLen - 1)] & 31);
-    state[*index] = rotl(state[*index], 16);
+    state[*index & mask] ^= state[(*index + i + 1) & mask];
+    state[*index & mask] *= rotl(state[*index & mask], state[(*index + i + 1) & mask] & 31);
+    state[*index & mask] ^= rotl(state[*index & mask], 16);
 
     const struct minimix_src indexes = {
         .src = {
@@ -104,46 +106,41 @@ void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i, i
 
     minimix32(indexes, &state[*index]);
 
-    state[*index] ^= 0x838383FF;
-    state[*index] += state[(*index + 44) & (wordLen - 1)];
-    state[*index] ^= state[i & (wordLen - 1)] * 0x9E37D9BF;
-    state[*index] += 1;
+    state[*index & mask] ^= 0x838383FF;
+    state[*index & mask] += state[(*index + 44) & mask];
+    state[*index & mask] ^= state[i & mask] * 0x9E37D9BF;
+    state[*index & mask] += 1;
 }
 
 void multiarxmix32(uint32_t *state, int wordLen, const int *_i, bytes_t src) {
     int i = *_i;
 
-    for (int r = 0; r < wordLen; r++) {
+    for (int r = 0; r < 4; r++) {
         uint32_t currentByte = src.b[i % src.len] ^ 0xAB808DF1;
-        uint32_t mix = currentByte ^ rotl(currentByte, src.b[(i + 1) % src.len]);
+        uint32_t mix = currentByte ^ rotl(src.b[(i + 1) % src.len], 0xBEEA5123);
 
-        flavourmix32(&state[r & (wordLen - 1)], mix);
+        flavourmix32(&state[r & (wordLen - 1)], currentByte ^ mix);
         arxmix32(state, &r, &i, wordLen);
     }
 }
 
 void dependency32(int wordLen, uint32_t *state, const int *index) {
-    for (int r = 0; r < wordLen; r++)
+    for (int r = 0; r < 4; r++)
         arxmix32(state, &r, index, wordLen);
 
     // This sub-block will ensure that high bits influence low bits
-    for (int ii = 0; ii < wordLen; ii++)
+    for (int ii = 0; ii < 4; ii++)
         state[ii] ^= state[(ii + 1) & (wordLen - 1)] >> 1;
 }
 
 void smallmix32(uint32_t *word) {
     uint32_t w = *word;
 
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 8; i++) {
+        w *= 0x140329DD ^ (i | 1);
         w ^= 0x912125FF;
-        w *= rotl(w, 0x0870518D);
-        w ^= rotr(w, *word);
-
-        w *= w ^ rotl(w, 0xDEADBEEF);
         w ^= w * rotr(w, 0x13371337);
-        w *= w << (rotr(w, 0x0539) & 0x1F);
 
-        w ^= *word;
     }
 
     *word = w;
@@ -152,16 +149,11 @@ void smallmix32(uint32_t *word) {
 void smallmix16(uint16_t *word) {
     uint16_t w = *word;
 
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 4; i++) {
+        w *= 0x98430E0D ^ (i | 1);
         w ^= 0x1337;
-        w *= rotr16(w, 0xDEAD);
-        w ^= rotl16(w, 0xBEEF);
-
-        w *= w ^ rotl16(w, 0x0539);
         w ^= w * rotr16(w, 0xF00F);
-        w *= w >> (rotl16(w, 0xABCD) & 0xF);
 
-        w ^= *word;
     }
 
     *word = w;
@@ -170,21 +162,11 @@ void smallmix16(uint16_t *word) {
 void flavourmix32(uint32_t *word, uint32_t flavour) {
     uint32_t w = *word;
 
-    for (int i = 0; i < 32; i++) {
-        smallmix32(&w);
-        smallmix32(&flavour);
-
+    for (int i = 0; i < 8; i++) {
         w ^= flavour;
-        w *= rotl(flavour, w);
-        w ^= rotr(w, flavour);
-
-        flavour ^= *word;
-
-        w *= w ^ rotl(flavour, 0xDEADBEEF);
-        w ^= w * rotr(flavour, w);
-        w *= w << (rotl(flavour, 0x13371337) & 0x1F);
-
-        w ^= *word;
+        w *= 0x3008B987;
+        w = rotr(w, 11);
+        w ^= rotl(flavour, 7);
     }
 
     *word = w;
@@ -193,21 +175,11 @@ void flavourmix32(uint32_t *word, uint32_t flavour) {
 void flavourmix16(uint16_t *word, uint16_t flavour) {
     uint16_t w = *word;
 
-    for (int i = 0; i < 16; i++) {
-        smallmix16(&w);
-        smallmix16(&flavour);
-
+    for (int i = 0; i < 4; i++) {
         w ^= flavour;
-        w *= rotr16(flavour, w);
-        w ^= rotl16(w, flavour);
-
-        flavour ^= *word;
-
-        w *= w ^ rotr16(flavour, 0xDEAD);
-        w ^= w * rotl16(flavour, w);
-        w *= w << (rotr16(flavour, 0x1337) & 0xF);
-
-        w ^= *word;
+        w *= 0xCEE1;
+        w = rotl16(w, 3);
+        w ^= rotr16(flavour, 15);
     }
 
     *word = w;
@@ -247,4 +219,41 @@ uint16_t summarize16(uint32_t word) {
     }
 
     return out;
+}
+
+void mixtwo32(uint32_t *state, bytes_t *src, int wordLen) {
+    uint32_t mask = wordLen - 1;
+    for (int i = 0; i < 8; i++) {
+        const struct minimix_src stateMinimixSrc = {
+            .src = {
+                state[i & mask],
+                state[(i + 1) & mask],
+                state[(i + 50) & mask]
+            }
+        };
+
+        const struct minimix_src srcMinimixSrc = {
+            .src = {
+                src->b[i % src->len],
+                src->b[(i + 2) % src->len],
+                src->b[(i + 27) % src->len]
+            }
+        };
+
+        minimix32(srcMinimixSrc, &state[(i + 1) & mask]);
+
+        uint32_t curByte =  src->b[i % src->len] |
+                            (src->b[(i + 1) % src->len] << 8) |
+                            (src->b[(i + 2) % src->len] << 16) |
+                            (src->b[(i + 3) % src->len] << 24);
+
+        minimix32(stateMinimixSrc, &curByte);
+        uint16_t srcA = curByte & 0xFFFF;
+        uint16_t srcB = (curByte >> 16) & 0xFFFF;
+
+        minimix16(stateMinimixSrc, &srcA);
+        minimix16(stateMinimixSrc, &srcB);
+
+        state[(i + 3) & mask] = srcA | ((uint32_t)srcB << 16);
+    }
 }

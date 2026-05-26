@@ -16,6 +16,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
+#include <stdio.h>
 
 bytes_t HashDjb2(bytes_t src) {
     ulong_t hash = 5381;
@@ -146,62 +148,72 @@ void _seedState(int wordLen, uint32_t *state, const scorpionSettings *ctx) {
     }
 }
 
-void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
-    for (size_t i = 0; i < src.len; i++) {
+void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen, const int *index) {
+    for (int i = 0; i < (int)src.len; i++) {
         // Here we define the currentByte
-        uint32_t currentByte = src.b[i];
-        uint32_t *word = &state[i & (wordLen - 1)];
+
+        uint32_t curByte =  src.b[i % src.len] |
+                            (src.b[(i + 1) % src.len] << 8) |
+                            (src.b[(i + 2) % src.len] << 16) |
+                            (src.b[(i + 3) % src.len] << 24);
+
+        uint32_t secByte =  src.b[(i + 19) % src.len] |
+                            (src.b[(i + 28) % src.len] << 8) |
+                            (src.b[(i + 36) % src.len] << 16) |
+                            (src.b[(i + 11) % src.len] << 24);
+
+        uint32_t word = state[i & (wordLen - 1)];
+
+        flavourmix32(&curByte, 0x6B8FA177);
+        flavourmix32(&secByte, 0x1CFE885B);
 
         // Now we iterate inside the current word
         const struct minimix_src indexes = {
             .src = {
-                currentByte,
-                src.b[(i + 2) % src.len],
-                src.b[(i + 30) % src.len]
+                curByte,
+                secByte,
+                word ^ rotr(curByte & 0x1F, secByte & 0x1F)
             }
         };
 
-        minimix32(indexes, word);
+        minimix32(indexes, &word);
 
         // Now we define [v]alue, that must be based in state and must interact with currentByte
         // The idx (index) is the state's index that we'll modify
-        uint32_t v = fmix32(state[i & (wordLen - 1)]);
-        uint32_t idx = state[i % wordLen] ^ ((v << 9) ^ 0xFFF1FF2F);
+        uint32_t v = fmix32(word) ^ 0x85EBCA6Bu;
+        uint32_t idx = word ^ ((v << 9) ^ 0xDEADBEEF);
 
-        // Modify the state index and next word
-        arxmix32(state, (int*)&idx, (int*)&i, wordLen);
+        uint32_t trdByte =  src.b[(i + 16) % src.len] |
+                            (src.b[(i + 39) % src.len] << 8) |
+                            (src.b[(i + 44) % src.len] << 16) |
+                            (src.b[(i + 4) % src.len] << 24);
+
+        smallmix32(&trdByte);
 
         const struct minimix_src secondIndexes = {
             .src = {
-                src.b[i % src.len],
-                src.b[(i + 16) % src.len],
-                src.b[(i + 39) % src.len]
+                curByte,
+                trdByte,
+                curByte ^ trdByte
             }
         };
 
-        minimix32(secondIndexes, word);
-
-        state[(idx + 78) & (wordLen - 1)] += state[idx & (wordLen - 1)];
-
-        uint32_t x = currentByte ^ state[(idx + 2) & (wordLen - 1)];
-        smallmix32(&x);
-
-        uint32_t spread = currentByte * 0x9E3779B1;
-        flavourmix32(&state[(idx + (88 * i)) & (wordLen - 1)], spread);
+        minimix32(secondIndexes, &word);
+        state[i & (wordLen - 1)] = word;
     }
 }
 
 void _mixState(int wordLen, int miniWordLen, uint32_t *state, const int *index) {
     int i = *index;
 
-    for (int r = 0; r < wordLen; r++)
+    for (int r = 0; r < miniWordLen; r++)
         arraymix32(state, &r, wordLen, &i, miniWordLen);
 }
 
 void _finalizer(int wordLen, uint32_t *state) {
     uint32_t mask = wordLen - 1;
 
-    for (int i = 0; i < wordLen; i++) {
+    for (int i = 0; i < 4; i++) {
         struct minimix_src mixSrc = {
             .src = { 
                 state[(i + 83) & mask],
@@ -218,7 +230,7 @@ void _finalizer(int wordLen, uint32_t *state) {
         minimix16(mixSrc, &a);
         minimix16(mixSrc, &b);
 
-        state[i] = a | b;
+        state[i] = a | ((uint32_t)b << 16);
     }
 }
 
@@ -236,16 +248,17 @@ bytes_t HashScorpionX(bytes_t src) {
     bytes_t out;
     out.len = hashLen;
     out.b = malloc(out.len);
-
     uint32_t *state = _getState(wordLen);
     if (state == NULL)
         return (bytes_t){NULL, 0};
 
     _seedState(wordLen, state, Hash.settings);
-    _mixStateWithSrc(src, state, wordLen);
-
-    for (int i = 0; i < miniWordLen; i++) {
+    for (int i = 0; i < 4; i++)
         _mixState(wordLen, miniWordLen, state, &i);
+
+    mixtwo32(state, &src, wordLen);
+    for (int i = 0; i < miniWordLen; i++) {
+        _mixStateWithSrc(src, state, wordLen, &i);
         multiarxmix32(state, wordLen, &i, src);
     }
 

@@ -54,3 +54,4 @@ void smallmix16(uint16_t *word);
 void flavourmix32(uint32_t *word, uint32_t flavour);
 void flavourmix16(uint16_t *word, uint16_t flavour);
 uint16_t summarize16(uint32_t word);
+void mixtwo32(uint32_t *state, bytes_t *src, int wordLen);
