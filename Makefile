@@ -27,7 +27,7 @@ I_FLAGS 		:=  -I. \
 								-Isrc-server/shared/utils/math \
 								-Isrc-server/shared/utils/mixers \
 			
-OPTIMIZE_FLAGS 	:= 	-Os
+OPTIMIZE_FLAGS 	:= 	-O3
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
 
 USE_DEBUG		:= 	false
