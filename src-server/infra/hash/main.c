@@ -174,10 +174,6 @@ void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
 
         minimix32(indexes, &word);
 
-        // Now we define [v]alue, that must be based in state and must interact with currentByte
-        // The idx (index) is the state's index that we'll modify
-        uint32_t v = fmix32(word) ^ 0x85EBCA6Bu;
-
         uint32_t trdByte = src.b[wrap_idx(i + 16, srcLen)] |
                            (src.b[wrap_idx(i + 39, srcLen)] << 8) |
                            (src.b[wrap_idx(i + 44, srcLen)] << 16) |
