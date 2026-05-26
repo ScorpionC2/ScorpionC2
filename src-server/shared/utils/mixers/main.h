@@ -92,8 +92,7 @@ static inline void minimix16(const struct minimix_src src, uint16_t *pword) {
 }
 
 void arxmix32(uint32_t *state, const int *_r, const int *_i, int wordLen);
-void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i,
-                int miniWordLen);
+void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i);
 void multiarxmix32(uint32_t *state, int wordLen, const int *_i, bytes_t src);
 void dependency32(int wordLen, uint32_t *state, const int *index);
 void smallmix32(uint32_t *word);
@@ -101,4 +100,4 @@ void smallmix16(uint16_t *word);
 void flavourmix32(uint32_t *word, uint32_t flavour);
 void flavourmix16(uint16_t *word, uint16_t flavour);
 uint16_t summarize16(uint32_t word);
-void mixtwo32(uint32_t *state, bytes_t *src, int wordLen);
+void mixtwo32(uint32_t *state, const bytes_t *src, int wordLen);

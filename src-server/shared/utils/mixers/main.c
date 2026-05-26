@@ -25,8 +25,7 @@ void arxmix32(uint32_t *state, const int *_r, const int *_i, int wordLen) {
     state[r & (wordLen - 1)] ^= state[r & (wordLen - 1)] >> 16;
 }
 
-void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i,
-                int miniWordLen) {
+void arraymix32(uint32_t *state, const int *index, int wordLen, const int *_i) {
     int i = *_i;
     uint32_t mask = wordLen - 1;
 
@@ -137,7 +136,7 @@ inline uint16_t summarize16(uint32_t word) {
     return out;
 }
 
-void mixtwo32(uint32_t *state, bytes_t *src, int wordLen) {
+void mixtwo32(uint32_t *state, const bytes_t *src, int wordLen) {
     uint32_t mask = wordLen - 1;
     size_t srcLen = src->len;
     for (int i = 0; i < 8; i++) {

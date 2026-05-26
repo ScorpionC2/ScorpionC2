@@ -177,7 +177,6 @@ void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
         // Now we define [v]alue, that must be based in state and must interact with currentByte
         // The idx (index) is the state's index that we'll modify
         uint32_t v = fmix32(word) ^ 0x85EBCA6Bu;
-        uint32_t idx = word ^ ((v << 9) ^ 0xDEADBEEF);
 
         uint32_t trdByte = src.b[wrap_idx(i + 16, srcLen)] |
                            (src.b[wrap_idx(i + 39, srcLen)] << 8) |
@@ -199,7 +198,7 @@ void _mixState(int wordLen, int miniWordLen, uint32_t *state,
     int i = *index;
 
     for (int r = 0; r < miniWordLen; r++)
-        arraymix32(state, &r, wordLen, &i, miniWordLen);
+        arraymix32(state, &r, wordLen, &i);
 }
 
 void _finalizer(int wordLen, uint32_t *state) {
