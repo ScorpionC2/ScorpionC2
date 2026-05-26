@@ -9,11 +9,15 @@
 //      source code for crackme in https://crackmes.one/crackme/6973ebc6d735cd51e7a1aa97
 //
 
-#include "main.h"
+#include "src-server/infra/hash/main.h"
 
 #include "src-server/shared/utils/math/main.h"
 #include "src-server/shared/utils/mixers/main.h"
+#include <inttypes.h>
+#include <iso646.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -147,69 +151,61 @@ void _seedState(int wordLen, uint32_t *state, const scorpionSettings *ctx) {
 }
 
 void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
-    for (size_t i = 0; i < src.len; i++) {
-        // Here we define the currentByte
-        uint32_t currentByte = src.b[i];
-        uint32_t *word = &state[i & (wordLen - 1)];
+    size_t srcLen = src.len;
+    for (int i = 0; i < (int)srcLen; i++) {
+        uint32_t curByte = src.b[wrap_idx(i, srcLen)] |
+                           (src.b[wrap_idx(i + 1, srcLen)] << 8) |
+                           (src.b[wrap_idx(i + 2, srcLen)] << 16) |
+                           (src.b[wrap_idx(i + 3, srcLen)] << 24);
+
+        uint32_t secByte = src.b[wrap_idx(i + 19, srcLen)] |
+                           (src.b[wrap_idx(i + 28, srcLen)] << 8) |
+                           (src.b[wrap_idx(i + 36, srcLen)] << 16) |
+                           (src.b[wrap_idx(i + 11, srcLen)] << 24);
+
+        uint32_t word = state[i & (wordLen - 1)];
+
+        curByte = fmix32(curByte);
+        secByte = fmix32(secByte);
 
         // Now we iterate inside the current word
         const struct minimix_src indexes = {
-            .src = {
-                currentByte,
-                src.b[(i + 2) % src.len],
-                src.b[(i + 30) % src.len]
-            }
-        };
+            .src = {curByte, secByte, word ^ rotr(curByte, secByte & 0x1F)}};
 
-        minimix32(indexes, word);
+        minimix32(indexes, &word);
 
-        // Now we define [v]alue, that must be based in state and must interact with currentByte
-        // The idx (index) is the state's index that we'll modify
-        uint32_t v = fmix32(state[i & (wordLen - 1)]);
-        uint32_t idx = state[i % wordLen] ^ ((v << 9) ^ 0xFFF1FF2F);
+        uint32_t trdByte = src.b[wrap_idx(i + 16, srcLen)] |
+                           (src.b[wrap_idx(i + 39, srcLen)] << 8) |
+                           (src.b[wrap_idx(i + 44, srcLen)] << 16) |
+                           (src.b[wrap_idx(i + 4, srcLen)] << 24);
 
-        // Modify the state index and next word
-        arxmix32(state, (int*)&idx, (int*)&i, wordLen);
+        trdByte = fmix32(trdByte);
 
         const struct minimix_src secondIndexes = {
-            .src = {
-                src.b[i % src.len],
-                src.b[(i + 16) % src.len],
-                src.b[(i + 39) % src.len]
-            }
-        };
+            .src = {curByte, trdByte, curByte ^ trdByte}};
 
-        minimix32(secondIndexes, word);
-
-        state[(idx + 78) & (wordLen - 1)] += state[idx & (wordLen - 1)];
-
-        uint32_t x = currentByte ^ state[(idx + 2) & (wordLen - 1)];
-        smallmix32(&x);
-
-        uint32_t spread = currentByte * 0x9E3779B1;
-        flavourmix32(&state[(idx + (88 * i)) & (wordLen - 1)], spread);
+        minimix32(secondIndexes, &word);
+        state[i & (wordLen - 1)] = word;
     }
 }
 
-void _mixState(int wordLen, int miniWordLen, uint32_t *state, const int *index) {
+void _mixState(int wordLen, int miniWordLen, uint32_t *state,
+               const int *index) {
     int i = *index;
 
-    for (int r = 0; r < wordLen; r++)
-        arraymix32(state, &r, wordLen, &i, miniWordLen);
+    for (int r = 0; r < miniWordLen; r++)
+        arraymix32(state, &r, wordLen, &i);
 }
 
 void _finalizer(int wordLen, uint32_t *state) {
     uint32_t mask = wordLen - 1;
 
-    for (int i = 0; i < wordLen; i++) {
-        struct minimix_src mixSrc = {
-            .src = { 
-                state[(i + 83) & mask],
-                state[(i + 17) & mask],
-                state[(i + 27) & mask]
-            }
-        };
-        
+    // Self mixing
+    for (int i = 0; i < 4; i++) {
+        struct minimix_src mixSrc = {.src = {state[(i + 83) & mask],
+                                             state[(i + 17) & mask],
+                                             state[(i + 27) & mask]}};
+
         minimix32(mixSrc, &state[i]);
 
         uint16_t a = state[i] & 0xFFFF;
@@ -218,7 +214,29 @@ void _finalizer(int wordLen, uint32_t *state) {
         minimix16(mixSrc, &a);
         minimix16(mixSrc, &b);
 
-        state[i] = a | b;
+        state[i] = a | ((uint32_t)b << 16);
+    }
+
+    // Cross-lane mixing
+    for (int i = 0; i < wordLen; i++) {
+        uint32_t old = state[i & mask];
+
+        state[i & mask] ^= state[(i + 10) & mask];
+        state[i & mask] += state[(i + 29) & mask];
+        state[i & mask] ^= rotl(state[(i + 38) & mask], 11);
+
+        state[i & mask] ^= old;
+    }
+
+    for (int i = 0; i < wordLen; i++) {
+        uint32_t old = state[i & mask];
+
+        state[i & mask] *= 0x85F7B117;
+        state[i & mask] ^= rotl(state[i & mask], 16);
+        state[i & mask] *= 0x9FD223F;
+        state[i & mask] ^= rotr(state[i & mask], 11);
+
+        state[i & mask] ^= old;
     }
 }
 
@@ -236,288 +254,26 @@ bytes_t HashScorpionX(bytes_t src) {
     bytes_t out;
     out.len = hashLen;
     out.b = malloc(out.len);
-
     uint32_t *state = _getState(wordLen);
     if (state == NULL)
         return (bytes_t){NULL, 0};
 
     _seedState(wordLen, state, Hash.settings);
+    for (int i = 0; i < 4; i++)
+        _mixState(wordLen, miniWordLen, state, &i);
+
+    mixtwo32(state, &src, wordLen);
     _mixStateWithSrc(src, state, wordLen);
 
-    for (int i = 0; i < miniWordLen; i++) {
-        _mixState(wordLen, miniWordLen, state, &i);
+    for (int i = 0; i < 4; i++) {
         multiarxmix32(state, wordLen, &i, src);
     }
 
-    for (int i = 0; i < (miniWordLen * 2); i++)
+    for (int i = 0; i < miniWordLen; i++)
         dependency32(wordLen, state, &i);
 
-    _finalizer(wordLen, state);
-
-    // This block will be implemented in _finalizer later
-    /*
-     * Sixth block of iteration, this is a finalizer for the state
-     *
-     * The goal of this is to destroy internal correlations by mixing some well-tested algorithms/methods in the My custom One
-     *
-     */
-//    for (int i = 0; i < 2; i++) {
-//        uint32_t mask = wordLen - 1;
-//
-//        // Mix miniWords From Hash Edge
-//            // Already in _finalizer
-//
-//        // ARX
-//        for (int arx = 0; arx < wordLen; arx++) {
-//            uint32_t old = state[arx];
-//
-//            uint32_t a = state[arx];
-//            uint32_t b = state[(arx + 1) & mask];
-//            uint32_t c = state[(arx + 2) & mask];
-//
-//            a += b;
-//            c ^= a;
-//            c = rotl(c, 16);
-//
-//            b += c;
-//            a ^= b;
-//            a = rotl(a, 12);
-//
-//            state[arx] = a;
-//            state[(arx + 1) & mask] = b;
-//            state[(arx + 2) & mask] = c;
-//
-//            state[arx] ^= old;
-//        }
-//
-//        // Cross words mixing
-//        for (int cwm = 0; cwm < wordLen; cwm++) {
-//            uint32_t old = state[cwm];
-//            for (int m = 0; m < miniWordLen; m++) {
-//                uint32_t word = state[i];
-//
-//                uint8_t mw0 = word & 0xFF;
-//                uint8_t mw1 = (word >> 8) & 0xFF;
-//                uint8_t mw2 = (word >> 16) & 0xFF;
-//                uint8_t mw3 = (word >> 24) & 0xFF;
-//
-//                mw0 = rotl8(mw0, 20);
-//                mw0 ^= (mw0 >> 4);
-//                mw0 *= seed_helper(0xBAEF2124, seed, shiftSeed);
-//                mw0 ^= rotr8(state[(i + 37) & (wordLen - 1)] & 0xFF, 2);
-//                mw0 ^= (mw0 << 5) | (mw0 >> 7);
-//
-//                uint8_t mw0x =
-//                    (mw0 << 7) ^
-//                    (mw0 * (mw0 ^ seed_helper(0x2BDA, seed, shiftSeed)));
-//                for (int it = 0; it < 15; it++) {
-//                    uint8_t oldX = mw0x;
-//
-//                    uint8_t x =
-//                        (mw0x << ((mw0 ^ seed_helper(0x6FAA, seed, shiftSeed)) &
-//                                  8)) ^
-//                        mw0;
-//                    x ^= x >> 6;
-//                    x *= 0x2C6D;
-//                    x ^= x >> 7;
-//                    x *= 0x2979;
-//                    x ^= x >> 4;
-//
-//                    mw0x = x;
-//                    mw0x ^= oldX;
-//                }
-//
-//                mw1 = rotr8(mw1, 5);
-//                mw1 ^= (mw1 << 6) ^ rotl8(mw1, 7);
-//                mw1 += 1;
-//                mw1 ^= (mw1 ^ seed_helper(0x0539, seed, shiftSeed - 1))
-//                       << ((mw1 - 1) & 8);
-//
-//                uint8_t mw1x =
-//                    (((mw1 * 200202) & sizeof(uint8_t)) ^ (mw1 - 2)) << rotl8(
-//                        mw1, (mw1 ^ seed_helper(0x9998, seed, shiftSeed)) & 8);
-//                for (int it = 0; it < 15; it++) {
-//                    uint8_t oldX = mw1x;
-//                    uint8_t x = (mw1x * rotl8(mw1x, 3)) ^ (mw1x << 28);
-//
-//                    uint32_t a = x;
-//                    uint32_t b = x >> 6;
-//                    uint32_t c = x << 2;
-//
-//                    a += b;
-//                    c ^= a;
-//                    c = rotl8(c, 6);
-//
-//                    b += c;
-//                    a ^= b;
-//                    a = rotl8(a, 2);
-//
-//                    x = a;
-//                    x ^= b << 5;
-//                    x ^= c >> 4;
-//
-//                    x ^= oldX;
-//                    mw1x = x + 1;
-//                }
-//
-//                mw2 = rotr8(mw2, mw3 & 8);
-//                mw2 ^= (mw3 << 6) ^ rotl8(mw2, 7);
-//                mw3 ^= mw2 >> (mw2 ^ 0xBF8F) & 8;
-//                mw2 ^= (mw3 << ((mw2 >> 4) & 8));
-//                mw3 = rotl8(mw2, 27);
-//                mw3 ^= mw2 << 7;
-//                mw2 ^= mw3 >> 5;
-//
-//                uint8_t mw5x =
-//                    (mw2 *
-//                     (mw3 >> (mw2 ^ seed_helper(0x1C4D, seed << 9, shiftSeed)) &
-//                      8)) ^
-//                    (mw2 << (mw3 & 8));
-//                for (int it = 0; it < 30; it++) {
-//                    uint8_t oldX = mw5x;
-//                    uint8_t x =
-//                        (mw5x ^ ((mw5x << 1) ^ ((mw5x << 2) ^ (mw5x << 3)))) ^
-//                        (mw5x << 4);
-//
-//                    uint32_t j = (it * 5 + 1);
-//                    uint32_t k = (it * 3 + 1);
-//
-//                    uint32_t t = x;
-//                    x = (x ^ (x * j)) >> (x & 8);
-//                    x = (x ^ (x * (it * 3 + 1))) << (((it * 5 + 1) * x) & 8);
-//                    x = rotl8(x, (it * 3 + 1));
-//                    x ^= t << 6;
-//                    x ^= t ^ (k >> 7);
-//
-//                    mw5x = x;
-//                    mw5x ^= oldX;
-//                }
-//
-//                uint8_t mw3x = rotr8(mw5x, mw2 & 7);
-//                uint8_t mw2x = rotl8(mw5x, mw3 & 7);
-//
-//                state[i] = mw0x | (mw1x << 8) | (mw2x << 16) | (mw3x << 24);
-//
-//                state[i] += mw0x;
-//                state[(i + 22) & (wordLen - 1)] *= mw1x;
-//                state[i] = rotl(state[i], mw2x & 0x1F);
-//                state[i] = rotr(state[i], mw3x & 0x1F);
-//
-//                state[cwm] ^= state[i];
-//            }
-//
-//            state[(cwm + 3) & (wordLen - 1)] ^= old;
-//            state[cwm] =
-//                rotr(state[cwm], state[(cwm + 1) & (wordLen - 1)] & 0x1F);
-//            state[(cwm + 80) & (wordLen - 1)] ^= state[cwm];
-//        }
-//
-//        // Cross-lane mixing
-//        for (int clm = 0; clm < wordLen; clm++) {
-//            uint32_t old = state[clm];
-//
-//            state[clm] ^= state[(clm + 7) & mask];
-//            state[clm] += state[(clm + 13) & mask];
-//            state[clm] ^= rotl(state[(clm + 37) & mask], 11);
-//
-//            state[clm] ^= old;
-//        }
-//
-//        // Multiplicative Scrambling
-//        for (int ms = 0; ms < wordLen; ms++) {
-//            uint32_t old = state[ms];
-//
-//            state[ms] *= 0x9E3779B1;
-//            state[ms] ^= state[ms] >> 16;
-//            state[ms] *= 0x85EBCA6B;
-//            state[ms] ^= rotl(state[ms], 11);
-//
-//            state[ms] ^= old;
-//        }
-//
-//        // Word self-mixing
-//        for (int wsm = 0; wsm < wordLen; wsm++) {
-//            for (int m = 0; m < miniWordLen; m++) {
-//                uint32_t old = state[wsm];
-//                uint32_t word = state[wsm];
-//
-//                word ^= word << 13;
-//                word ^= word >> 17;
-//                word -= word << 23;
-//                word = rotl(word, 16);
-//                word = rotr(word, 22);
-//
-//                uint32_t curWord = word;
-//                word = rotr(word, ((word << 29) & m) ^
-//                                      ((curWord >> 11) | (word << (m & 0x1F))));
-//                word ^=
-//                    rotl(curWord, ((word << 29) & m) ^
-//                                      ((curWord >> 11) | (word << (m & 0x1F))));
-//                word ^= (curWord << (word & 0x1F));
-//
-//                state[wsm] = word;
-//                state[wsm] ^= old;
-//            }
-//        }
-//
-//        // Butterfly mixing
-//        for (int bm = 0; bm < wordLen; bm++) {
-//            uint32_t old = state[bm];
-//
-//            state[bm] ^= state[(wordLen - bm - 1) & mask];
-//            state[(bm + 1) & mask] += state[(wordLen / 2 + bm + 1) & mask];
-//
-//            state[bm] ^= old;
-//        }
-//
-//        // Bit avalanche injection
-//        for (int bai = 0; bai < wordLen; bai++) {
-//            uint32_t old = state[bai];
-//
-//            uint32_t x = state[bai];
-//
-//            x ^= x >> 15;
-//            x *= 0x2C1B3C6D;
-//            x ^= x >> 12;
-//            x *= 0x297A2D39;
-//            x ^= x >> 15;
-//
-//            state[bai] = x;
-//            state[bai] ^= old;
-//        }
-//
-//        // Global Diffusion
-//        for (int gd = 0; gd < wordLen; gd++) {
-//            state[gd] ^= state[(gd + 7) & (wordLen - 1)];
-//            state[gd] ^= state[(gd + 13) & (wordLen - 1)];
-//            state[gd] ^= state[(gd + 37) & (wordLen - 1)];
-//        }
-//
-//        // Lane shuffle
-//        for (int ls = 0; ls < wordLen; ls++) {
-//            uint32_t old = state[ls];
-//
-//            uint32_t j = (ls * 5 + 1) & mask;
-//            uint32_t k = (ls * 3 + 1) & mask;
-//
-//            uint32_t t = state[ls];
-//            state[ls] = state[j];
-//            state[j] = state[k];
-//            state[k] = t;
-//
-//            state[ls] ^= old;
-//        }
-//
-//        // Non-linear mix
-//        for (int nlm = 0; nlm < wordLen; nlm++) {
-//            uint32_t old = state[nlm];
-//
-//            state[nlm] ^= (state[nlm] << 7) & (state[(nlm + 3) & mask]);
-//            state[nlm] += (state[(nlm + 1) & mask] ^ ~state[(nlm + 2) & mask]);
-//
-//            state[nlm] ^= old;
-//        }
-//    }
+    for (int i = 0; i < 4; i++)
+        _finalizer(wordLen, state);
 
     // Last block of iteration, this will create the output
     for (int i = 0; i < wordLen; i++) {
