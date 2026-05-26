@@ -2,8 +2,7 @@
 
 ## Issues
 
-1. Refactor `HashScorpionX` - Issue Finished but still having to test the algorithm and implement more loops in `_finalizer`. - ON GOING 85%
-2. Create context to `app/cli/input/safeget` - [Issue AZ3gDTv8cS4qjkleCTfG](https://sonarcloud.io/project/issues?impactSoftwareQualities=MAINTAINABILITY&issueStatuses=OPEN%2CCONFIRMED&id=ScorpionC2_ScorpionC2&open=AZ3gDTv8cS4qjkleCTfG)
+1. Create context to `app/cli/input/safeget` - [Issue AZ3gDTv8cS4qjkleCTfG](https://sonarcloud.io/project/issues?impactSoftwareQualities=MAINTAINABILITY&issueStatuses=OPEN%2CCONFIRMED&id=ScorpionC2_ScorpionC2&open=AZ3gDTv8cS4qjkleCTfG)
 
 ## New features
 
