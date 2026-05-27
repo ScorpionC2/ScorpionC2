@@ -26,7 +26,11 @@ I_FLAGS 		:=  -I. \
 								-Isrc-server/app/cli/input \
 								-Isrc-server/shared/utils/math \
 								-Isrc-server/shared/utils/mixers \
+								-Isrc-server/shared/utils/comparision \
 			
+
+LIB_FLAGS := -lm
+
 OPTIMIZE_FLAGS 	:= 	-O3 -march=native -flto
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
 
@@ -66,7 +70,7 @@ all: help
 
 build: ## Build the project to build/scorpionc2-server
 	mkdir -p $(TARGET_DIR)
-	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT)
+	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
 
 clean: ## Remove build binary
 	rm -rf $(TARGET)
@@ -77,7 +81,7 @@ help: ## Show this menu
 rebuild: ## Remove old build and build again
 	rm -rf $(TARGET)
 	mkdir -p $(TARGET_DIR)
-	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT)
+	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
 
 
 RUN_TARGET_DIR := /tmp/scorpion-runs/$(shell date --iso=seconds)
@@ -86,7 +90,7 @@ RUN_TARGET := $(RUN_TARGET_DIR)/scorpionc2
 run: ## Run the project in a tmp file
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 	mkdir -p $(RUN_TARGET_DIR)
-	$(CC) $(CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT)
+	$(CC) $(CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
 	$(RUN_TARGET)
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 
@@ -102,14 +106,14 @@ DEBUG_CC_FLAGS	:= $(I_FLAGS) $(DEBUG_FLAGS)
 run-valgrind: ## Run the project in a tmp file and check it with valgrind
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 	mkdir -p $(RUN_TARGET_DIR)
-	$(CC) $(DEBUG_CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT)
+	$(CC) $(DEBUG_CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
 	$(VALGRIND_TARGET)
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 
 run-debug: ## Run the project in a tmp file
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 	mkdir -p $(RUN_TARGET_DIR)
-	$(CC) $(DEBUG_CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT)
+	$(CC) $(DEBUG_CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
 	$(RUN_TARGET)
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 
@@ -130,6 +134,6 @@ TEST_I_FLAGS := $(I_FLAGS) \
 test: ## Run the project's tests
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
 	mkdir -p $(TEST_TARGET_DIR)
-	$(CC) -fsanitize=address -g $(TEST_I_FLAGS) -o $(TEST_TARGET) $(TEST_SRC)
+	$(CC) -fsanitize=address -g $(TEST_I_FLAGS) -o $(TEST_TARGET) $(TEST_SRC) $(LIB_FLAGS)
 	$(TEST_TARGET)
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)

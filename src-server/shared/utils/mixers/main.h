@@ -61,7 +61,6 @@ struct minimix_src {
 };
 
 static inline void minimix32(const struct minimix_src src, uint32_t *pword) {
-    uint32_t curByte = src.src[0];
     uint32_t word = *pword;
     word *= 0x39D652DB;
 
@@ -79,7 +78,6 @@ static inline void minimix32(const struct minimix_src src, uint32_t *pword) {
 }
 
 static inline void minimix16(const struct minimix_src src, uint16_t *pword) {
-    uint32_t curByte = src.src[0];
     uint16_t word = *pword;
 
     uint8_t mw0 = word & 0xFF;
@@ -100,4 +98,3 @@ void smallmix16(uint16_t *word);
 void flavourmix32(uint32_t *word, uint32_t flavour);
 void flavourmix16(uint16_t *word, uint16_t flavour);
 uint16_t summarize16(uint32_t word);
-void mixtwo32(uint32_t *state, const bytes_t *src, int wordLen);
