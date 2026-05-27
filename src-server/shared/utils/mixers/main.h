@@ -61,7 +61,6 @@ struct minimix_src {
 };
 
 static inline void minimix32(const struct minimix_src src, uint32_t *pword) {
-    uint32_t curByte = src.src[0];
     uint32_t word = *pword;
     word *= 0x39D652DB;
 
@@ -79,7 +78,6 @@ static inline void minimix32(const struct minimix_src src, uint32_t *pword) {
 }
 
 static inline void minimix16(const struct minimix_src src, uint16_t *pword) {
-    uint32_t curByte = src.src[0];
     uint16_t word = *pword;
 
     uint8_t mw0 = word & 0xFF;
