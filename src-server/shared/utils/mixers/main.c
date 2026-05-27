@@ -135,34 +135,3 @@ inline uint16_t summarize16(uint32_t word) {
 
     return out;
 }
-
-void mixtwo32(uint32_t *state, const bytes_t *src, int wordLen) {
-    uint32_t mask = wordLen - 1;
-    size_t srcLen = src->len;
-    for (int i = 0; i < 8; i++) {
-        const struct minimix_src stateMinimixSrc = {
-            .src = {state[i & mask], state[(i + 1) & mask],
-                    state[(i + 50) & mask]}};
-
-        const struct minimix_src srcMinimixSrc = {
-            .src = {src->b[wrap_idx(i, srcLen)],
-                    src->b[wrap_idx(i + 2, srcLen)],
-                    src->b[wrap_idx(i + 27, srcLen)]}};
-
-        minimix32(srcMinimixSrc, &state[(i + 1) & mask]);
-
-        uint32_t curByte = src->b[wrap_idx(i, srcLen)] |
-                           (src->b[wrap_idx(i + 1, srcLen)] << 8) |
-                           (src->b[wrap_idx(i + 2, srcLen)] << 16) |
-                           (src->b[wrap_idx(i + 3, srcLen)] << 24);
-
-        minimix32(stateMinimixSrc, &curByte);
-        uint16_t srcA = curByte & 0xFFFF;
-        uint16_t srcB = (curByte >> 16) & 0xFFFF;
-
-        minimix16(stateMinimixSrc, &srcA);
-        minimix16(stateMinimixSrc, &srcB);
-
-        state[(i + 3) & mask] = srcA | ((uint32_t)srcB << 16);
-    }
-}

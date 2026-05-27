@@ -11,6 +11,7 @@
 
 #include "src-server/infra/hash/main.h"
 
+#include "src-server/shared/utils/comparision/main.h"
 #include "src-server/shared/utils/math/main.h"
 #include "src-server/shared/utils/mixers/main.h"
 #include <inttypes.h>
@@ -43,7 +44,7 @@ scorpionSettings settings = {
 
 #define SH seed_helper
 
-uint32_t *_getState(int wordLen) {
+uint32_t *getState(int wordLen) {
     // 512 is the higher wordLen value because max hashSize is 2048 and 2048 / 4 = 512
     static const uint32_t stateConst[512] = {
         0x2D88371A, 0x1DE48F52, 0x69A2BA8B, 0x58EFA8C9, 0x2F946493, 0x83A8C45E,
@@ -144,14 +145,15 @@ uint32_t *_getState(int wordLen) {
     return state;
 }
 
-void _seedState(int wordLen, uint32_t *state, const scorpionSettings *ctx) {
+void seedState(int wordLen, uint32_t *state, const scorpionSettings *ctx) {
     for (int i = 0; i < wordLen; i++) {
         state[i] = seed_helper(state[i], ctx->seed, ctx->shiftSeed);
     }
 }
 
-void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
+void absorb(bytes_t src, uint32_t *state, int wordLen) {
     size_t srcLen = src.len;
+
     for (int i = 0; i < (int)srcLen; i++) {
         uint32_t curByte = src.b[wrap_idx(i, srcLen)] |
                            (src.b[wrap_idx(i + 1, srcLen)] << 8) |
@@ -174,48 +176,22 @@ void _mixStateWithSrc(bytes_t src, uint32_t *state, int wordLen) {
 
         minimix32(indexes, &word);
 
-        uint32_t trdByte = src.b[wrap_idx(i + 16, srcLen)] |
-                           (src.b[wrap_idx(i + 39, srcLen)] << 8) |
-                           (src.b[wrap_idx(i + 44, srcLen)] << 16) |
-                           (src.b[wrap_idx(i + 4, srcLen)] << 24);
-
-        trdByte = fmix32(trdByte);
-
-        const struct minimix_src secondIndexes = {
-            .src = {curByte, trdByte, curByte ^ trdByte}};
-
-        minimix32(secondIndexes, &word);
         state[i & (wordLen - 1)] = word;
     }
 }
 
-void _mixState(int wordLen, int miniWordLen, uint32_t *state,
-               const int *index) {
-    int i = *index;
-
-    for (int r = 0; r < miniWordLen; r++)
+void mixState(int wordLen, int miniWordLen, uint32_t *state) {
+    int i = 0;
+    for (int r = 0; r < miniWordLen; r++) {
         arraymix32(state, &r, wordLen, &i);
+        dependency32(wordLen, state, &i);
+
+        i += (r + 1) / 2;
+    }
 }
 
-void _finalizer(int wordLen, uint32_t *state) {
+void finalizer(int wordLen, uint32_t *state) {
     uint32_t mask = wordLen - 1;
-
-    // Self mixing
-    for (int i = 0; i < 4; i++) {
-        struct minimix_src mixSrc = {.src = {state[(i + 83) & mask],
-                                             state[(i + 17) & mask],
-                                             state[(i + 27) & mask]}};
-
-        minimix32(mixSrc, &state[i]);
-
-        uint16_t a = state[i] & 0xFFFF;
-        uint16_t b = (state[(i + 5) & mask] >> 16) & 0xFFFF;
-
-        minimix16(mixSrc, &a);
-        minimix16(mixSrc, &b);
-
-        state[i] = a | ((uint32_t)b << 16);
-    }
 
     // Cross-lane mixing
     for (int i = 0; i < wordLen; i++) {
@@ -228,15 +204,29 @@ void _finalizer(int wordLen, uint32_t *state) {
         state[i & mask] ^= old;
     }
 
+    // Self mixing
+    for (int i = 0; i < 4; i++) {
+        struct minimix_src mixSrc = {.src = {state[(i + 83) & mask],
+                                             state[(i + 17) & mask],
+                                             state[(i + 27) & mask]}};
+
+        uint16_t a = state[i] & 0xFFFF;
+        uint16_t b = (state[i & mask] >> 16) & 0xFFFF;
+
+        minimix16(mixSrc, &a);
+        minimix16(mixSrc, &b);
+
+        state[i] = a | ((uint32_t)b << 16);
+    }
+
+    // Lane Shuffle Mixing
     for (int i = 0; i < wordLen; i++) {
         uint32_t old = state[i & mask];
 
         state[i & mask] *= 0x85F7B117;
-        state[i & mask] ^= rotl(state[i & mask], 16);
+        state[i & mask] ^= rotl(state[(i + 50) & mask], 16);
         state[i & mask] *= 0x9FD223F;
-        state[i & mask] ^= rotr(state[i & mask], 11);
-
-        state[i & mask] ^= old;
+        state[i & mask] ^= rotr(state[(i + 100) & mask], 11);
     }
 }
 
@@ -244,59 +234,30 @@ bytes_t HashScorpionX(bytes_t src) {
     if (src.b == NULL || src.len <= 0)
         return (bytes_t){NULL, 0};
 
-    int hashLen = Hash.settings->hashSize ? Hash.settings->hashSize : 128;
+    int hashLen = coalesce_int(Hash.settings->hashSize, 128);
     int wordLen = hashLen / 4;
     int miniWordLen = wordLen / 8;
-    uint32_t seed = Hash.settings->seed ? Hash.settings->seed : 0x2F1FFDDD;
-    uint32_t shiftSeed =
-        Hash.settings->shiftSeed ? Hash.settings->shiftSeed & 0x1F : 16;
+    uint32_t seed = coalesce_uint32(Hash.settings->seed, 0xF899D28F);
+    uint32_t shiftSeed = coalesce_uint32(Hash.settings->shiftSeed & 0x1F, 16);
+
+    uint32_t *state = getState(wordLen);
+    if (state == NULL)
+        return (bytes_t){NULL, 0};
+
+    seedState(wordLen, state, Hash.settings);
+    absorb(src, state, wordLen);
+    mixState(wordLen, miniWordLen, state);
+
+    for (int i = 0; i < 2; i++)
+        finalizer(wordLen, state);
 
     bytes_t out;
     out.len = hashLen;
     out.b = malloc(out.len);
-    uint32_t *state = _getState(wordLen);
-    if (state == NULL)
-        return (bytes_t){NULL, 0};
 
-    _seedState(wordLen, state, Hash.settings);
-    for (int i = 0; i < 4; i++)
-        _mixState(wordLen, miniWordLen, state, &i);
-
-    mixtwo32(state, &src, wordLen);
-    _mixStateWithSrc(src, state, wordLen);
-
-    for (int i = 0; i < 4; i++) {
-        multiarxmix32(state, wordLen, &i, src);
-    }
-
-    for (int i = 0; i < miniWordLen; i++)
-        dependency32(wordLen, state, &i);
-
-    for (int i = 0; i < 4; i++)
-        _finalizer(wordLen, state);
-
-    // Last block of iteration, this will create the output
     for (int i = 0; i < wordLen; i++) {
-        uint32_t v =
-            state[i & (wordLen - 1)] ^
-            (i * seed_helper(0x9E3F09B9 << (seed & 0x1F), seed, shiftSeed));
-        uint32_t oldV = v;
-
-        v ^= state[(i + 1) & (wordLen - 1)];
-        v ^= state[(i + 7) & (wordLen - 1)]
-             << (state[(i + 11) & (wordLen - 1)] & 0x1F);
-        v += state[(i + 19) & (wordLen - 1)];
-        v ^= state[(i + 81) & (wordLen - 1)]
-             << (state[(i + 36) & (wordLen - 1)] & 0x1F);
-        v -= 2;
-
-        v ^= (v << 15) ^ (v >> 29);
-
-        v ^= state[(i + 96) & (wordLen - 1)];
-        v ^= state[(i + 13) & (wordLen - 1)];
-        v ^= state[(i + 37) & (wordLen - 1)];
-
-        v ^= oldV;
+        uint32_t v = fmix32(state[i & (wordLen - 1)]);
+        smallmix32(&v);
 
         out.b[i * 4 + 0] = (uint8_t)(v);
         out.b[i * 4 + 1] = (uint8_t)(v >> 8);
@@ -311,5 +272,4 @@ bytes_t HashScorpionX(bytes_t src) {
 HashInstance Hash = {
     .djb2 = HashDjb2,
     .ScorpionX = HashScorpionX,
-
 };
