@@ -26,6 +26,7 @@ I_FLAGS 		:=  -I. \
 								-Isrc-server/app/cli/input \
 								-Isrc-server/shared/utils/math \
 								-Isrc-server/shared/utils/mixers \
+								-Isrc-server/shared/utils/comparision \
 			
 OPTIMIZE_FLAGS 	:= 	-O3 -march=native -flto
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
