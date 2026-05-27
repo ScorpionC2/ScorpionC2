@@ -145,9 +145,10 @@ uint32_t *getState(int wordLen) {
     return state;
 }
 
-void seedState(int wordLen, uint32_t *state, const scorpionSettings *ctx) {
+void seedState(int wordLen, uint32_t *state, uint32_t seed,
+               uint32_t shiftSeed) {
     for (int i = 0; i < wordLen; i++) {
-        state[i] = seed_helper(state[i], ctx->seed, ctx->shiftSeed);
+        state[i] = seed_helper(state[i], seed, shiftSeed);
     }
 }
 
@@ -221,8 +222,6 @@ void finalizer(int wordLen, uint32_t *state) {
 
     // Lane Shuffle Mixing
     for (int i = 0; i < wordLen; i++) {
-        uint32_t old = state[i & mask];
-
         state[i & mask] *= 0x85F7B117;
         state[i & mask] ^= rotl(state[(i + 50) & mask], 16);
         state[i & mask] *= 0x9FD223F;
@@ -244,7 +243,7 @@ bytes_t HashScorpionX(bytes_t src) {
     if (state == NULL)
         return (bytes_t){NULL, 0};
 
-    seedState(wordLen, state, Hash.settings);
+    seedState(wordLen, state, seed, shiftSeed);
     absorb(src, state, wordLen);
     mixState(wordLen, miniWordLen, state);
 
