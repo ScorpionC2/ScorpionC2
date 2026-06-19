@@ -22,118 +22,31 @@
 //
 
 #include "src-server/shared/utils/random/main.h"
-#include "src-server/shared/utils/math/main.h"
+
 #include <immintrin.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <time.h>
 #include <unistd.h>
 
-#define _RDRAND_MAX_RETRIES 24
-#define _RDSEED_MAX_RETRIES 24
-#define CHECK(x, cap)                                                          \
-    if ((x) > (cap))                                                           \
-        break;                                                                 \
-    else                                                                       \
-        (x)++;
+static uint64_t seed_g = 0;
 
-uint32_t seed_g = 1;
+void Randomseed(uint64_t seed) { seed_g = seed; }
 
-unsigned long long getRDRAND() {
-    unsigned long long rdrand_val = 0;
-    size_t count = 0;
+uint64_t Randomrand() {
+    seed_g = (84971284 + seed_g * 1664525);
+    uint64_t s = (seed_g << 9) ^ (seed_g >> 30);
 
-    while (_rdrand64_step(&rdrand_val) == 0) {
-        CHECK(count, _RDRAND_MAX_RETRIES)
-    }
+    s ^= s >> 37;
+    s *= 0xbf58476d1ce4e5b9ULL;
+    s ^= s >> 19;
 
-    return rdrand_val;
+    return s;
 };
 
-unsigned long long getRDSEED() {
-    unsigned long long rdseed_val = 0;
-    size_t count = 0;
-
-    while (_rdseed64_step(&rdseed_val) == 0) {
-        CHECK(count, _RDRAND_MAX_RETRIES)
-    }
-
-    return rdseed_val;
-};
-
-void Randomseed(int seed) { seed_g = seed; }
-
-uint32_t Randomrseed(uint32_t seed) {
-    uint32_t pid = (uint32_t)getpid();
-    uint32_t gid = (uint32_t)getgid();
-    uint32_t timeNow = time(NULL);
-    unsigned long long rdseed = getRDSEED();
-
-    uint32_t out = rdseed;
-    out ^= rotl(out, pid);
-    out *= gid;
-    out ^= rotr(out, timeNow);
-    out <<= seed & 0x1F;
-    out ^= rotr(rdseed, (gid & 0x1F));
-
-    seed_g = rdseed ^ out;
-
-    return out;
-}
-
-uint32_t Randomrand() {
-    uint32_t s = Randomrseed(seed_g ^ 0x6C656574);
-    if (seed_g == 1) {
-        uint32_t rdrand = getRDRAND();
-        uint32_t rdseed = getRDSEED();
-
-        seed_g = rdrand;
-        seed_g ^= rdseed;
-        seed_g *= 0xDEADBEEF;
-        seed_g ^= rotl(seed_g, (rdseed & 0x1F));
-
-        s = rotr(seed_g, 19);
-        seed_g = Randomrseed(s);
-    }
-
-    s = ((s << 13) ^ s) - (s >> 21);
-
-    uint32_t n = s;
-    n = (n * (n * n * 15732 + 789221) + 771171059);
-    n += s;
-    n = ((n << 14) ^ n) - (n >> 20);
-
-    uint32_t out;
-    for (int i = 0; i < 8; i++) {
-        uint32_t old = n;
-
-        uint32_t a = n ^ 0x0539;
-        uint32_t b = rotr(n, 15);
-        uint32_t c = rotl(a, b) ^ 0x1337;
-
-        a += b;
-        c ^= a;
-        c = rotl(c, 16);
-
-        b += c;
-        a ^= b;
-        a = rotl(a, 12);
-
-        out = a;
-        out ^= b;
-        out *= rotl(out, old);
-        out ^= n;
-        out *= rotr(out, 17);
-        out ^= c;
-    }
-
-    return out;
-};
-
-uint32_t Randomrandr(int min, int max) {
-    uint32_t range = (uint32_t)(max - min + 1);
+uint64_t Randomrandr(int min, int max) {
+    uint32_t range = (uint64_t)(max - min + 1);
     uint32_t x;
-    uint32_t limit = UINT32_MAX - (UINT32_MAX % range);
+    uint32_t limit = UINT64_MAX - (UINT64_MAX % range);
 
     do {
         x = Randomrand();

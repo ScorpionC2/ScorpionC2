@@ -8,10 +8,9 @@
 #include <stdint.h>
 
 typedef struct {
-    void (*seed)(int seed);
-    uint32_t (*rand)();
-    uint32_t (*randr)(int min, int max);
-    
+    void (*seed)(uint64_t seed);
+    uint64_t (*rand)();
+    uint64_t (*randr)(int min, int max);
 } RandomInstance;
 
 extern const RandomInstance Random;
