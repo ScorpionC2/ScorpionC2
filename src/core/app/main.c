@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "src-server/shared/types/main.h"
-#include "src-server/shared/utils/random/main.h"
+#include "src/core/shared/types/main.h"
+#include "src/core/shared/utils/random/main.h"
 
 #include <time.h>
 

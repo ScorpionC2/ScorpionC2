@@ -11,6 +11,7 @@
 I_FLAGS 		:=  -I. \
 								-mrdseed \
 								-mrdrnd \
+								-Isrc \
 								-Isrc/core \
 								-Isrc/core/domain/encoders/services/xor \
 								-Isrc/core/domain/encoders/types \

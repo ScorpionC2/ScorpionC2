@@ -10,8 +10,8 @@
 //  https://pubs.opengroup.org/onlinepubs/009696799/functions/tcsetattr.html
 //
 
-#include "src-server/shared/types/main.h"
-#include "src-server/app/cli/input/readMode/main.h"
+#include "src/core/shared/types/main.h"
+#include "src/core/app/cli/input/readMode/main.h"
 #include <termios.h>
 #include <unistd.h>
 

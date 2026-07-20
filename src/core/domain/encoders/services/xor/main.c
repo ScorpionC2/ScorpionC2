@@ -4,8 +4,8 @@
 //
 
 #include "main.h"
-#include "src-server/infra/hash/main.h"
-#include "src-server/shared/utils/random/main.h"
+#include "src/core/infra/hash/main.h"
+#include "src/core/shared/utils/random/main.h"
 
 #include <stddef.h>
 #include <stdlib.h>

@@ -9,7 +9,7 @@
 //
 
 #include "main.h"
-#include "src-server/app/cli/colors/main.h"
+#include "src/core/app/cli/colors/main.h"
 
 #include <stdio.h>
 

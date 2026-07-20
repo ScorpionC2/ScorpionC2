@@ -1,6 +1,6 @@
 #include "tests/engine/unit/main.h"
-#include "src-server/app/cli/colors/main.h"
-#include "src-server/app/cli/logs/main.h"
+#include "src/core/app/cli/colors/main.h"
+#include "src/core/app/cli/logs/main.h"
 
 #include <errno.h>
 #include <stdint.h>

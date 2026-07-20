@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "src-server/shared/types/main.h"
-#include "src-server/shared/utils/math/main.h"
+#include "src/core/shared/types/main.h"
+#include "src/core/shared/utils/math/main.h"
 #include <stdint.h>
 
 static inline uint32_t fmix32(uint32_t h) {

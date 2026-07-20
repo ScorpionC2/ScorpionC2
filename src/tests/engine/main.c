@@ -4,9 +4,9 @@
 //
 
 #include "tests/engine/main.h"
-#include "src-server/app/cli/colors/main.h"
-#include "src-server/app/cli/logs/main.h"
-#include "src-server/shared/types/main.h"
+#include "src/core/app/cli/colors/main.h"
+#include "src/core/app/cli/logs/main.h"
+#include "src/core/shared/types/main.h"
 #include "tests/engine/unit/main.h"
 #include <inttypes.h>
 #include <stdint.h>

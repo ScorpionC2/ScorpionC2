@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "src-server/shared/types/main.h"
+#include "src/core/shared/types/main.h"
 
 #define ECHO_MODE (1 << 0)
 #define CANONICAL_MODE (1 << 1)

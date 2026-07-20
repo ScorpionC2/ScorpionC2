@@ -5,8 +5,8 @@
 
 #include "main.h"
 #include "safeget/main.h"
-#include "src-server/app/cli/logs/main.h"
-#include "src-server/infra/fs/main.h"
+#include "src/core/app/cli/logs/main.h"
+#include "src/core/infra/fs/main.h"
 #include <stdlib.h>
 #include <string.h>
 

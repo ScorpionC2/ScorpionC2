@@ -3,9 +3,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "src-server/shared/utils/mixers/main.h"
-#include "src-server/shared/types/main.h"
-#include "src-server/shared/utils/math/main.h"
+#include "src/core/shared/utils/mixers/main.h"
+#include "src/core/shared/types/main.h"
+#include "src/core/shared/utils/math/main.h"
 #include <stdint.h>
 
 void arxmix32(uint32_t *state, const int *_r, const int *_i, int wordLen) {

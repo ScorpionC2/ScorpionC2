@@ -4,8 +4,8 @@
 //
 
 #include "main.h"
-#include "src-server/app/cli/colors/main.h"
-#include "src-server/shared/types/main.h"
+#include "src/core/app/cli/colors/main.h"
+#include "src/core/shared/types/main.h"
 
 #include <stdarg.h>
 #include <stdio.h>

@@ -9,11 +9,11 @@
 //      source code for crackme in https://crackmes.one/crackme/6973ebc6d735cd51e7a1aa97
 //
 
-#include "src-server/infra/hash/main.h"
+#include "src/core/infra/hash/main.h"
 
-#include "src-server/shared/utils/comparision/main.h"
-#include "src-server/shared/utils/math/main.h"
-#include "src-server/shared/utils/mixers/main.h"
+#include "src/core/shared/utils/comparision/main.h"
+#include "src/core/shared/utils/math/main.h"
+#include "src/core/shared/utils/mixers/main.h"
 #include <inttypes.h>
 #include <iso646.h>
 #include <stddef.h>

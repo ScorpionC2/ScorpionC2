@@ -11,9 +11,9 @@
 //
 
 #include "main.h"
-#include "src-server/app/cli/input/readMode/main.h"
-#include "src-server/app/cli/logs/main.h"
-#include "src-server/infra/fs/main.h"
+#include "src/core/app/cli/input/readMode/main.h"
+#include "src/core/app/cli/logs/main.h"
+#include "src/core/infra/fs/main.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>

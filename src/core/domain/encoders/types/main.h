@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "src-server/infra/hash/main.h"
-#include "src-server/shared/types/main.h"
+#include "src/core/infra/hash/main.h"
+#include "src/core/shared/types/main.h"
 #include <stdint.h>
 
 typedef struct {

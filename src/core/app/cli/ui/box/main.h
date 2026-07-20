@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "src-server/shared/types/main.h"
+#include "src/core/shared/types/main.h"
 
 #define B_TL_CORNER "╭"
 #define B_TR_CORNER "╮"

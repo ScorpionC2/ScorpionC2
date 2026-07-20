@@ -21,7 +21,7 @@
 // Last upgrades (aka rdseed and rdrand use) is very inspired by my friend's video: https://youtu.be/fyBr9iKZrZo?si=eBSlXBXzTRLL4isi
 //
 
-#include "src-server/shared/utils/random/main.h"
+#include "src/core/shared/utils/random/main.h"
 
 #include <immintrin.h>
 #include <stddef.h>

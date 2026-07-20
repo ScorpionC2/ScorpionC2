@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "src-server/domain/encoders/types/main.h"
+#include "src/core/domain/encoders/types/main.h"
 
 /*
  * This file must contain all encoders as pointers to their implementations.

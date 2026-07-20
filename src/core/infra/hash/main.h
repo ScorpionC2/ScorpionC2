@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#include "src-server/shared/types/main.h"
+#include "src/core/shared/types/main.h"
 
 typedef struct {
     enum {
