@@ -1,0 +1,19 @@
+//
+// Copyright (c) 2026-Present ScorpionC2 public-person "Lucas de Moraes Claro" and all anonymous contributors. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+//
+
+#include "src/core/shared/types/main.h"
+#include "src/core/shared/utils/random/main.h"
+
+#include <time.h>
+
+void init() {
+    Random.seed((int)time(NULL));
+    Random.seed((int)Random.rand());
+}
+
+int main() {
+    init();
+    return 0;
+}

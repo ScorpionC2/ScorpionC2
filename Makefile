@@ -11,22 +11,23 @@
 I_FLAGS 		:=  -I. \
 								-mrdseed \
 								-mrdrnd \
-								-Isrc-server \
-								-Isrc-server/domain/encoders/services/xor \
-								-Isrc-server/domain/encoders/types \
-								-Isrc-server/shared/types \
-								-Isrc-server/app/cli/colors \
-								-Isrc-server/app/cli/loading \
-								-Isrc-server/app/cli/logs \
-								-Isrc-server/app/cli/ui/box \
-								-Isrc-server/app/cli/input/readMode \
-								-Isrc-server/app/cli/input/safeget \
-								-Isrc-server/infra/fs \
-								-Isrc-server/infra/hash \
-								-Isrc-server/app/cli/input \
-								-Isrc-server/shared/utils/math \
-								-Isrc-server/shared/utils/mixers \
-								-Isrc-server/shared/utils/comparision \
+								-Isrc \
+								-Isrc/core \
+								-Isrc/core/domain/encoders/services/xor \
+								-Isrc/core/domain/encoders/types \
+								-Isrc/core/shared/types \
+								-Isrc/core/app/cli/colors \
+								-Isrc/core/app/cli/loading \
+								-Isrc/core/app/cli/logs \
+								-Isrc/core/app/cli/ui/box \
+								-Isrc/core/app/cli/input/readMode \
+								-Isrc/core/app/cli/input/safeget \
+								-Isrc/core/infra/fs \
+								-Isrc/core/infra/hash \
+								-Isrc/core/app/cli/input \
+								-Isrc/core/shared/utils/math \
+								-Isrc/core/shared/utils/mixers \
+								-Isrc/core/shared/utils/comparision \
 			
 
 LIB_FLAGS := -lm
@@ -52,19 +53,19 @@ endif
 TARGET_DIR		:=	build/
 TARGET			:=	$(TARGET_DIR)scorpionc2-server
 CORE_SRC :=		\
-							src-server/app/cli/logs/main.c \
-							src-server/shared/utils/random/main.c \
-							src-server/infra/hash/main.c \
-							src-server/domain/encoders/services/main.c \
-							src-server/domain/encoders/services/xor/main.c \
-							src-server/app/cli/ui/box/main.c \
-							src-server/app/cli/input/readMode/main.c \
-							src-server/app/cli/input/safeget/main.c \
-							src-server/app/cli/input/main.c \
-							src-server/infra/fs/main.c \
-							src-server/shared/utils/mixers/main.c \
+							src/core/app/cli/logs/main.c \
+							src/core/shared/utils/random/main.c \
+							src/core/infra/hash/main.c \
+							src/core/domain/encoders/services/main.c \
+							src/core/domain/encoders/services/xor/main.c \
+							src/core/app/cli/ui/box/main.c \
+							src/core/app/cli/input/readMode/main.c \
+							src/core/app/cli/input/safeget/main.c \
+							src/core/app/cli/input/main.c \
+							src/core/infra/fs/main.c \
+							src/core/shared/utils/mixers/main.c \
 
-SRC_ENTRYPOINT	:=	src-server/app/main.c $(CORE_SRC)
+SRC_ENTRYPOINT	:=	src/core/app/main.c $(CORE_SRC)
 
 all: help
 
@@ -120,16 +121,16 @@ run-debug: ## Run the project in a tmp file
 TEST_TARGET_DIR := /tmp/scorpion-tests/$(shell date --iso=seconds)
 TEST_TARGET := $(TEST_TARGET_DIR)/ScorpionC2-tests
 TEST_SRC := $(CORE_SRC) \
-						tests/engine/main.c \
-						tests/engine/unit/main.c \
-						tests/unit/encoders/xor.c \
-						tests/unit/hash/djb2.c
+						src/tests/engine/main.c \
+						src/tests/engine/unit/main.c \
+						src/tests/unit/encoders/xor.c \
+						src/tests/unit/hash/djb2.c
 
 TEST_I_FLAGS := $(I_FLAGS) \
-								-Itests/engine \
-								-Itests/engine/unit \
-								-Itests/unit/encoders \
-								-Itests/unit/hash
+								-Isrc/tests/engine \
+								-Isrc/tests/engine/unit \
+								-Isrc/tests/unit/encoders \
+								-Isrc/tests/unit/hash
 
 test: ## Run the project's tests
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
