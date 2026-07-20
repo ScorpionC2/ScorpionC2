@@ -6,5 +6,6 @@
 
 ## New features
 
-1. Create ScorpionSk (socket-like Parallel and Concurrent API) - ON GOING 0%
-2. Create SDCS (Secure Dissemination of Cryptographic Secrets) using an Encoder over TLS distribute cryptographic keys for Custom Secure Protocols
+1. Create SocorpionDo (go-like fast and lightweight coroutines)
+2. Create ScorpionSk (socket-like Parallel and Concurrent API)
+3. Create SDCS (Secure Dissemination of Cryptographic Secrets) using an Encoder over TLS distribute cryptographic keys for Custom Secure Protocols
