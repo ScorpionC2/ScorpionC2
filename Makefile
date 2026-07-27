@@ -6,7 +6,7 @@
 #
 
 .PHONY: build clean help rebuild run test
-.SILENT: build help rebuild run run-valigrind run-debug test
+.SILENT: build help rebuild run run-valgrind run-debug test
 
 I_FLAGS 		:=  -I. \
 								-mrdseed \
@@ -30,7 +30,8 @@ I_FLAGS 		:=  -I. \
 								-Isrc/core/shared/utils/comparision \
 			
 
-LIB_FLAGS := -lm
+LDFLAGS :=
+LDLIBS := -lm
 
 OPTIMIZE_FLAGS 	:= 	-O3 -march=native -flto
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
@@ -67,11 +68,29 @@ CORE_SRC :=		\
 
 SRC_ENTRYPOINT	:=	src/core/app/main.c $(CORE_SRC)
 
+AS := nasm
+AS_FLAGS := -f elf64
+AS_SRC := src/core/infra/sched/context/main.s
+AS_OBJ_DIR := build/
+AS_OBJ := $(AS_OBJ_DIR)asm.o
+
 all: help
 
 build: ## Build the project to build/scorpionc2-server
-	mkdir -p $(TARGET_DIR)
-	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
+	mkdir -p $(TARGET_DIR) $(AS_OBJ_DIR)
+	$(AS) \
+		$(AS_FLAGS) \
+		$(AS_SRC) \
+		-o $(AS_OBJ)
+	
+	$(CC) \
+		$(CC_FLAGS) \
+		-o $(TARGET) \
+		$(SRC_ENTRYPOINT) \
+		$(AS_OBJ) \
+		$(LDLIBS)
+	
+	rm -rf $(AS_OBJ)
 
 clean: ## Remove build binary
 	rm -rf $(TARGET)
@@ -81,17 +100,40 @@ help: ## Show this menu
 
 rebuild: ## Remove old build and build again
 	rm -rf $(TARGET)
-	mkdir -p $(TARGET_DIR)
-	$(CC) $(CC_FLAGS) -o $(TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
-
+	mkdir -p $(TARGET_DIR) $(AS_OBJ_DIR)
+	$(AS) \
+		$(AS_FLAGS) \
+		$(AS_SRC) \
+		-o $(AS_OBJ)
+	
+	$(CC) \
+		$(CC_FLAGS) \
+		-o $(TARGET) \
+		$(SRC_ENTRYPOINT) \
+		$(AS_OBJ) \
+		$(LDLIBS)
+	
+	rm -rf $(AS_OBJ)
 
 RUN_TARGET_DIR := /tmp/scorpion-runs/$(shell date --iso=seconds)
 RUN_TARGET := $(RUN_TARGET_DIR)/scorpionc2
 	
 run: ## Run the project in a tmp file
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
-	mkdir -p $(RUN_TARGET_DIR)
-	$(CC) $(CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
+	mkdir -p $(RUN_TARGET_DIR) $(AS_OBJ_DIR)
+	$(AS) \
+		$(AS_FLAGS) \
+		$(AS_SRC) \
+		-o $(AS_OBJ)
+	
+	$(CC) \
+		$(CC_FLAGS) \
+		-o $(RUN_TARGET) \
+		$(SRC_ENTRYPOINT) \
+		$(AS_OBJ) \
+		$(LDLIBS)
+	
+	rm -rf $(AS_OBJ)
 	$(RUN_TARGET)
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 
@@ -106,15 +148,39 @@ DEBUG_CC_FLAGS	:= $(I_FLAGS) $(DEBUG_FLAGS)
 
 run-valgrind: ## Run the project in a tmp file and check it with valgrind
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
-	mkdir -p $(RUN_TARGET_DIR)
-	$(CC) $(DEBUG_CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
+	mkdir -p $(RUN_TARGET_DIR) $(AS_OBJ_DIR)
+	$(AS) \
+		$(AS_FLAGS) \
+		$(AS_SRC) \
+		-o $(AS_OBJ)
+	
+	$(CC) \
+		$(CC_FLAGS) \
+		-o $(RUN_TARGET) \
+		$(SRC_ENTRYPOINT) \
+		$(AS_OBJ) \
+		$(LDLIBS)
+	
+	rm -rf $(AS_OBJ)
 	$(VALGRIND_TARGET)
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 
-run-debug: ## Run the project in a tmp file
+run-debug: ## Run the project in a tmp file with debug flags
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
-	mkdir -p $(RUN_TARGET_DIR)
-	$(CC) $(DEBUG_CC_FLAGS) -o $(RUN_TARGET) $(SRC_ENTRYPOINT) $(LIB_FLAGS)
+	mkdir -p $(RUN_TARGET_DIR) $(AS_OBJ_DIR)
+	$(AS) \
+		$(AS_FLAGS) \
+		$(AS_SRC) \
+		-o $(AS_OBJ)
+	
+	$(CC) \
+		$(DEBUG_CC_FLAGS) \
+		-o $(RUN_TARGET) \
+		$(SRC_ENTRYPOINT) \
+		$(AS_OBJ) \
+		$(LDLIBS)
+	
+	rm -rf $(AS_OBJ)
 	$(RUN_TARGET)
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 
@@ -134,7 +200,19 @@ TEST_I_FLAGS := $(I_FLAGS) \
 
 test: ## Run the project's tests
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
-	mkdir -p $(TEST_TARGET_DIR)
-	$(CC) -fsanitize=address -g $(TEST_I_FLAGS) -o $(TEST_TARGET) $(TEST_SRC) $(LIB_FLAGS)
+	mkdir -p $(TEST_TARGET_DIR) $(AS_OBJ_DIR)
+	$(AS) \
+		$(AS_FLAGS) \
+		$(AS_SRC) \
+		-o $(AS_OBJ)
+	
+	$(CC) \
+		-fsanitize=address \
+		-g $(TEST_I_FLAGS) \
+		-o $(TEST_TARGET) \
+		$(TEST_SRC) \
+		$(AS_OBJ) \
+		$(LDLIBS)
+	
 	$(TEST_TARGET)
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
