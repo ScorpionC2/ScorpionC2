@@ -53,7 +53,7 @@ typedef struct {
      *     -1: Can't write to file
      *      1: Can't open the file
      */
-    int (*writeFile)(string_t path, const bytes_t *src);
+    int (*writeFile)(string_t path, bytes_t *src);
 
     /*
      * Return rules:
@@ -68,7 +68,7 @@ typedef struct {
      *     -1: Directory or file with same name in same path already exists
      *      1: Can't create directory
      */
-    int (*makeDir)(string_t path, mode_t perm);
+    int (*makeDir)(string_t path);
 
     /*
      * Return rules:
