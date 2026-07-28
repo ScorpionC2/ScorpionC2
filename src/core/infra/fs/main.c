@@ -98,7 +98,7 @@ int getLine(string_t path, int line, bytes_t *out) {
 };
 
 int makeDir(string_t path) {
-	if(mkdir(path.s, 0755) == -1)  {
+	if(mkdir(path.s, 0700) == -1)  {
 		return 1;
 	} else {
 		return 0;
@@ -165,7 +165,6 @@ int writeFile(string_t path, const bytes_t *src) {
 	FILE *fp = fopen(path.s, "wb");
 
 	if(!fp) {
-		fclose(fp);
 		return 1;
 	}
 	
