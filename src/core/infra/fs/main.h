@@ -68,7 +68,7 @@ typedef struct {
      *     -1: Directory or file with same name in same path already exists
      *      1: Can't create directory
      */
-    int (*makeDir)(string_t path);
+    int (*makeDir)(string_t path, mode_t perm);
 
     /*
      * Return rules:

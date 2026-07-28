@@ -97,8 +97,8 @@ int getLine(string_t path, int line, bytes_t *out) {
     return 0;
 };
 
-int makeDir(string_t path) {
-	if(mkdir(path.s, 0700) == -1)  {
+int makeDir(string_t path, mode_t perm) {
+	if(mkdir(path.s, perm) == -1)  {
 		return 1;
 	} else {
 		return 0;
