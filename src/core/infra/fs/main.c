@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 int appendFile(string_t path, const bytes_t *src) {
     if (!path.s || !path.len)
@@ -98,8 +100,9 @@ int getLine(string_t path, int line, bytes_t *out) {
 int makeDir(string_t path) {
 	if(mkdir(path.s, 0755) == -1)  {
 		return 1;
+	} else {
+		return 0;
 	}
-	return 0;
 }
 
 int rmDir(string_t path) {
@@ -158,10 +161,10 @@ int readFIle(string_t path, bytes_t *out) {
 	return 0;
 }
 
-int writeFile(string_t path, bytes_t *src) {
+int writeFile(string_t path, const bytes_t *src) {
 	FILE *fp = fopen(path.s, "wb");
 
-	if(fp == NULL) {
+	if(!fp) {
 		fclose(fp);
 		return 1;
 	}

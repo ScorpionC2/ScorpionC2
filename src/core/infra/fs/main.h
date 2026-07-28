@@ -53,7 +53,7 @@ typedef struct {
      *     -1: Can't write to file
      *      1: Can't open the file
      */
-    int (*writeFile)(string_t path, bytes_t *src);
+    int (*writeFile)(string_t path, const bytes_t *src);
 
     /*
      * Return rules:
