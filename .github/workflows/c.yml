@@ -12,6 +12,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install dependencies
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y nasm
+
     - name: build
       run: make build
 
@@ -23,7 +29,7 @@ jobs:
     - name: Install dependencies
       run: |
           sudo apt-get update
-          sudo apt-get install -y valgrind
+          sudo apt-get install -y valgrind nasm
 
     - name: Valgrind-check
       run: make run-valgrind
@@ -33,5 +39,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install dependencies
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y nasm
+
     - name: Run tests
       run: make test
