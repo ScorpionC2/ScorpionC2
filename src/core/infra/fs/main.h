@@ -6,6 +6,8 @@
 #pragma once
 
 #include "src/core/shared/types/main.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 
 typedef struct {
     /*
