@@ -26,6 +26,17 @@
 
 ssize_t _parseStdin(char *ch) { return read(STDIN_FILENO, ch, 1); }
 
+typedef struct {
+  int *curHistL;
+  int histFileLines;
+  string_t histPath;
+  size_t *bufLen;
+  size_t *bufCap;
+  char **buf;
+  int promptSize;
+} safeGetContext;
+
+
 bool_t _checkBuf(char **buf, const size_t *bufLen, size_t *bufCap) {
     if ((*bufLen + 1) >= *bufCap) {
         while ((*bufLen + 1) >= *bufCap) {
@@ -101,27 +112,26 @@ void _parseHist(char ch, int *curHistL, int histFileLines, string_t histPath,
  *   0: If can continue
  *  -1: Error
  */
-int _handleArrows(int *curHistL, int histFileLines, string_t histPath,
-                  size_t *bufLen, char **buf, size_t *bufCap) {
+int _handleArrows(safeGetContext *ctx) {
     char ch = 0x00;
     if (_parseStdin(&ch) <= 0) {
         return -1;
     }
 
     char *histL = NULL;
-    _parseHist(ch, curHistL, histFileLines, histPath, &histL);
+    _parseHist(ch, ctx->curHistL, ctx->histFileLines, ctx->histPath, &histL);
 
     if (histL == NULL)
         return 0;
 
-    *bufLen = strlen(histL);
-    if (_checkBuf(buf, bufLen, bufCap) == FALSE) {
+    *ctx->bufLen = strlen(histL);
+    if (_checkBuf(ctx->buf, ctx->bufLen, ctx->bufCap) == FALSE) {
         free(histL);
         return -1;
     }
 
-    memcpy(*buf, histL, *bufLen);
-    (*buf)[*bufLen] = '\0';
+    memcpy(*ctx->buf, histL, *ctx->bufLen);
+    (*ctx->buf)[*ctx->bufLen] = '\0';
     free(histL);
 
     return 0;
@@ -138,9 +148,8 @@ void _refreshStdout(int promptSize, char *buf) {
  *   1: End of buffer (like newLine)
  *  -1: Error (free buf, toggle terminal mode and return NULL)
  */
-int _handleCharacter(char ch, int *curHistL, int histFileLines,
-                     string_t histPath, size_t *bufLen, size_t *bufCap,
-                     char **buf, int promptSize) {
+
+int _handleCharacter(char ch, safeGetContext *ctx) {
     switch (ch) {
         case 0x0A: { // New line
             putchar(0x0A);
@@ -153,11 +162,10 @@ int _handleCharacter(char ch, int *curHistL, int histFileLines,
                 return -1;
 
             if (ch2 == 0x5B) {
-                if (_handleArrows(curHistL, histFileLines, histPath, bufLen,
-                                  buf, bufCap) < 0)
+              if (_handleArrows(ctx) < 0)
                     return -1;
 
-                _refreshStdout(promptSize, *buf);
+                _refreshStdout(ctx->promptSize, *ctx->buf);
                 return 0;
             }
 
@@ -166,19 +174,19 @@ int _handleCharacter(char ch, int *curHistL, int histFileLines,
 
         case 0x7F:
         case 0x08: {
-            if (*bufLen > 0) {
-                (*bufLen)--;
-                (*buf)[*bufLen] = '\0';
+            if (*ctx->bufLen > 0) {
+                (*ctx->bufLen)--;
+                (*ctx->buf)[*ctx->bufLen] = '\0';
             }
 
-            _refreshStdout(promptSize, *buf);
+            _refreshStdout(ctx->promptSize, *ctx->buf);
 
             break;
         }
 
         default: {
-            (*buf)[(*bufLen)++] = ch;
-            (*buf)[*bufLen] = '\0';
+            (*ctx->buf)[(*ctx->bufLen)++] = ch;
+            (*ctx->buf)[*ctx->bufLen] = '\0';
 
             putc(ch, stdout);
             fflush(stdout);
@@ -214,6 +222,16 @@ char *ucfgets(string_t histPath, int promptSize) {
 
     currentHistLine = histFileLines;
 
+    safeGetContext ctx = {
+          .curHistL = &currentHistLine,
+	  .histFileLines = histFileLines,
+	  .histPath = histPath,
+	  .bufLen = &bufLen,
+	  .bufCap = &bufCap,
+	  .buf = &buf,
+	  .promptSize = promptSize
+    };
+
     while (TRUE) {
         if (_parseStdin(&ch) <= 0) {
             TOGGLE_TERMINAL_MODE
@@ -227,8 +245,7 @@ char *ucfgets(string_t histPath, int promptSize) {
             return NULL;
         }
 
-        switch (_handleCharacter(ch, &currentHistLine, histFileLines, histPath,
-                                 &bufLen, &bufCap, &buf, promptSize)) {
+        switch (_handleCharacter(ch, &ctx)) {
             case 0: {
                 continue;
             }
