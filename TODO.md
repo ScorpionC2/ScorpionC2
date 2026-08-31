@@ -2,7 +2,13 @@
 
 ## Issues
 
+<<<<<<< HEAD
 ## New features
+=======
+1. Create context to `app/cli/input/safeget` - [Issue AZ3gDTv8cS4qjkleCTfG](https://sonarcloud.io/project/issues?impactSoftwareQualities=MAINTAINABILITY&issueStatuses=OPEN%2CCONFIRMED&id=ScorpionC2_ScorpionC2&open=AZ3gDTv8cS4qjkleCTfG)
+
+## **Tasks and Features Backlog**
+>>>>>>> 6170767a640cf74b97a608d8ad97834692159e22
 
 1. Create SocorpionDo (go-like fast and lightweight coroutines) ON-GOING
 2. Create ScorpionSk (socket-like Parallel and Concurrent API)
