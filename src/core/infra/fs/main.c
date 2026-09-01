@@ -8,21 +8,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 int appendFile(string_t path, const bytes_t *src) {
     if (!path.s || !path.len)
         return 1;
-	
+
     FILE *file = fopen(path.s, "ab+");
     if (file == NULL)
         return -1;
-	
+
     fwrite(src->b, sizeof(src->b[0]), src->len, file);
     fclose(file);
-	
+
     return 0;
 };
 
@@ -47,7 +47,7 @@ int countLines(string_t path) {
 int getLine(string_t path, int line, bytes_t *out) {
     if (path.s == NULL || path.len == 0)
         return 1;
-	
+
     int lines = countLines(path);
     if (lines < 0)
         return 1;
@@ -93,83 +93,88 @@ int getLine(string_t path, int line, bytes_t *out) {
 };
 
 int makeDir(string_t path, mode_t perm) {
-	if (mkdir(path.s, perm) == -1) {
-		return 1;
-	} else {
-		return 0;
-	}
+    if (mkdir(path.s, perm) == -1) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 int rmDir(string_t path) {
-	if (rmdir(path.s) == -1) {
-		return 1;
-	} else {
-		return 0;
-	}
+    if (rmdir(path.s) == -1) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 int readFIle(string_t path, bytes_t *out) {
-	if (!out) {
-		return 1;
-	}
-	
-	out->b = NULL;
-	FILE *file = fopen(path.s, "rb");
-	if (file == NULL)
-		return -1;
+    if (!out) {
+        return 1;
+    }
 
-	fseek(file, 0, SEEK_END);
-	long size = ftell(file);
+    out->b = NULL;
+    FILE *file = fopen(path.s, "rb");
+    if (file == NULL)
+        return -1;
 
-	if (size == -1) {
-		fclose(file);
-		return 1;
-	}
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
 
-	rewind(file);
-	if (size == 0) {
-		out->b = NULL;
-		fclose(file);
-		return 0;
-	}
+    if (size == -1) {
+        fclose(file);
+        return 1;
+    }
 
-	out->b = malloc(size);
-	out->len = size;
+    rewind(file);
+    if (size == 0) {
+        out->b = NULL;
+        fclose(file);
+        return 0;
+    }
 
-	if (out->b == NULL) {
-		fclose(file);
-		return -1;
-	}
+    out->b = malloc(size);
+    out->len = size;
 
-	size_t read = fread(out->b, 1, size, file);
-	fclose(file);
+    if (out->b == NULL) {
+        fclose(file);
+        return -1;
+    }
 
-	if (read != size) {
-		free(out->b);
-		out->b = NULL;
-		return -1;
-	}
+    size_t read = fread(out->b, 1, size, file);
+    fclose(file);
 
-	return 0;
+    if (read != size) {
+        free(out->b);
+        out->b = NULL;
+        return -1;
+    }
+
+    return 0;
 }
 
 int writeFile(string_t path, const bytes_t *src) {
-	FILE *fp = fopen(path.s, "wb");
+    FILE *fp = fopen(path.s, "wb");
 
-	if (!fp) {
-		return 1;
-	}
-	
-	size_t writed = fwrite(src->b, 1, src->len, fp);
+    if (!fp) {
+        return 1;
+    }
 
-	if (writed != src->len) { // If writed is not the same size as src->len it will return -1
-		return -1;
-	}
+    size_t writed = fwrite(src->b, 1, src->len, fp);
 
-	fclose(fp);
-	return 0;
+    if (writed !=
+        src->len) { // If writed is not the same size as src->len it will return -1
+        return -1;
+    }
+
+    fclose(fp);
+    return 0;
 }
 
-FsInstance Files = {
-    .countLines = countLines, .appendFile = appendFile, .getLine = getLine, .makeDir = makeDir, .rmDir = rmDir, .readFIle = readFIle, .writeFile = writeFile};
-
+FsInstance Files = {.countLines = countLines,
+                    .appendFile = appendFile,
+                    .getLine = getLine,
+                    .makeDir = makeDir,
+                    .rmDir = rmDir,
+                    .readFIle = readFIle,
+                    .writeFile = writeFile};

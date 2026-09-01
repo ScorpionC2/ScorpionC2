@@ -29,7 +29,6 @@ typedef struct {
     double floatingPoint;
     double *floatingPointArr;
     scorpionSettings *hashScorpionSettings;
-
 } EncoderSettings;
 
 typedef struct {
@@ -42,5 +41,4 @@ typedef struct {
      * Settings must be well-documented
      */
     EncoderSettings *settings;
-
 } EncoderInstance;

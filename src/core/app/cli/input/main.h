@@ -11,12 +11,10 @@ typedef struct {
     string_t prompt;
     string_t histPath;
     int histLimit;
-
 } InputSettings;
 
 typedef struct {
     void (*readline)(InputSettings conf, string_t *out);
-
 } InputInstance;
 
 extern InputInstance Input;
