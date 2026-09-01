@@ -14,17 +14,11 @@ typedef unsigned int uint_t;
 typedef struct {
     uchar_t *b;
     size_t len;
-
 } bytes_t;
 
-typedef enum bool_t {
-    TRUE = 1,
-    FALSE = 0
-
-} bool_t;
+typedef enum bool_t { TRUE = 1, FALSE = 0 } bool_t;
 
 typedef struct {
     char *s;
     size_t len;
-
 } string_t;

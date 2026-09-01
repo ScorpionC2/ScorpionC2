@@ -34,9 +34,7 @@ EncoderSettings XorSettings = {
     //  scox:  scorpionx
     //
     .string = "scox",
-    .hashScorpionSettings = &hashSettings
-
-};
+    .hashScorpionSettings = &hashSettings};
 
 bytes_t xor(bytes_t src, bytes_t key) {
     // Creates copies of src and key
@@ -188,6 +186,4 @@ bytes_t XorDecode(bytes_t src) {
 };
 
 EncoderInstance XorInstance = {
-    .encode = XorEncode, .decode = XorDecode, .settings = &XorSettings
-
-};
+    .encode = XorEncode, .decode = XorDecode, .settings = &XorSettings};

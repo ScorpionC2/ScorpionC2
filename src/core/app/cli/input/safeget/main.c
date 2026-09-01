@@ -27,15 +27,14 @@
 ssize_t _parseStdin(char *ch) { return read(STDIN_FILENO, ch, 1); }
 
 typedef struct {
-  int *curHistL;
-  int histFileLines;
-  string_t histPath;
-  size_t *bufLen;
-  size_t *bufCap;
-  char **buf;
-  int promptSize;
+    int *curHistL;
+    int histFileLines;
+    string_t histPath;
+    size_t *bufLen;
+    size_t *bufCap;
+    char **buf;
+    int promptSize;
 } safeGetContext;
-
 
 bool_t _checkBuf(char **buf, const size_t *bufLen, size_t *bufCap) {
     if ((*bufLen + 1) >= *bufCap) {
@@ -162,7 +161,7 @@ int _handleCharacter(char ch, safeGetContext *ctx) {
                 return -1;
 
             if (ch2 == 0x5B) {
-              if (_handleArrows(ctx) < 0)
+                if (_handleArrows(ctx) < 0)
                     return -1;
 
                 _refreshStdout(ctx->promptSize, *ctx->buf);
@@ -222,15 +221,13 @@ char *ucfgets(string_t histPath, int promptSize) {
 
     currentHistLine = histFileLines;
 
-    safeGetContext ctx = {
-          .curHistL = &currentHistLine,
-	  .histFileLines = histFileLines,
-	  .histPath = histPath,
-	  .bufLen = &bufLen,
-	  .bufCap = &bufCap,
-	  .buf = &buf,
-	  .promptSize = promptSize
-    };
+    safeGetContext ctx = {.curHistL = &currentHistLine,
+                          .histFileLines = histFileLines,
+                          .histPath = histPath,
+                          .bufLen = &bufLen,
+                          .bufCap = &bufCap,
+                          .buf = &buf,
+                          .promptSize = promptSize};
 
     while (TRUE) {
         if (_parseStdin(&ch) <= 0) {

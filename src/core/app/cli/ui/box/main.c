@@ -25,14 +25,12 @@ typedef struct {
     int R;
     int G;
     int B;
-
 } rgb_t;
 
 typedef struct {
     int R;
     int G;
     int B;
-
 } rgb_td;
 
 rgb_t parseRgb(const char *color) {

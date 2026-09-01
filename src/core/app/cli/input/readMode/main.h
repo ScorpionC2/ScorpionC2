@@ -12,7 +12,6 @@
 
 typedef struct {
     void (*turnMode)(uint_t mode);
-
 } TerminalModeChangerInstance;
 
 extern TerminalModeChangerInstance TerminalModeToggler;

@@ -38,9 +38,7 @@ bytes_t HashDjb2(bytes_t src) {
 };
 
 scorpionSettings settings = {
-    .hashSize = godzilla, .seed = 0xF1FB230E, .shiftSeed = 18
-
-};
+    .hashSize = godzilla, .seed = 0xF1FB230E, .shiftSeed = 18};
 
 #define SH seed_helper
 
@@ -133,7 +131,6 @@ uint32_t *getState(int wordLen) {
         0xA6AB0F1B, 0x79308011, 0x901FAACE, 0x06A2958F, 0xAB6CD53C, 0xFE8CD5A4,
         0x81560E6A, 0x801F92C9, 0x58716D75, 0xD53A69CB, 0x259E95CA, 0x2993B5B2,
         0xB65ABE05, 0x8593DF20,
-
     };
 
     uint32_t *state = malloc(wordLen * sizeof(uint32_t));

@@ -17,7 +17,6 @@ typedef struct {
      *      .s = NULL: Can't read or can't allocate new memory for string
      */
     string_t (*ucread)(string_t histPath, int promptSize);
-
 } SafeGetInstance;
 
 extern SafeGetInstance SafeGet;

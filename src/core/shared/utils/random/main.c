@@ -57,6 +57,4 @@ uint64_t Randomrandr(int min, int max) {
 }
 
 const RandomInstance Random = {
-    .seed = Randomseed, .rand = Randomrand, .randr = Randomrandr
-
-};
+    .seed = Randomseed, .rand = Randomrand, .randr = Randomrandr};

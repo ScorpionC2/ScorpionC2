@@ -79,7 +79,6 @@ typedef struct {
      *      1: Can't delete directory
      */
     int (*rmDir)(string_t path);
-
 } FsInstance;
 
 extern FsInstance Files;
