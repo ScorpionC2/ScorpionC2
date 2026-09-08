@@ -133,30 +133,26 @@ bytes_t XorEncode(bytes_t src) {
 };
 
 bytes_t XorDecode(bytes_t src) {
-    // Start src copy and copy src to it
-    bytes_t srcCopy = {.len = src.len, .b = malloc(src.len)};
-    memcpy(srcCopy.b, src.b, srcCopy.len);
-
     // Nonce parsing
     bytes_t nonce;
     nonce.len = XorSettings.num;
     nonce.b = malloc(XorSettings.num);
-    memcpy(nonce.b, srcCopy.b + 4, XorSettings.num);
+    memcpy(nonce.b, src.b + 4, XorSettings.num);
   
     // Unxor nonce
     bytes_t nonceKey;
     nonceKey.len = 4;
     nonceKey.b = malloc(nonceKey.len);
-    memcpy(nonceKey.b, srcCopy.b, nonceKey.len);
+    memcpy(nonceKey.b, src.b, nonceKey.len);
 
     bytes_t nonceUnxored = xor(nonce, nonceKey);
 
     // Init unxored src and copy the src without nonce and trash
     bytes_t srcWithoutXor;
     srcWithoutXor.len =
-        srcCopy.len - XorSettings.num - XorSettings.shortNum - 4;
+        src.len - XorSettings.num - XorSettings.shortNum - 4;
     srcWithoutXor.b = malloc(srcWithoutXor.len);
-    memcpy(srcWithoutXor.b, srcCopy.b + XorSettings.num + 4, srcWithoutXor.len);
+    memcpy(srcWithoutXor.b, src.b + XorSettings.num + 4, srcWithoutXor.len);
 
     // Get hash and hash the nonce
     bytes_t (*hashFunction)(bytes_t source) = getHashFunction();
@@ -168,8 +164,7 @@ bytes_t XorDecode(bytes_t src) {
     memcpy(out.b, unxor.b, out.len);
 
     // Free everything
-    free(srcCopy.b);
-    free(nonce.b);
+   free(nonce.b);
     free(srcWithoutXor.b);
     free(hash.b);
     free(unxor.b);
