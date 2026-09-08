@@ -37,33 +37,22 @@ EncoderSettings XorSettings = {
     .hashScorpionSettings = &hashSettings};
 
 bytes_t xor(bytes_t src, bytes_t key) {
-    // Creates copies of src and key
-    uchar_t *srcCopy = malloc(src.len);
-    memcpy(srcCopy, src.b, src.len);
-
-    uchar_t *keyCopy = malloc(key.len);
-    memcpy(keyCopy, key.b, key.len);
-
     // Initialize out and iterate over it
     uchar_t out[src.len];
     for (size_t i = 0; i < src.len; i++) {
         // Out[i] = src[i] xored to key[i + 1] (length fallback)
-        out[i] = srcCopy[i] ^ keyCopy[(i + 1) % key.len];
+        out[i] = src.b[i] ^ key.b[(i + 1) % key.len];
 
         // Key[i + 2] (with fallback) = key[i]
-        keyCopy[(i + 2) & (key.len - 1)] = keyCopy[i % key.len];
+        key.b[(i + 2) & (key.len - 1)] = key.b[i % key.len];
 
         // Key[i + 1] (fallback) xored to key[i + 3] (fallback)
-        keyCopy[(i + 1) & (key.len - 1)] ^= keyCopy[(i + 3) & (key.len - 1)];
+        key.b[(i + 1) & (key.len - 1)] ^= key.b[(i + 3) & (key.len - 1)];
     }
 
     // Init output and copy
     bytes_t output = {.len = src.len, .b = malloc(src.len)};
     memcpy(output.b, out, src.len);
-
-    // Free src and key copies
-    free(srcCopy);
-    free(keyCopy);
 
     return output;
 }
