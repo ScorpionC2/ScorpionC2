@@ -37,6 +37,9 @@ EncoderSettings XorSettings = {
     .hashScorpionSettings = &hashSettings};
 
 bytes_t xor(bytes_t src, bytes_t key) {
+  uchar_t *keyCopy = malloc(key.len);
+  memcpy(keyCopy, key.b, key.len);
+  
     // Initialize out and iterate over it
     uchar_t out[src.len];
     for (size_t i = 0; i < src.len; i++) {
@@ -44,16 +47,18 @@ bytes_t xor(bytes_t src, bytes_t key) {
         out[i] = src.b[i] ^ key.b[(i + 1) % key.len];
 
         // Key[i + 2] (with fallback) = key[i]
-        key.b[(i + 2) & (key.len - 1)] = key.b[i % key.len];
+        keyCopy[(i + 2) & (key.len - 1)] = keyCopy[i % key.len];
 
         // Key[i + 1] (fallback) xored to key[i + 3] (fallback)
-        key.b[(i + 1) & (key.len - 1)] ^= key.b[(i + 3) & (key.len - 1)];
+        keyCopy[(i + 1) & (key.len - 1)] ^= keyCopy[(i + 3) & (key.len - 1)];
     }
 
     // Init output and copy
     bytes_t output = {.len = src.len, .b = malloc(src.len)};
     memcpy(output.b, out, src.len);
 
+    free(keyCopy);
+  
     return output;
 }
 
@@ -137,7 +142,7 @@ bytes_t XorDecode(bytes_t src) {
     nonce.len = XorSettings.num;
     nonce.b = malloc(XorSettings.num);
     memcpy(nonce.b, srcCopy.b + 4, XorSettings.num);
-
+  
     // Unxor nonce
     bytes_t nonceKey;
     nonceKey.len = 4;
