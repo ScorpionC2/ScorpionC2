@@ -18,6 +18,12 @@ global _context_get_linux_amd64
 global _context_set_linux_amd64
 
 ; extern void _context_swap_linux_amd64(struct SchedContext_t *old, struct SchedContext_t *new);
+; @brief Context Swapping for linux amd64 architecture.
+;
+; @param old Pointer to the SchedContext_t instance that will receive the old
+;        context backup.
+; @param new Pointer to the SchedContext_t instance that will be swapped with the
+;        old context, being the new context.
 _context_swap_linux_amd64:
   mov [rdi + CTX_RSP_OFFSET], rsp
   mov [rdi + CTX_RBX_OFFSET], rbx
@@ -38,6 +44,9 @@ _context_swap_linux_amd64:
   ret
 
 ; extern void _context_get_linux_amd64(struct SchedContext_t *ctx);
+; @brief Context getting for linux amd64 architecture.
+;
+; @param ctx The SchedContext_t instance that'll receive the current context.
 _context_get_linux_amd64:
   mov [rdi + CTX_RSP_OFFSET], rsp
   mov [rdi + CTX_RBX_OFFSET], rbx
@@ -50,6 +59,9 @@ _context_get_linux_amd64:
   ret
 
 ; extern void _context_set_linux_amd64(struct SchedContext_t *ctx);
+; @brief Context setting for linux amd64 architecture.
+;
+; @param ctx the SchedContext_t instance that'll be used to set current context.
 _context_set_linux_amd64:
   mov rsp, [rdi + CTX_RSP_OFFSET]
   mov rbx, [rdi + CTX_RBX_OFFSET]
