@@ -2,7 +2,7 @@
 
 ## Issues
 
-## Tasks and Features Backlog
+## **Tasks and Features Backlog**
 
 1. Create SocorpionDo (go-like fast and lightweight coroutines) ON-GOING
 2. Create ScorpionSk (socket-like Parallel and Concurrent API)
@@ -47,7 +47,7 @@ Diagram:
 4. Create _initTask with pseudo-stack allocation - DONE in src/core/infra/sched/main.c
 5. Create _exitTask with context swapping back to the processor - DONE in src/core/infra/sched/main.c
 6. Implement function pointer inserting into task stack - DONE in src/core/infra/sched/main.c
-7. Implement dynamic stack growing - ON-GOING
+7. Implement dynamic stack growing - DONE in src/core/infra/sched/stack/main.c
 8. Implement processor initialize
 9. Implement yield
 10. Implement processor blocked-threads yielding
