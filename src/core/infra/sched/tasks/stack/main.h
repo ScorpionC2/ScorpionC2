@@ -77,7 +77,7 @@ void *_handleTaskStack(struct SchedTask_Stack_t *stack, uint64_t rsp);
  *
  * @param stack A pointer to the SchedTask_Stack_t instance.
  *
- * @return Clean execution status, as pointer to boolean.
+ * @return Clean execution status, as a boolean.
  * @retval FALSE Clean failed or parameter nullity fallback.
  * @retval TRUE Successfuly cleaned the stack.
  *
