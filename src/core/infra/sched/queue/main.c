@@ -78,18 +78,6 @@ void _deleteNode(struct SchedQueue_Node_t *node) {
 }
 
 /**
- * @brief Delete a node from the DLL.
- *
- * @param node Pointer to the node to be deleted.
- *
- * @note The node is permanentely deleted and it's memory released.
- *
- * @pre @p node being a valid pointer to a SchedQueue_Node_t instance.
- * @post @p node deleted.
- */
-void _deleteNode(struct SchedQueue_Node_t *node);
-
-/**
  * @brief Get a new non-colided ID for a queue.
  *
  * @param queue Pointer to the SchedQueue_t instance that will be used to check for colisions.
@@ -142,6 +130,7 @@ struct SchedQueue_t *_initQueue(struct SchedTask_t *task) {
 
     out->head = node;
     out->tail = node;
+    out->cursor = node;
 
     return out;
 }
@@ -253,6 +242,14 @@ struct SchedTask_t *_findTask(struct SchedQueue_t *queue, uint64_t id) {
     if (queue->head == NULL)
         return NULL;
 
+    // This is a control flow optimization.
+    // If the user tries to find the cursor
+    // by it's ID, this ensure fast returning.
+    if (queue->cursor != NULL) {
+        if (id == queue->cursor->id)
+            return queue->cursor->task;
+    }
+
     struct SchedQueue_Node_t *current = queue->head;
     while (current != NULL) {
         if (current->id == id)
@@ -320,4 +317,237 @@ void *_deleteTail(struct SchedQueue_t *queue) {
         queue->tail = NULL;
 
     return queue;
+}
+
+/**
+ * @brief Return the next task of a id in a queue.
+ *
+ * @param queue A pointer to the SchedQueue_t instance for searching.
+ * @param id Task ID to get the next task.
+ *
+ * @return Pointer to the found task.
+ * @retval NULL - Parameter nullity fallback;
+ *              - Task haven't a valid next (probably is tail);
+ *              - Task with @p id was not found.
+ */
+struct SchedTask_t *_nextByID(struct SchedQueue_t *queue, uint64_t id) {
+    if (queue == NULL)
+        return NULL;
+
+    if (queue->head == NULL)
+        return NULL;
+
+    // This is the same control flow optimization
+    // seen in _findTask().
+    if (queue->cursor != NULL) {
+        if (id == queue->cursor->id)
+            return queue->cursor->task;
+    }
+
+    struct SchedQueue_Node_t *current = queue->head;
+    while (current != NULL) {
+        if (current->id == id)
+            return current->next->task ? current->next->task : NULL;
+
+        current = current->next;
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief Return the prev task of a id in a queue.
+ *
+ * @param queue A pointer to the SchedQueue_t instance for searching.
+ * @param id Task ID to get the prev task.
+ *
+ * @return Pointer to the found task.
+ * @retval NULL - Parameter nullity fallback;
+ *              - Task haven't a valid prev (probably is head);
+ *              - Task with @p id was not found.
+ */
+struct SchedTask_t *_prevByID(struct SchedQueue_t *queue, uint64_t id) {
+    if (queue == NULL)
+        return NULL;
+
+    if (queue->head == NULL)
+        return NULL;
+
+    // This is the same control flow optimization
+    // seen in _findTask().
+    if (queue->cursor != NULL) {
+        if (id == queue->cursor->id)
+            return queue->cursor->task;
+    }
+
+    struct SchedQueue_Node_t *current = queue->head;
+    while (current != NULL) {
+        if (current->id == id)
+            return current->prev->task ? current->prev->task : NULL;
+
+        current = current->next;
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief Set the cursor to a new task.
+ *
+ * @param queue A pointer to the SchedQueue_t that will have itself cursor set.
+ * @param task A pointer to the SchedTask_t that'll be the new @p queue's cursor.
+ *
+ * @return Pointer to the new cursor.
+ * @retval NULL Parameter nullity fallback or memory error.
+ *
+ * @note The created SchedQueue_Node_t is owned by the caller, that must release it.
+ * @note If @p queue->cursor is NULL, the new task will be prepended.
+ *
+ * @pre @p queue being a valid pointer to a valid SchedQueue_t instance.
+ * @pre @p task being a valid pointer to a valid SchedTask_t instance.
+ *
+ * @post @p queue with a new task inserted as the cursor.
+ * @post @p task unchanged.
+ */
+struct SchedTask_t *_setCursor(struct SchedQueue_t *queue,
+                               struct SchedTask_t *task) {
+    if (queue == NULL || task == NULL)
+        return NULL;
+
+    if (queue->cursor == NULL) {
+        void *a = _prependQueue(queue, task);
+        if (a == NULL)
+            return NULL;
+
+        queue->cursor = queue->head;
+        return task;
+    }
+
+    struct SchedQueue_Node_t *nnode = malloc(sizeof(struct SchedQueue_Node_t));
+    if (nnode == NULL)
+        return NULL;
+
+    nnode->next = NULL;
+    nnode->prev = NULL;
+    nnode->task = task;
+    nnode->id = _getNewID(queue);
+
+    // [Cursor] <-> [Cursor->next]
+    // ↓
+    // [Cursor] <-> [nnode] <-> [Cursor->next]
+    nnode->next = queue->cursor->next;
+    nnode->prev = queue->cursor;
+    if (nnode->next != NULL)
+        nnode->next->prev = nnode;
+
+    queue->cursor->next = nnode;
+    queue->cursor = nnode;
+
+    return task;
+}
+
+/**
+ * @brief Set the queue cursor by another task in the same queue, using it's ID.
+ *
+ * @param queue A pointer to the SchedQueue_t iterated by the function.
+ * @param id The task that'll be the new cursor id.
+ *
+ * @return Pointer to the task.
+ * @retval NULL Param nullity fallback.
+ * @retval NULL ID not found.
+ *
+ * @note The current @p queue->cursor isn't deleted.
+ *
+ * @pre @p queue being a vali pointer to a vali SchedQueue_t instance.
+ * @pre @p id being the id for the task that'll be set as the cursor.
+ *
+ * @post @p queue with the new cursor set.
+ * @post @p id unchanged.
+ */
+struct SchedTask_t *_setCursorByID(struct SchedQueue_t *queue, uint64_t id) {
+    if (queue == NULL)
+        return NULL;
+
+    if (queue->head == NULL)
+        return NULL;
+
+    // This is a control flow optimization.
+    // If the user tries to set the cursor
+    // by it's own ID, this ensure fast returning.
+    if (queue->cursor != NULL) {
+        if (id == queue->cursor->id)
+            return queue->cursor->task;
+    }
+
+    struct SchedQueue_Node_t *current = queue->head;
+    while (current != NULL) {
+        if (current->id == id) {
+            queue->cursor = current;
+            return queue->cursor->task;
+        }
+
+        current = current->next;
+    }
+
+    return NULL;
+}
+
+/**
+ * @brief Set the cursor as the next.
+ *
+ * @param queue A pointer to the SchedQueue_t instance that'll have it's cursor changed.
+ * @return Pointer to the new cursor's task.
+ *
+ * @retval NULL Param nullity error.
+ * @retval NULL @p queue->cursor set to NULL.
+ *
+ * @note If the @p queue->cursor is the tail, it'll be set NULL.
+ *
+ * @pre @p queue being a valid pointer to a valid SchedQueue_t instance.
+ * @post @p queue with the cursor changed.
+ */
+struct SchedTask_t *_setNextCursor(struct SchedQueue_t *queue) {
+    if (queue == NULL)
+        return NULL;
+
+    if (queue->cursor == NULL)
+        return NULL;
+
+    if (queue->cursor->next == NULL) {
+        queue->cursor = NULL;
+        return NULL;
+    }
+
+    queue->cursor = queue->cursor->next;
+    return queue->cursor->task;
+}
+
+/**
+ * @brief Set the cursor as the prev.
+ *
+ * @param queue A pointer to the SchedQueue_t instance that'll have it's cursor changed.
+ * @return Pointer to the new cursor's task.
+ *
+ * @retval NULL Param nullity error.
+ * @retval NULL @p queue->cursor set to NULL.
+ *
+ * @note If the @p queue->cursor is the head, it'll be set NULL.
+ *
+ * @pre @p queue being a valid pointer to a valid SchedQueue_t instance.
+ * @post @p queue with the cursor changed.
+ */
+struct SchedTask_t *_setPrevCursor(struct SchedQueue_t *queue) {
+    if (queue == NULL)
+        return NULL;
+
+    if (queue->cursor == NULL)
+        return NULL;
+
+    if (queue->cursor->prev == NULL) {
+        queue->cursor = NULL;
+        return NULL;
+    }
+
+    queue->cursor = queue->cursor->prev;
+    return queue->cursor->task;
 }
