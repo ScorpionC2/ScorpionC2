@@ -27,6 +27,10 @@
  *          and a valid cleaned stack;
  *       2. Free the SchedTask_t instance with free().
  *
+ * @attention The argument is inserted in the stack and must be popped using:
+ *                  pop rdi
+ *            before the function call.
+ *
  * @pre @p func being a valid function pointer.
  *
  * @post @p func unchanged.
@@ -44,13 +48,15 @@ struct SchedTask_t *_initTask(void (*func)(void *), void *arg) {
     out->state = RUNNABLE;
 
     uintptr_t sp = (uintptr_t)(out->stack.buf + out->stack.size);
-    sp &= 0xF;
+    sp &= ~((uintptr_t)0xF);
 
     // Adds the func to the stack so the ret op can handle it
-    // Adds the _exitTask too
+    // Adds the arg and the _exitTask too
     uint64_t *stack_top = (uint64_t *)sp;
-    *(--stack_top) = (uint64_t)out->func;
     *(--stack_top) = (uint64_t)_exitTask;
+    *(--stack_top) = (uint64_t)out->func;
+    *(--stack_top) = (uint64_t)out->arg;
+    *(--stack_top) = (uint64_t)_task_entry_trampoline;
 
     // Every register turns to 0x00000000 and set rsp
     memset(&out->ctx, 0x00, sizeof(struct SchedContext_t));
