@@ -49,14 +49,20 @@ You can implement your own feature request, feel free for doing that and opening
 
 ## Development Setup
 
-For developing your contribution (if is a code contribution, bug fix nor anything that 
-need code) you may need a local version of the project, follow this steps to get one working
-sync with your GitHub account.
+For code contributions (bug fixes, features, refactors or anything that needs code) you'll need a
+local copy of the project, in sync with your GitHub account. Follow these steps to get one working:
 
 1. **_Fork the repository_**: Go to https://github.com/ScorpionC2/ScorpionC2/fork
 2. **_Clone your fork locally_**
-3. **_Code your implementation_**
-4. **_Test it_**: You can test every new implementation with:
+3. **_Install the dependencies_**: The build and testing targets need the following tools:
+
+   - `gcc` — the C compiler
+   - `nasm` — the assembler, required to build the scheduler context (`src/core/infra/sched/context/main.s`)
+   - `valgrind` — required by `make run-valgrind`
+   - `make` — the build tool
+
+4. **_Code your implementation_**
+5. **_Test it_**: You can test every new implementation with:
 
 ```shell
 make run # Run the project in /tmp
@@ -84,7 +90,7 @@ Closes #23
 
 ### 2. Create a branch
 
-Create a new branch from `main` with a descriptive name.
+Create a new branch from `dev` with a descriptive name.
 
 Examples:
 
@@ -95,6 +101,7 @@ ref/issue-X<br/>
 Example command:
 
 ```bash
+git checkout dev
 git checkout -b feat/issue-X
 ````
 
@@ -102,10 +109,15 @@ git checkout -b feat/issue-X
 
 While implementing your code:
 
-- Follow the existing code style
+- Follow the existing code style (see [Code Style](#code-style))
 - Keep functions small and readable
 - Avoid unnecessary dependencies
 - Write clear comments when logic is complex
+- Document public functions and structs with Doxygen comments (`@brief`, `@param`, `@return`, `@note`, `@pre`, `@post`)
+- Register any new source file in the `Makefile`:
+  - add the module `.c` files to `CORE_SRC`, and to `TEST_SRC` if you wrote test files;
+  - add the new include directory to `I_FLAGS` (and `TEST_I_FLAGS` if you wrote test files).
+  If you skip this, the CI and the local targets won't compile your module.
 
 <!-- TOC --><a name="4-test-your-implementation"></a>
 ### 4. Test your implementation
@@ -131,12 +143,21 @@ Your code **must not introduce memory leaks or crashes**.
 
 ### 4.5 Test Engine Guidelines
 
-The internal test engine is minimal and low-level by design.
+The internal test engine (`src/tests/engine`) is minimal and low-level by design. You must use it to
+test your code.
+
+How it works:
+
+- Tests are `bool_t` functions that return `TRUE` on success
+- Tests are registered automatically at the bottom of the test file with
+  `TESTS_UNIT_REGISTER(func, "name")` (constructor-based registration)
+- Assertions use the engine macros: `TEST_EQUAL`, `TEST_UNEQUAL`, `TEST_BIGGER`, `TEST_LOWER`,
+  `TEST_BIGGER_EQUAL`, `TEST_LOWER_EQUAL`, `TEST_EQUAL_BYTES`, `TEST_UNEQUAL_BYTES`
+- `make test` compiles with AddressSanitizer (`-fsanitize=address`), so any memory error stops the whole run
+- Keep one test file per module, under `src/tests/unit/<module>/`
 
 Keep in mind:
 
-- Tests should stop if memory errors happens
-- Tests are executed automatically via constructor registration
 - Avoid global state when writing tests
 - Do not rely on execution order between tests
 - Keep assertions explicit and simple
@@ -165,9 +186,12 @@ type(scope): Short description starting in past-tense
 Examples:
 
 ```
-fix(infra/parser): Resolved buffer overflow
-feat(protocols/sctcp): Added encrypted session handshake
-ref(domain/protocols): Simplified socket handling
+fix(infra/sched/tasks): Implemented task argument passing and corrected stack alignment
+feat(infra/sched/queue): Created task queue module
+feat(infra/sched/processor): Created scheduler processor for task management
+ref(encoders/xor): Removed srcCopy from the xor encoder
+test(encoders/xor): Added tests for different hash size configurations
+chore(make): Added .c of new features to SRC_ENTRYPOINT
 ```
 
 ### 6. Push and open the Pull Request
@@ -212,24 +236,35 @@ Our commit convention will be explained down here:
 <type>(<non-optional-scope>): Message started with past-tense verb
 ```
 
-Examples directly from git history:
+The scope is the module you changed (e.g. `infra/sched/tasks`, `app/cli/logs`, `shared/types`,
+`encoders/xor`) and it is **mandatory**.
+
+Types used in the project history:
+
+- `feat` — new feature or module
+- `fix` — bug fix
+- `ref` — refactor that keeps behavior
+- `docs` — documentation update only
+- `test` — tests only
+- `chore` — build, Makefile or CI maintenance
+- `style` — formatting or linting only
+
+Examples:
 
 ```
-feat(encoders/xor): Added settings option to use different hash algorithms
-feat(app/main): Added tests for the new hashing algorithms
-feat(utils/hash): Created custom hashing
-fix(utils/random): Fixed modulo bias in randr using limit and rejecting trash values; Refactored seed_g incrementation;
-ref(cli/loading): Deleted useless cli/loading modules
-feat(app/main): Added tests for the new hash module and new xor encoder
+feat(infra/sched/queue): Created task queue module
+feat(infra/sched/queue): Introduced cursor and implemented task navigation functions
+feat(infra/sched/tasks): Implemented task management
+feat(infra/sched/tasks/stack): Implemented virtual memory based task stack management
+feat(infra/sched/processor): Created scheduler processor for task management
+fix(infra/sched/tasks): Implemented task argument passing and corrected stack alignment
+docs(infra/sched/context): Documented scheduler context structure and functions
+docs(infra/sched/tasks/stack): Corrected return type documentation
+docs(todo): Updated status for dynamic stack growing task
+ref(encoders/xor): Removed srcCopy from the xor encoder
+test(hash/djb2): Added unit tests for DJB2 hash function
+chore(Makefile): Added NASM assembly compilation to build targets
 chore(make): Added .c of new features to SRC_ENTRYPOINT
-feat(encoders/xor): Created xor encoder and updated types
-feat(shared/types): Added new types: bool_t and ulong_t
-feat(utils/hash): Implemented hashing and djb2 hash
-docs(cli/logs): Updated docs for bytesf
-fix(utils/random): Fixed incorrect include for unistd.h
-feat(app/main): Added tests for the new random module
-feat(utils/random): Created pseudo-random numbers generation (a.k.a. RNG)
-feat(domain/encoders): Created main.h with base docs to define the project default architecture for encoders
 ```
 
 ## Code Style
@@ -241,14 +276,14 @@ To keep the codebase consistent and readable, all contributions must follow the 
 ### Indentation
 
 - Use **4 spaces** for indentation.
-- **Tabs are not allowed out of a `Makefile`.**
+- **Tabs are not allowed out of `Makefile`.**
 - Keep indentation consistent across blocks.
 
 Example:
 
 ```c
-if (condition) {
-    doSomething();
+void foo(void bar) {
+    return;
 }
 ````
 
@@ -259,12 +294,19 @@ if (condition) {
 Opening braces must stay on the **same line** as the statement.
 
 ```c
-if (x > y) {
-    doSomething();
+int sum(int a, int b) {
+    return a + b;
 }
 ```
 
 This improves readability and visually separates the block ending.
+
+> [!NOTE]
+> If a structure (like for, if or while) don't need braces, the project standards ensure the removing of useless braces:
+> ```c
+> if (x > y)
+>     return;
+> ```
 
 ---
 
@@ -284,26 +326,36 @@ bytes_t inputRaw;
 
 #### Functions
 
-Functions must also use **camelCase**.
+Functions must use **snake_case**.
+
+Internal functions must be prefixed with a single underscore `_`.
 
 ```c
-void readLine();
-uint32_t randomSeed();
+struct SchedTask_t *_initTask(void (*func)(void *), void *arg);
+void _exitTask();
+void *_removeNode(struct SchedQueue_Node_t *node);
 ```
+
+Function pointer members of module instances keep the **camelCase** name used to call them
+(e.g. `Xor->encode()`, `Logger.fmt.warnf()`, `Files.appendFile()`).
 
 ---
 
 #### Struct Types
 
-Structs and public types use **PascalCase**.
+Structs and public types use **PascalCase** and end with the **`_t`** suffix.
 
 ```c
 typedef struct {
-    string_t prompt;
-    string_t histPath;
-    int histLimit;
-} InputSettings;
+    uint64_t id;
+    struct SchedTask_t *task;
+    struct SchedQueue_Node_t *prev;
+    struct SchedQueue_Node_t *next;
+} SchedQueue_Node_t;
 ```
+
+Nested or derived types keep the `_t` suffix as well: `SchedTask_t`, `SchedTask_Stack_t`,
+`SchedQueue_Node_t`. The shared scalar types also follow this rule: `bool_t`, `string_t`, `bytes_t`.
 
 ---
 
@@ -312,7 +364,9 @@ typedef struct {
 Public module instances use **PascalCase**.
 
 ```c
-InputInstance Input;
+extern const LoggerInstance Logger;
+extern const RandomInstance Random;
+extern FsInstance Files;
 ```
 
 ---
@@ -324,6 +378,7 @@ Macros must use **UPPER_CASE**.
 ```c
 #define RESET "\x1b[0m"
 #define FG_GREEN "\x1b[38;2;72;168;48m"
+#define TESTS_UNIT_REGISTER(f, n) __reg_unit_test_##f
 ```
 
 ---
@@ -337,6 +392,13 @@ char *string;
 uint32_t *uintArr;
 ```
 
+Never do this:
+
+```c
+char* string;
+uint32* uintArr;
+```
+
 ---
 
 ### Struct Layout
@@ -345,10 +407,10 @@ Struct fields should be grouped logically and aligned for readability.
 
 ```c
 typedef struct {
-    string_t prompt;
-    string_t histPath;
-    int histLimit;
-} InputSettings;
+    uchar_t *buf;
+    size_t cap;
+    size_t size;
+} SchedTask_Stack_t;
 ```
 
 ---
@@ -359,8 +421,42 @@ Function pointers must be clearly declared inside structs.
 
 ```c
 typedef struct {
-    void (*readline)(InputSettings conf, string_t *out);
-} InputInstance;
+    void (*func)(void *);
+    void *arg;
+} SchedTask_t;
+```
+
+---
+
+### Documentation Comments
+
+Public functions, structs and their fields must be documented with Doxygen-style comments using
+`@brief`, `@param`, `@return`, `@retval`, `@note`, `@pre`, `@post` and `@warning`.
+
+Example:
+
+```c
+/**
+ * @brief Initialize task.
+ *
+ * @param func The function that will run in the task.
+ * @param arg Pointer to the @p func argument.
+ *
+ * @return Pointer to the new task.
+ * @retval NULL The given @p func parameter is NULL.
+ *
+ * @note The returned SchedTask_t instance is owned by caller, that must release it.
+ * @note To correctly release the SchedTask_t instance you must follow this checklist:
+ *       1. Exit the task: You must run the _exitTask() funciton to ensure the DEAD state
+ *          and a valid cleaned stack;
+ *       2. Free the SchedTask_t instance with free().
+ *
+ * @pre @p func being a valid function pointer.
+ *
+ * @post @p func unchanged.
+ * @post Valid task returned.
+ */
+struct SchedTask_t *_initTask(void (*func)(void *), void *arg);
 ```
 
 ---
@@ -406,9 +502,6 @@ Every file must start with the project license header.
 // Copyright (c) 2026-Present ScorpionC2 public-person "Lucas de Moraes Claro" and all anonymous contributors. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
-// Contribution formal owner is <"Your full name here" or Anonymous>. All rights reserved.
-// This snippet of code stands under the MIT license, as the entire project. See LICENSE file in the project root for details.
-//
 ```
 
 ---
@@ -420,10 +513,19 @@ Header files must:
 - use `#pragma once`
 - include only necessary dependencies
 - expose only public interfaces
+- group project includes (e.g. `src/core/...`, `tests/engine/...`) before system includes (`<stdlib.h>`, ...)
 
 ## Testing
 
-ScorpionC2 have a custom testing engine (look at [Test your implementation](#4-test-your-implementation)), that you should use to test your custom implementations before sending any Pull Requests
+ScorpionC2 has a custom testing engine (look at [Test your implementation](#4-test-your-implementation))
+that you should use to test your custom implementations before sending any Pull Requests.
+
+The engine lives in `src/tests/engine` and unit tests live in `src/tests/unit/<module>/`.
+
+Tests are plain `bool_t` functions that return `TRUE` on success, registered with
+`TESTS_UNIT_REGISTER(func, "name")` at the bottom of the file. They are discovered automatically
+through constructor registration, and assertions use the engine macros (`TEST_EQUAL`,
+`TEST_EQUAL_BYTES`, ...).
 
 Before submitting a Pull Request, contributors must ensure that the code compiles
 and runs correctly using the provided Make targets.
@@ -443,6 +545,7 @@ These commands validate that:
 * the program runs correctly
 * no memory leaks are detected with valgrind
 * debug builds compile correctly
+* unit tests pass (`make test` is compiled with AddressSanitizer)
 
 Pull Requests that introduce compilation errors, crashes, or memory leaks will not be accepted.
 
@@ -455,4 +558,3 @@ Please follow the responsible disclosure process described in [SECURITY](SECURIT
 ## License
 
 By contributing you agree that your contributions will be licensed under the project license.
-
