@@ -5,7 +5,7 @@
 # This file uses provided code at https://gist.github.com/prwhite/8168133?permalink_comment_id=4160255#gistcomment-4160255 for the help target
 #
 
-.PHONY: build clean help rebuild run test
+.PHONY: build clean help rebuild run test FORCE
 .SILENT: build help rebuild run run-valgrind run-debug test
 
 I_FLAGS 		:=  -I. \
@@ -28,7 +28,6 @@ I_FLAGS 		:=  -I. \
 								-Isrc/core/shared/utils/math \
 								-Isrc/core/shared/utils/mixers \
 								-Isrc/core/shared/utils/comparision \
-			
 
 LDFLAGS :=
 LDLIBS := -lm
@@ -70,18 +69,27 @@ SRC_ENTRYPOINT	:=	src/core/app/main.c $(CORE_SRC)
 
 AS := nasm
 AS_FLAGS := -f elf64
-AS_SRC := src/core/infra/sched/context/main.s
-AS_OBJ_DIR := build/
-AS_OBJ := $(AS_OBJ_DIR)asm.o
+
+AS_SRC := \
+	src/core/infra/sched/context/main.s \
+	src/core/infra/sched/tasks/main.s
+
+AS_OBJ_DIR := build/asm
+AS_OBJS := $(patsubst %.s,$(AS_OBJ_DIR)/%.o,$(AS_SRC))
+AS_OBJ := build/asm.o
+
+FORCE:
+
+$(AS_OBJ_DIR)/%.o: %.s FORCE
+	@mkdir -p $(dir $@)
+	@$(AS) $(AS_FLAGS) $< -o $@
 
 all: help
 
 build: ## Build the project to build/scorpionc2-server
 	mkdir -p $(TARGET_DIR) $(AS_OBJ_DIR)
-	$(AS) \
-		$(AS_FLAGS) \
-		$(AS_SRC) \
-		-o $(AS_OBJ)
+	@$(MAKE) --no-print-directory $(AS_OBJS)
+	ld -r $(AS_OBJS) -o $(AS_OBJ)
 	
 	$(CC) \
 		$(CC_FLAGS) \
@@ -101,10 +109,8 @@ help: ## Show this menu
 rebuild: ## Remove old build and build again
 	rm -rf $(TARGET)
 	mkdir -p $(TARGET_DIR) $(AS_OBJ_DIR)
-	$(AS) \
-		$(AS_FLAGS) \
-		$(AS_SRC) \
-		-o $(AS_OBJ)
+	@$(MAKE) --no-print-directory $(AS_OBJS)
+	ld -r $(AS_OBJS) -o $(AS_OBJ)
 	
 	$(CC) \
 		$(CC_FLAGS) \
@@ -121,10 +127,8 @@ RUN_TARGET := $(RUN_TARGET_DIR)/scorpionc2
 run: ## Run the project in a tmp file
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 	mkdir -p $(RUN_TARGET_DIR) $(AS_OBJ_DIR)
-	$(AS) \
-		$(AS_FLAGS) \
-		$(AS_SRC) \
-		-o $(AS_OBJ)
+	@$(MAKE) --no-print-directory $(AS_OBJS)
+	ld -r $(AS_OBJS) -o $(AS_OBJ)
 	
 	$(CC) \
 		$(CC_FLAGS) \
@@ -149,10 +153,8 @@ DEBUG_CC_FLAGS	:= $(I_FLAGS) $(DEBUG_FLAGS)
 run-valgrind: ## Run the project in a tmp file and check it with valgrind
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 	mkdir -p $(RUN_TARGET_DIR) $(AS_OBJ_DIR)
-	$(AS) \
-		$(AS_FLAGS) \
-		$(AS_SRC) \
-		-o $(AS_OBJ)
+	@$(MAKE) --no-print-directory $(AS_OBJS)
+	ld -r $(AS_OBJS) -o $(AS_OBJ)
 	
 	$(CC) \
 		$(CC_FLAGS) \
@@ -168,10 +170,8 @@ run-valgrind: ## Run the project in a tmp file and check it with valgrind
 run-debug: ## Run the project in a tmp file with debug flags
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 	mkdir -p $(RUN_TARGET_DIR) $(AS_OBJ_DIR)
-	$(AS) \
-		$(AS_FLAGS) \
-		$(AS_SRC) \
-		-o $(AS_OBJ)
+	@$(MAKE) --no-print-directory $(AS_OBJS)
+	ld -r $(AS_OBJS) -o $(AS_OBJ)
 	
 	$(CC) \
 		$(DEBUG_CC_FLAGS) \
@@ -201,10 +201,8 @@ TEST_I_FLAGS := $(I_FLAGS) \
 test: ## Run the project's tests
 	rm -rf $(TEST_TARGET) $(TEST_TARGET_DIR)
 	mkdir -p $(TEST_TARGET_DIR) $(AS_OBJ_DIR)
-	$(AS) \
-		$(AS_FLAGS) \
-		$(AS_SRC) \
-		-o $(AS_OBJ)
+	@$(MAKE) --no-print-directory $(AS_OBJS)
+	ld -r $(AS_OBJS) -o $(AS_OBJ)
 	
 	$(CC) \
 		-fsanitize=address \
