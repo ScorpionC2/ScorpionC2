@@ -2,17 +2,22 @@
 
 ## Issues
 
-## **Features Backlog**
+## **Tasks and Features Backlog**
 
 1. Create SocorpionDo (go-like fast and lightweight coroutines) ON-GOING
 2. Create ScorpionSk (socket-like Parallel and Concurrent API)
 3. Create SDCS (Secure Dissemination of Cryptographic Secrets) using an Encoder over TLS distribute cryptographic keys for Custom Secure Protocols
 
-## **Tasks, Refactors and Improvements**
+## Testing
 
-1. Hash Testing Suite https://github.com/ScorpionC2/ScorpionC2/issues/70
-2. Randomize the xor encoder trash size https://github.com/ScorpionC2/ScorpionC2/issues/71
+1. Write tests to hashing following the upp-test-framework but using the same 150k hashes to every test: https://gist.github.com/Yyax13/bb90d152951d7b9e6ce3e4cf346b3188
 
+## Deep Descriptions
+
+### Task 1 of Testing: 
+
+The test must be size-agnostic, so the result metric must changes with the hash-size.
+No-need of speed testing
 
 ## Current Implementing
 
@@ -48,9 +53,10 @@ Diagram:
 6. Implement function pointer inserting into task stack - DONE
 7. Implement dynamic stack growing - DONE
 8. Implement processor initialize - DONE
-9. Implement processor loop - DONE
-10. Implement yield
-11. Implement processor blocked-threads yielding
-12. Implement processor next-task algorithm based in round-robin - DONE (just `cursor->next` yet)
-13. Implement scheduler initialize
-14. Implement scheduler loop
+9. Implement yield
+10. Implement scheduler initialize using thrd_t - ON-GOING
+11. Implement `ScorpionDo(sched *self, func, void *arg)` which adds the task to a waiting queue
+12. Implement scheduler dispatcher loop that dispatches the waiting queue to processors
+13. Implement processor blocked-threads yielding
+14. Wire-up the _handleTaskStack using SIGSEGV/SIGBUS signal listeners
+15. Implement processor next-task algorithm based in round-robin
