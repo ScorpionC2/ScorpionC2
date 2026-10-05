@@ -42,17 +42,20 @@ struct SchedTask_t *_initTask(void (*func)(void *), void *arg) {
 
     struct SchedTask_t *out = malloc(sizeof(struct SchedTask_t));
 
-    out->stack = *_initStack();
+    void *stack = _initStack();
+    if (stack == NULL) {
+        free(out);
+        return NULL;
+    }
+
+    out->stack = *(struct SchedTask_Stack_t *)(stack);
     out->func = func;
     out->arg = arg;
     out->state = RUNNABLE;
 
-    uintptr_t sp = (uintptr_t)(out->stack.buf + out->stack.size);
-    sp &= ~((uintptr_t)0xF);
-
     // Adds the func to the stack so the ret op can handle it
     // Adds the arg and the _exitTask too
-    uint64_t *stack_top = (uint64_t *)sp;
+    uint64_t *stack_top = (uint64_t *)out->stack.top;
     *(--stack_top) = (uint64_t)_exitTask;
     *(--stack_top) = (uint64_t)out->func;
     *(--stack_top) = (uint64_t)out->arg;

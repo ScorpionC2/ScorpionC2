@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 #define DEFAULT_STACK_INIT_SIZE (1 << 13)   // 8 KiB
-#define DEFAULT_STACK_CAP (1 << 20)         // 512 KiB
+#define DEFAULT_STACK_CAP (1 << 19)         // 512 KiB
 #define STACK_CAP_MARGIN (1 << 10)          // 1 KiB
 #define DEFAULT_STACK_EXPAND_SIZE (1 << 13) // 8 KiB
 
@@ -47,6 +47,11 @@ struct SchedTask_Stack_t {
      * @brief Commited part lenght of the buffer.
      */
     size_t commited;
+
+    /**
+     * @brief Stack top offset
+     */
+    uint64_t top;
 };
 
 /**

@@ -45,22 +45,27 @@ void *_vallocNone(size_t size) {
  *
  * @param ptr Pointer to allocated virtual memory.
  * @param size Allocated block size.
- * @param commit Size to be commited.
+ * @param commited Already commited size.
+ * @param add Size to be commited.
  *
  * @return Pointer to @p ptr.
  * @retval NULL mprotect() failed.
  *
  * @pre @p ptr poiting to a valid allocated block.
  * @pre @p size being the block size.
- * @pre @p commit being smaller than @p size.
+ * @pre @p commited being smaller than @p size.
+ * @pre @p add being higher than 0 (if _handleTaskStack is caller, should use the calculated add).
  *
  * @post @p ptr with more capability.
  *
  * @note Works better if the @p commit is power of two.
  */
-void *_vmcommitRW(void *ptr, size_t size, size_t commit) {
-    void *stack_top = (char *)ptr + size;
-    if (mprotect((char *)stack_top - commit, commit, PROT_READ | PROT_WRITE) !=
+void *_vmcommitRW(void *ptr, size_t size, size_t commited, size_t add) {
+    if (commited + add > size)
+        return NULL;
+
+    void *top = (char *)ptr + size;
+    if (mprotect((char *)top - commited - add, add, PROT_READ | PROT_WRITE) !=
         0)
         return NULL;
 
@@ -86,13 +91,15 @@ struct SchedTask_Stack_t *_initStack() {
     if (buf == NULL)
         return NULL;
 
-    void *commit = _vmcommitRW(buf, out->cap, DEFAULT_STACK_EXPAND_SIZE);
+    void *commit =
+        _vmcommitRW(buf, out->cap, out->commited, DEFAULT_STACK_EXPAND_SIZE);
     if (commit == NULL)
         return NULL;
 
     out->buf = buf;
     out->commited += DEFAULT_STACK_EXPAND_SIZE;
-    out->size = out->commited;
+    out->size = out->cap;
+    out->top = ((uintptr_t)out->buf + out->size) & ~(uintptr_t)0xF;
 
     return out;
 }
@@ -115,15 +122,23 @@ void *_handleTaskStack(struct SchedTask_Stack_t *stack, uint64_t rsp) {
     if (stack->buf == NULL)
         return NULL;
 
+    uint64_t top = stack->top;
+    uint64_t low = stack->top - stack->commited;
+
     // Stack size (f)
-    if ((stack->size - rsp) >= (stack->cap - STACK_CAP_MARGIN)) {
-        stack->commited += DEFAULT_STACK_EXPAND_SIZE;
-        void *commit = _vmcommitRW(stack->buf, stack->cap, stack->commited);
-        if (commit == NULL)
+    if (rsp - low < STACK_CAP_MARGIN) {
+        if (stack->commited >= stack->cap)
+            return stack; // already commited through cap
+
+        size_t add = DEFAULT_STACK_EXPAND_SIZE;
+        if (stack->commited + add > stack->cap)
+            add = stack->cap - stack->commited;
+
+        if (_vmcommitRW(stack->buf, stack->cap, stack->commited, add) == NULL)
             // TODO clean task exit
             return NULL;
 
-        stack->size = stack->commited;
+        stack->commited += add;
     }
 
     return stack;
