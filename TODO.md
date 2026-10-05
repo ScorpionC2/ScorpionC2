@@ -26,31 +26,37 @@ No-need of speed testing
 Diagram:
 
 ```
-    Sched                                                                                                                                                  
-      │                       ┌────► Routine 1 ────► _taskInit ─────► context_swap(old: processor, new: task) ───► _exitTask ─────► free(task stack & task)
-      │                       │                                                                                                                            
-      ├───────► Processor ────┼────► Routine 2 ────► _taskInit ─────► context_swap(old: processor, new: task) ───► _exitTask ─────► free(task stack & task)
-      │                       │                                                                                                                            
-      │                       └────► Routine 3 ────► _taskInit ─────► context_swap(old: processor, new: task) ───► _exitTask ─────► free(task stack & task)
-      │                                                                                                                                                    
-      │                       ┌────► Routine 1 ────► _taskInit ─────► context_swap(old: processor, new: task) ───► _exitTask ─────► free(task stack & task)
-      │                       │                                                                                                                            
-      │───────► Processor ────┼────► Routine 2 ────► _taskInit ─────► context_swap(old: processor, new: task) ───► _exitTask ─────► free(task stack & task)
-      │                       │                                                                                                                            
-      ▼                       └────► Routine 3 ────► _taskInit ─────► context_swap(old: processor, new: task) ───► _exitTask ─────► free(task stack & task)
+                   Sched                                                                                         
+                  ─────────┬────────────────────────────────────────────────────────────────────────────────────►
+                           ▼                                                                               ▲     
+                       Processor      ┌────────────────────────────────┐                                   │     
+                           │          │                               Yes                                  │     
+                           │          ▼                                │                                   │     
+                           └────► Main Loop ──────► Next Task ────► Running? ──No──► Graceful Shutdown ────┘     
+                                      │                 ▲                                                        
+                                      ▼                 │                                                        
+    │ _exit  ◄──── Stack Init ◄── Init Task             │                                                        
+    │ _func                           │                 │                                                        
+    │ _arg                            ▼                 │                                                        
+    │ _entry                     Swap 2 Task            │                                                        
+    ▼                                 │                 │                                                        
+                                      ▼                 │                                                        
+                                  Swap Back ────────────┘                                                        
 ```
 
-1. Create Context Struct - DONE in src/core/infra/sched/context/main.h
-2. Create Context Swap Functions - DONE in src/core/infra/sched/context/main.s
-3. Create Task Struct - DONE in src/core/infra/sched/main.h
-4. Create Task Queue Struct - DONE in src/core/infra/sched/main.h
-4. Create _initTask with pseudo-stack allocation - DONE in src/core/infra/sched/main.c
-5. Create _exitTask with context swapping back to the processor - DONE in src/core/infra/sched/main.c
-6. Implement function pointer inserting into task stack - DONE in src/core/infra/sched/main.c
-7. Implement dynamic stack growing - DONE in src/core/infra/sched/stack/main.c
-8. Implement processor initialize
+1. Create Context Struct - DONE
+2. Create Context Swap Functions - DONE
+3. Create Task Struct - DONE
+4. Create Task Queue Struct - DONE
+4. Create _initTask with pseudo-stack allocation - DONE
+5. Create _exitTask with context swapping back to the processor - DONE
+6. Implement function pointer inserting into task stack - DONE
+7. Implement dynamic stack growing - DONE
+8. Implement processor initialize - DONE
 9. Implement yield
-10. Implement processor blocked-threads yielding
-11. Implement processor next-task algorithm based in round-robin
-12. Implement scheduler initialize
-13. Implement scheduler loop
+10. Implement scheduler initialize using thrd_t - ON-GOING
+11. Implement `ScorpionDo(sched *self, func, void *arg)` which adds the task to a waiting queue
+12. Implement scheduler dispatcher loop that dispatches the waiting queue to processors
+13. Implement processor blocked-threads yielding
+14. Wire-up the _handleTaskStack using SIGSEGV/SIGBUS signal listeners
+15. Implement processor next-task algorithm based in round-robin
