@@ -1,7 +1,7 @@
 #
 # Copyright (c) 2026-Present ScorpionC2 public-person "Lucas de Moraes Claro" and all anonymous contributors. All rights reserved.
 # Licensed under the MIT license. See LICENSE file in the project root for details.
-# 
+#
 # This file uses provided code at https://gist.github.com/prwhite/8168133?permalink_comment_id=4160255#gistcomment-4160255 for the help target
 #
 
@@ -78,13 +78,13 @@ AS_OBJ_DIR := build/asm
 AS_OBJS := $(patsubst %.s,$(AS_OBJ_DIR)/%.o,$(AS_SRC))
 AS_OBJ := build/asm.o
 
-FORCE:
-
 $(AS_OBJ_DIR)/%.o: %.s FORCE
 	@mkdir -p $(dir $@)
 	@$(AS) $(AS_FLAGS) $< -o $@
 
 all: help
+
+FORCE:
 
 build: ## Build the project to build/scorpionc2-server
 	mkdir -p $(TARGET_DIR) $(AS_OBJ_DIR)
