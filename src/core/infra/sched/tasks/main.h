@@ -92,6 +92,8 @@ extern void _task_entry_trampoline();
  *
  * @return Pointer to the new task.
  * @retval NULL The given @p func parameter is NULL.
+ * @retval NULL Allocation error.
+ * @retval NULL Can't init stack.
  *
  * @note The returned SchedTask_t instance is owned by caller, that must release it.
  * @note To correctly release the SchedTask_t instance you must follow this checklist:
