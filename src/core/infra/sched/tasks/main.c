@@ -81,9 +81,7 @@ struct SchedTask_t *_initTask(void (*func)(void *), void *arg) {
  */
 void _exitTask() {
     currentProcessor->current->state = DEAD;
-    _cleanStack(&currentProcessor->current->stack);
-    _context_swap_linux_amd64(&currentProcessor->current->ctx,
-                              &currentProcessor->context);
+    _context_set_linux_amd64(&currentProcessor->context);
 
     __builtin_unreachable();
 }

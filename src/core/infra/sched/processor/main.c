@@ -173,6 +173,9 @@ bool_t _runProcessor(struct Sched_Processor_t *processor,
 
     while (processor->currentRunning) {
         _context_get_linux_amd64(&processor->current->ctx);
+        if (processor->runnable->cursor->prev->task->state == DEAD)
+            _cleanStack(&processor->runnable->cursor->prev->task->stack);
+
         if (processor->current->state != DEAD)
             _context_set_linux_amd64(&processor->current->ctx);
 
