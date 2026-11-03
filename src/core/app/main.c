@@ -4,11 +4,13 @@
 //
 
 #include "src/core/shared/types/main.h"
+#include "src/core/infra/sched/main.h"
 #include "src/core/shared/utils/random/main.h"
 
 #include <time.h>
 
 void init() {
+    _initSched(Scheduler);
     Random.seed((int)time(NULL));
     Random.seed((int)Random.rand());
 }
