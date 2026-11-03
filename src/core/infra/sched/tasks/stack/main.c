@@ -122,7 +122,6 @@ void *_handleTaskStack(struct SchedTask_Stack_t *stack, uint64_t rsp) {
     if (stack->buf == NULL)
         return NULL;
 
-    uint64_t top = stack->top;
     uint64_t low = stack->top - stack->commited;
 
     // Stack size (f)
