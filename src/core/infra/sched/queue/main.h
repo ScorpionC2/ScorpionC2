@@ -18,7 +18,7 @@
 struct SchedQueue_Node_t {
     /**
      * @brief Node unique ID.
-     * @note Must be initialized using the value returned by _getNewID.
+     * @note Must be initialized using the value returned by queue->nextID++ (ensure increment after use).
      */
     uint64_t id;
 
@@ -120,20 +120,16 @@ struct SchedQueue_t {
      * @warning Might be null, if manual handling is truly needed (not recomended), please check it.
      */
     struct SchedQueue_Node_t *cursor;
-};
 
-/**
- * @brief Get a new non-colided ID for a queue.
- *
- * @param queue Pointer to the SchedQueue_t instance that will be used to check for colisions.
- * @return New ID.
- *
- * @note If @p queue is NULL, return a random ID without colision checking.
- *
- * @pre @p queue being a valid pointer to a valid SchedTask_t instance.
- * @post @p queue unchanged.
- */
-uint64_t _getNewID(struct SchedQueue_t *queue);
+    /**
+     * @brief Tracks the next ID.
+     *
+     * @note This structure was created to optimize the ID assignment workload.
+     *       Previously the _getNewID function was iterating a LCG PRNG Algorithm
+     *       over every DLL node, basically O(n). This field remove this overhead.
+     */
+    uint64_t nextID;
+};
 
 /**
  * @brief Initializate a new queue.

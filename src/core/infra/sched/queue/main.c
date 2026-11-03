@@ -6,7 +6,6 @@
 #include "src/core/infra/sched/queue/main.h"
 #include "infra/sched/tasks/stack/main.h"
 #include "main.h"
-#include "src/core/shared/utils/random/main.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -78,29 +77,6 @@ void _deleteNode(struct SchedQueue_Node_t *node) {
 }
 
 /**
- * @brief Get a new non-colided ID for a queue.
- *
- * @param queue Pointer to the SchedQueue_t instance that will be used to check for colisions.
- * @return New ID.
- *
- * @note If @p queue is NULL, return a random ID without colision checking.
- *
- * @pre @p queue being a valid pointer to a valid SchedTask_t instance.
- * @post @p queue unchanged.
- */
-uint64_t _getNewID(struct SchedQueue_t *queue) {
-    if (queue == NULL) {
-        return Random.rand();
-    }
-
-    uint64_t newID = Random.rand();
-    while (_findTask(queue, newID) != NULL)
-        newID = Random.rand();
-
-    return newID;
-}
-
-/**
  * @brief Initializate a new queue.
  *
  * @param task Pointer to the SchedTask_t instance that will be made head and tail.
@@ -123,7 +99,7 @@ struct SchedQueue_t *_initQueue(struct SchedTask_t *task) {
     if (node == NULL)
         return NULL;
 
-    node->id = _getNewID(out);
+    node->id = 0;
     node->next = NULL;
     node->prev = NULL;
     node->task = task;
@@ -131,6 +107,7 @@ struct SchedQueue_t *_initQueue(struct SchedTask_t *task) {
     out->head = node;
     out->tail = node;
     out->cursor = node;
+    out->nextID = 1;
 
     return out;
 }
@@ -165,7 +142,7 @@ void *_appendQueue(struct SchedQueue_t *queue, struct SchedTask_t *task) {
     if (node == NULL)
         return NULL;
 
-    node->id = _getNewID(queue);
+    node->id = queue->nextID++;
     node->next = NULL;
     node->prev = queue->tail;
     node->task = task;
@@ -209,7 +186,7 @@ void *_prependQueue(struct SchedQueue_t *queue, struct SchedTask_t *task) {
     if (node == NULL)
         return NULL;
 
-    node->id = _getNewID(queue);
+    node->id = queue->nextID++;
     node->next = queue->head;
     node->prev = NULL;
     node->task = task;
@@ -430,7 +407,7 @@ struct SchedTask_t *_setCursor(struct SchedQueue_t *queue,
     nnode->next = NULL;
     nnode->prev = NULL;
     nnode->task = task;
-    nnode->id = _getNewID(queue);
+    nnode->id = queue->nextID++;
 
     // [Cursor] <-> [Cursor->next]
     // ↓
