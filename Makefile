@@ -9,8 +9,6 @@
 .SILENT: build help rebuild run run-valgrind run-debug test
 
 I_FLAGS 		:=  -I. \
-								-mrdseed \
-								-mrdrnd \
 								-Isrc \
 								-Isrc/core \
 								-Isrc/core/domain/encoders/services/xor \
@@ -28,6 +26,12 @@ I_FLAGS 		:=  -I. \
 								-Isrc/core/shared/utils/math \
 								-Isrc/core/shared/utils/mixers \
 								-Isrc/core/shared/utils/comparision \
+								-Isrc/core/infra/sched \
+								-Isrc/core/infra/sched/context \
+								-Isrc/core/infra/sched/processor \
+								-Isrc/core/infra/sched/queue \
+								-Isrc/core/infra/sched/tasks \
+								-Isrc/core/infra/sched/tasks/stack \
 
 LDFLAGS :=
 LDLIBS := -lm
@@ -64,6 +68,11 @@ CORE_SRC :=		\
 							src/core/app/cli/input/main.c \
 							src/core/infra/fs/main.c \
 							src/core/shared/utils/mixers/main.c \
+							src/core/infra/sched/main.c \
+							src/core/infra/sched/tasks/main.c \
+							src/core/infra/sched/tasks/stack/main.c \
+							src/core/infra/sched/processor/main.c \
+							src/core/infra/sched/queue/main.c \
 
 SRC_ENTRYPOINT	:=	src/core/app/main.c $(CORE_SRC)
 
