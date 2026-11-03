@@ -5,6 +5,7 @@
 
 #include "src/core/infra/sched/main.h"
 #include "src/core/app/cli/logs/main.h"
+#include <stdatomic.h>
 #include <stdlib.h>
 
 struct Sched_t *Scheduler = NULL;
@@ -43,7 +44,7 @@ struct Sched_t *_initSched(struct Sched_t *sched) {
         sched->processors[i] = _initProcessor();
     }
 
-    sched->running = ATOMIC_VAR_INIT(true);
+    atomic_init(&sched->running, true);
     thrd_create(&sched->thread, _runSched, sched);
     return sched;
 };
