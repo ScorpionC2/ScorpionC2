@@ -55,6 +55,18 @@ struct Sched_Processor_t {
      *       ensure that the processor isn't running any task or loop/check.
      */
     bool_t currentIsRunning;
+
+    /**
+     * @brief Mutex lock to queue access.
+     * @note Must be initialized by _initProcessor().
+     */
+    mtx_t mu;
+
+    /**
+     * @brief Condition variable that wakes up the processor when a new task arrives.
+     * @note Must be initialized by _initProcessor().
+     */
+    cnd_t wake;
 };
 
 /**

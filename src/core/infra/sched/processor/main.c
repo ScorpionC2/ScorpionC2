@@ -30,6 +30,7 @@ void spinSleep(uint64_t usecs) {
     select(0, NULL, NULL, NULL, &timeout);
 }
 
+// TODO: Initialize mtx_t mu & cnd_t wake.
 /**
  * @brief Initialize the processor.
  *
@@ -131,6 +132,8 @@ struct SchedTask_t *_nextTask(struct Sched_Processor_t *processor) {
     return next;
 }
 
+// TODO: Use the mtx_t mu.
+// TODO: Use the cnd_t wake instead of spinSleep.
 /**
  * @brief Run a given Sched_Processor_t.
  *

@@ -20,12 +20,6 @@
  *      4. I need to create _exitSched();
  *      5. Need some way to cleanly exit threads, I can easily control this for processor threads and
  *         scheduler threads but how do I exit a running task without context control? Need analysis.
- *  
- * Stuff:
- *      - The _runSched() will be a dispatcher that atomically dispatches tasks from the Scheduler->queue to the processor threads.
- *  
- * Fix and Improvements:
- *      1. The processor dispatcher MUST use mutexes to containerize queue->cursor accesses
  */
 
 /**
@@ -33,8 +27,11 @@
  *      1. The scheduler dispatcher must reallocate tasks from the Sched_t->queue to the Sched_Processor_t->queue;
  *      2. The task reallocation must check for ID re-use.
  *      3. The _runSched dispatcher must check for queue length for each processor;
- *      4. The _initSched will NOT fully initialize every processor and it's threads as it needs a initial task.
- *      5. The _initSched will NOT initialize the Sched_t->queue as it needs a initial task.
+ *      4. The _initSched will NOT fully initialize every processor and it's threads as it needs a initial task;
+ *      5. The _initSched will NOT initialize the Sched_t->queue as it needs a initial task;
+ *      6. The _runSched() will be a dispatcher that dispatches tasks from the Scheduler->queue to the processor runnable queues and wakes up the processor using cnd_t;
+ *      7. The same _runSched() must use the processor mtx_t mu and cnd_t wake;
+ *      8. The _processorRun() dispatcher MUST use mutexes to containerize runnable queue accesses.
  */
 
 /**
@@ -43,6 +40,7 @@
  *      of stack, why the heck we need to commit everything everytime. Require deep analysis.
  *       
  *      How will we solve the NOTE->4 and NOTE->5 issues? I don't know yet but we might need a check control flow branch in the scorpionDo function.
+ *      About the problem, I have an idea: what if I modify the queue initializer to use NULL init and handle everything with the append/prepend utils?
  */
 
 /**
@@ -72,11 +70,6 @@ struct Sched_t {
      * @note The _exitSched() must cleanly exit the thread by using the bool_t running value.
      */
     thrd_t thread;
-
-    /**
-     * 
-     */
-    mtx_t procMu;
 
     /**
      * @brief The atomic boolean that controls the scheduler execution.
