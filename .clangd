@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-I.]
+  Add: [-I., -std=c23]
