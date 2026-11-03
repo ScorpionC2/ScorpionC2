@@ -105,4 +105,4 @@ void _exitSched(struct Sched_t *sched);
 
 void scorpionDo(struct Sched_t *self, void (*func)(void *), void *arg);
 
-struct Sched_t *Scheduler = NULL;
+extern struct Sched_t *Scheduler;

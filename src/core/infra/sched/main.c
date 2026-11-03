@@ -7,6 +7,8 @@
 #include "src/core/app/cli/logs/main.h"
 #include <stdlib.h>
 
+struct Sched_t *Scheduler = NULL;
+
 /**
  * @brief Initialize a struct Sched_t instance.
  * @param sched A pointer to the Sched_t instance to be initialized.
