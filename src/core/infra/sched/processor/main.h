@@ -18,7 +18,7 @@
 #endif
 
 /**
- * @brief Scheduler [P]rocessor.
+ * @brief Scheduler Processor.
  *
  * The processor is the thread that runs the tasks, by swapping itself's context.
  *
@@ -49,24 +49,33 @@ struct Sched_Processor_t {
     bool_t currentRunning;
 
     /**
-     * @brief Current processor is running flag.
-     * @note Do not confuse with currentRunning, that is used in _runProcessor() main
-     *       loop. This one is used by _exitProcessor(), by the graceful shutdown, to
-     *       ensure that the processor isn't running any task or loop/check.
+     * @brief Condition Variable for notifying _exitProcessor() when the _runProcessor() stop.
      */
-    bool_t currentIsRunning;
+    cnd_t stopped;
+
+    /**
+     * @brief Mutex for the stopped cnd_t.
+     * @note Used by _exitProcessor(), by the graceful shutdown, 
+     *       to ensure that the processor isn't running any task or loop/check.
+     */
+    mtx_t stoppedMu;
 
     /**
      * @brief Mutex lock to queue access.
      * @note Must be initialized by _initProcessor().
      */
-    mtx_t mu;
+    mtx_t runnableMu;
 
     /**
      * @brief Condition variable that wakes up the processor when a new task arrives.
      * @note Must be initialized by _initProcessor().
      */
     cnd_t wake;
+
+    /**
+     * @brief Mutex for the wake cnd_t.
+     */
+    mtx_t wakeMu;
 };
 
 /**
@@ -82,17 +91,24 @@ struct Sched_Processor_t *_initProcessor();
 /**
  * @brief Insert a new task to the processor's queue.
  *
- * @param task A pointer to the SchedTask_t instance that'll be appended
- *             to the runnable queue.
+ * @param processor A pointer to the processor that'll receive the new task.
+ * @param task A pointer to the SchedTask_t instance that'll be
+ *             appended to the @p processor->runnable queue.
  *
  * @return Pointer to task;
  * @retval NULL Param nullity fallback.
  * @retval NULL Memory Error.
  *
+ * @warning Caller is responsible for locking @p processor->runnableMu.
+ *
  * @pre @p task being a valid pointer to a valid SchedTask_t instance.
+ * @pre @p processor being a valid pointer to a valid Sched_Processor_t instance.
+ *
  * @post @p task unchanged.
+ * @post @p processor unchanged.
  */
-struct SchedTask_t *_insertTask(struct SchedTask_t *task);
+struct SchedTask_t *_insertTask(struct SchedTask_t *task,
+                                struct Sched_Processor_t *processor);
 
 /**
  * @brief Get the next task.
@@ -116,6 +132,8 @@ struct SchedTask_t *_insertTask(struct SchedTask_t *task);
  *       A decoupled function let margin for future upgrades and algorithm
  *       rewrites, so we keep it simple now and then we upgrade it to the
  *       next level, as seen in other sucessfull projects!
+ *
+ * @warning Caller is responsible for locking @p processor->runnableMu.
  *
  * @pre @p processor being a valid pointer to a valid Sched_Processor_t instance.
  * @post Nothing changed.

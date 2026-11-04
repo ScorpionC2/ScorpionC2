@@ -21,17 +21,6 @@
 _Thread_local struct Sched_Processor_t *currentProcessor = NULL;
 
 /**
- * @brief CPU-Lazy Spin Sleeping.
- */
-void spinSleep(uint64_t usecs) {
-    struct timeval timeout = {.tv_sec = usecs / 1000000,
-                              .tv_usec = usecs % 1000000};
-
-    select(0, NULL, NULL, NULL, &timeout);
-}
-
-// TODO: Initialize mtx_t mu & cnd_t wake.
-/**
  * @brief Initialize the processor.
  *
  * @reutrn Pointer to the new Processor.
@@ -44,14 +33,20 @@ struct Sched_Processor_t *_initProcessor() {
     if (out == NULL)
         return NULL;
 
-    out->context = (struct SchedContext_t){0x00000000};
+    out->context = (struct SchedContext_t){0x00};
     out->runnable = _initQueue();
     if (out->runnable == NULL)
         return NULL;
 
     out->current = out->runnable->cursor->task;
-    out->currentIsRunning = FALSE;
     out->currentRunning = FALSE;
+
+    mtx_init(&out->runnableMu, mtx_plain);
+    mtx_init(&out->wakeMu, mtx_plain);
+    mtx_init(&out->stoppedMu, mtx_plain);
+
+    cnd_init(&out->wake);
+    cnd_init(&out->stopped);
 
     currentProcessor = out;
     return out;
@@ -60,21 +55,28 @@ struct Sched_Processor_t *_initProcessor() {
 /**
  * @brief Insert a new task to the processor's queue.
  *
- * @param task A pointer to the SchedTask_t instance that'll be appended
- *             to the runnable queue.
+ * @param processor A pointer to the processor that'll receive the new task.
+ * @param task A pointer to the SchedTask_t instance that'll be
+ *             appended to the @p processor->runnable queue.
  *
  * @return Pointer to task;
  * @retval NULL Param nullity fallback.
  * @retval NULL Memory Error.
  *
+ * @warning Caller is responsible for locking @p processor->runnableMu.
+ *
  * @pre @p task being a valid pointer to a valid SchedTask_t instance.
+ * @pre @p processor being a valid pointer to a valid Sched_Processor_t instance.
+ *
  * @post @p task unchanged.
+ * @post @p processor unchanged.
  */
-struct SchedTask_t *_insertTask(struct SchedTask_t *task) {
-    if (task == NULL || currentProcessor == NULL)
+struct SchedTask_t *_insertTask(struct SchedTask_t *task,
+                                struct Sched_Processor_t *processor) {
+    if (task == NULL || processor == NULL)
         return NULL;
 
-    struct SchedTask_t *t = _appendQueue(currentProcessor->runnable, task);
+    struct SchedTask_t *t = _appendQueue(processor->runnable, task);
     if (t == NULL)
         return NULL;
 
@@ -104,6 +106,8 @@ struct SchedTask_t *_insertTask(struct SchedTask_t *task) {
  *       rewrites, so we keep it simple now and then we upgrade it to the
  *       next level, as seen in other sucessfull projects!
  *
+ * @warning Caller is responsible for locking @p processor->runnableMu.
+ *
  * @pre @p processor being a valid pointer to a valid Sched_Processor_t instance.
  * @post Nothing changed.
  */
@@ -121,8 +125,6 @@ struct SchedTask_t *_nextTask(struct Sched_Processor_t *processor) {
     return next;
 }
 
-// TODO: Use the mtx_t mu.
-// TODO: Use the cnd_t wake instead of spinSleep.
 /**
  * @brief Run a given Sched_Processor_t.
  *
@@ -149,30 +151,34 @@ bool_t _runProcessor(struct Sched_Processor_t *processor) {
     processor->current = processor->runnable->cursor->task;
 
     processor->currentRunning = TRUE;
-    while (processor->currentRunning) {
+    while (TRUE) {
         _context_get_linux_amd64(&processor->current->ctx);
+
+        mtx_lock(&processor->runnableMu);
         if (processor->runnable->cursor->prev->task->state == DEAD)
             _cleanStack(&processor->runnable->cursor->prev->task->stack);
 
+        mtx_unlock(&processor->runnableMu);
         if (processor->current->state != DEAD)
             _context_set_linux_amd64(&processor->current->ctx);
 
-        while (currentProcessor->runnable->cursor->next == NULL)
-            spinSleep(250);
+        if (currentProcessor->runnable->cursor->next == NULL)
+            cnd_wait(&processor->wake, &processor->wakeMu);
 
+        mtx_lock(&processor->runnableMu);
         struct SchedTask_t *t = _setNextCursor(currentProcessor->runnable);
         if (t == NULL)
             return FALSE;
 
         _deleteNode(currentProcessor->runnable->cursor->prev);
         processor->current = processor->runnable->cursor->task;
+        mtx_unlock(&processor->runnableMu);
 
-        if (processor->currentRunning == FALSE) {
-            processor->currentIsRunning = processor->currentRunning;
+        if (processor->currentRunning == FALSE)
             break;
-        }
     }
 
+    cnd_broadcast(&processor->stopped);
     return TRUE;
 }
 
@@ -189,10 +195,9 @@ void _exitProcessor(struct Sched_Processor_t *processor) {
         return;
 
     processor->currentRunning = FALSE;
-    while (processor->currentIsRunning)
-        spinSleep(750);
+    cnd_wait(&processor->stopped, &processor->stoppedMu);
 
-    // Considering that @p processor->currentIsRunning changed to FALSE.
+    mtx_lock(&processor->runnableMu);
     if (processor->runnable->head != NULL &&
         processor->runnable->tail != NULL) {
         processor->runnable->cursor = processor->runnable->head;
@@ -206,5 +211,14 @@ void _exitProcessor(struct Sched_Processor_t *processor) {
     }
 
     free(processor->runnable);
+
+    mtx_unlock(&processor->runnableMu);
+    mtx_destroy(&processor->runnableMu);
+    mtx_destroy(&processor->stoppedMu);
+    mtx_destroy(&processor->wakeMu);
+
+    cnd_destroy(&processor->wake);
+    cnd_destroy(&processor->stopped);
+
     free(processor);
 }
