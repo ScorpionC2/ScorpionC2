@@ -75,9 +75,6 @@ struct Sched_Processor_t {
  * @reutrn Pointer to the new Processor.
  * @retval NULL Memory error.
  *
- * @note The processor is firstly created without a valid queue.
- *       User must add the task using _insertTask().
- *
  * @note Caller owns the new Sched_Processor_t instance and must release it with _exitProcessor().
  */
 struct Sched_Processor_t *_initProcessor();
@@ -89,11 +86,8 @@ struct Sched_Processor_t *_initProcessor();
  *             to the runnable queue.
  *
  * @return Pointer to task;
- * @retval NULL Param nullity fallback or Memory Error.
- *
- * @note If currentProcessor->runnable is NULL, the function creates it.
- *       This created queue is owned by caller, that must release it's
- *       memory when it is no longer needed, using _exitProcessor() wrapper.
+ * @retval NULL Param nullity fallback.
+ * @retval NULL Memory Error.
  *
  * @pre @p task being a valid pointer to a valid SchedTask_t instance.
  * @post @p task unchanged.
@@ -107,6 +101,7 @@ struct SchedTask_t *_insertTask(struct SchedTask_t *task);
  *
  * @return Pointer to the next task.
  * @retval NULL Param nullity fallback.
+ * @retval NULL @p processor->runnable is NULL.
  * @retval NULL Next task is null.
  *
  * @note Caller must upgrade @p processor->current.
@@ -143,8 +138,7 @@ struct SchedTask_t *_nextTask(struct Sched_Processor_t *processor);
  *
  * @pre @p processor and @p firstTask both being valid pointers to valid instances of itself's structs.
  */
-bool_t _runProcessor(struct Sched_Processor_t *processor,
-                     struct SchedTask_t *firsttask);
+bool_t _runProcessor(struct Sched_Processor_t *processor);
 
 /**
  * @brief Cleanly exits the processor.

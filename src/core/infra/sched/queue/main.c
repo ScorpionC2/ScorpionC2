@@ -79,34 +79,19 @@ void _deleteNode(struct SchedQueue_Node_t *node) {
 /**
  * @brief Initializate a new queue.
  *
- * @param task Pointer to the SchedTask_t instance that will be made head and tail.
- *
  * @return Pointer to the new queue.
- * @retval NULL Memory error or task nullity fallback.
+ * @retval NULL Memory error.
  *
  * @note Caller owns the returned queue and must release it's memory.
- * @note Caller owns the SchedQueue_Node_t instance used as initial head and must release it's memory.
- *
- * @pre @p task being a valid pointer to a valid SchedTask_t instance.
- * @post @p task unchanged.
  */
-struct SchedQueue_t *_initQueue(struct SchedTask_t *task) {
+struct SchedQueue_t *_initQueue() {
     struct SchedQueue_t *out = malloc(sizeof(struct SchedQueue_t));
-    if (out == NULL || task == NULL)
+    if (out == NULL)
         return NULL;
 
-    struct SchedQueue_Node_t *node = malloc(sizeof(struct SchedQueue_Node_t));
-    if (node == NULL)
-        return NULL;
-
-    node->id = 0;
-    node->next = NULL;
-    node->prev = NULL;
-    node->task = task;
-
-    out->head = node;
-    out->tail = node;
-    out->cursor = node;
+    out->head = NULL;
+    out->tail = NULL;
+    out->cursor = NULL;
     out->nextID = 1;
 
     return out;
@@ -121,9 +106,11 @@ struct SchedQueue_t *_initQueue(struct SchedTask_t *task) {
  * @param task A pointer to the SchedTask_t instance that will be appended.
  *
  * @return Pointer to @p queue.
- * @retval NULL Memory error or param nullity fallback.
+ * @retval NULL Memory error.
+ * @retval NULL @p queue or @p task nullity fallback.
  *
  * @note Caller owns the created node, and must release it's memory.
+ * @note The new task might be the head too if the queue is empty.
  *
  * @pre @p queue being a valid pointer to a valid SchedQueue_t instance.
  * @pre @p task being a valid pointer to a valid SchedTask_t instance.
@@ -135,9 +122,6 @@ void *_appendQueue(struct SchedQueue_t *queue, struct SchedTask_t *task) {
     if (queue == NULL || task == NULL)
         return NULL;
 
-    if (queue->tail == NULL)
-        return NULL;
-
     struct SchedQueue_Node_t *node = malloc(sizeof(struct SchedQueue_Node_t));
     if (node == NULL)
         return NULL;
@@ -147,12 +131,13 @@ void *_appendQueue(struct SchedQueue_t *queue, struct SchedTask_t *task) {
     node->prev = queue->tail;
     node->task = task;
 
-    // Don't check nullity because this can't be null (by default)
-    // if just one node, this is head and tail
-    // if null return (check above)
-    queue->tail->next = node;
-    queue->tail = node;
+    if (queue->tail != NULL)
+        queue->tail->next = node;
 
+    if (queue->head == NULL)
+        queue->head = node;
+
+    queue->tail = node;
     return queue;
 }
 
@@ -165,9 +150,11 @@ void *_appendQueue(struct SchedQueue_t *queue, struct SchedTask_t *task) {
  * @param task A pointer to the SchedTask_t instance that will be appended.
  *
  * @return Pointer to @p queue.
- * @retval NULL Memory error or param nullity fallback.
+ * @retval NULL Memory error.
+ * @retval NULL @p queue or @p task nullity fallback.
  *
  * @note Caller owns the created node, and must release it's memory.
+ * @note The new task might be the tail too if the queue is empty.
  *
  * @pre @p queue being a valid pointer to a valid SchedQueue_t instance.
  * @pre @p task being a valid pointer to a valid SchedTask_t instance.
@@ -179,9 +166,6 @@ void *_prependQueue(struct SchedQueue_t *queue, struct SchedTask_t *task) {
     if (queue == NULL || task == NULL)
         return NULL;
 
-    if (queue->head == NULL)
-        return NULL;
-
     struct SchedQueue_Node_t *node = malloc(sizeof(struct SchedQueue_Node_t));
     if (node == NULL)
         return NULL;
@@ -191,9 +175,13 @@ void *_prependQueue(struct SchedQueue_t *queue, struct SchedTask_t *task) {
     node->prev = NULL;
     node->task = task;
 
-    queue->head->prev = node;
-    queue->head = node;
+    if (queue->head != NULL)
+        queue->head->prev = node;
 
+    if (queue->tail == NULL)
+        queue->tail = node;
+
+    queue->head = node;
     return queue;
 }
 

@@ -37,9 +37,6 @@ void spinSleep(uint64_t usecs) {
  * @reutrn Pointer to the new Processor.
  * @retval NULL Memory error.
  *
- * @note The processor is firstly created without a valid queue.
- *       User must add the task using _insertTask().
- *
  * @note Caller owns the new Sched_Processor_t instance and must release it with _exitProcessor().
  */
 struct Sched_Processor_t *_initProcessor() {
@@ -48,8 +45,11 @@ struct Sched_Processor_t *_initProcessor() {
         return NULL;
 
     out->context = (struct SchedContext_t){0x00000000};
-    out->runnable = NULL;
-    out->current = NULL;
+    out->runnable = _initQueue();
+    if (out->runnable == NULL)
+        return NULL;
+
+    out->current = out->runnable->cursor->task;
     out->currentIsRunning = FALSE;
     out->currentRunning = FALSE;
 
@@ -64,11 +64,8 @@ struct Sched_Processor_t *_initProcessor() {
  *             to the runnable queue.
  *
  * @return Pointer to task;
- * @retval NULL Param nullity fallback or Memory Error.
- *
- * @note If currentProcessor->runnable is NULL, the function creates it.
- *       This created queue is owned by caller, that must release it's
- *       memory when it is no longer needed, using _exitProcessor() wrapper.
+ * @retval NULL Param nullity fallback.
+ * @retval NULL Memory Error.
  *
  * @pre @p task being a valid pointer to a valid SchedTask_t instance.
  * @post @p task unchanged.
@@ -76,15 +73,6 @@ struct Sched_Processor_t *_initProcessor() {
 struct SchedTask_t *_insertTask(struct SchedTask_t *task) {
     if (task == NULL || currentProcessor == NULL)
         return NULL;
-
-    if (currentProcessor->runnable == NULL) {
-        struct SchedQueue_t *q = _initQueue(task);
-        if (q == NULL)
-            return NULL;
-
-        currentProcessor->runnable = q;
-        return task;
-    }
 
     struct SchedTask_t *t = _appendQueue(currentProcessor->runnable, task);
     if (t == NULL)
@@ -100,6 +88,7 @@ struct SchedTask_t *_insertTask(struct SchedTask_t *task) {
  *
  * @return Pointer to the next task.
  * @retval NULL Param nullity fallback.
+ * @retval NULL @p processor->runnable is NULL.
  * @retval NULL Next task is null.
  *
  * @note Caller must upgrade @p processor->current.
@@ -150,30 +139,16 @@ struct SchedTask_t *_nextTask(struct Sched_Processor_t *processor) {
  *
  * @pre @p processor and @p firstTask both being valid pointers to valid instances of itself's structs.
  */
-bool_t _runProcessor(struct Sched_Processor_t *processor,
-                     struct SchedTask_t *firstTask) {
+bool_t _runProcessor(struct Sched_Processor_t *processor) {
     if (processor == NULL)
         return FALSE;
 
     currentProcessor = processor;
 
-    if (processor->runnable == NULL) {
-        struct SchedQueue_t *queue = _initQueue(firstTask);
-        if (queue == NULL)
-            return FALSE;
-
-        processor->runnable = queue;
-    } else {
-        struct SchedTask_t *t = _prependQueue(processor->runnable, firstTask);
-        if (t == NULL)
-            return FALSE;
-    }
-
     processor->runnable->cursor = processor->runnable->head;
     processor->current = processor->runnable->cursor->task;
 
     processor->currentRunning = TRUE;
-
     while (processor->currentRunning) {
         _context_get_linux_amd64(&processor->current->ctx);
         if (processor->runnable->cursor->prev->task->state == DEAD)

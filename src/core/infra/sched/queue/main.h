@@ -134,18 +134,12 @@ struct SchedQueue_t {
 /**
  * @brief Initializate a new queue.
  *
- * @param task Pointer to the SchedTask_t instance that will be made head and tail.
- *
  * @return Pointer to the new queue.
- * @retval NULL Memory error or task nullity fallback.
+ * @retval NULL Memory error.
  *
  * @note Caller owns the returned queue and must release it's memory.
- * @note Caller owns the SchedQueue_Node_t instance used as initial head and must release it's memory.
- *
- * @pre @p task being a valid pointer to a valid SchedTask_t instance.
- * @post @p task unchanged.
  */
-struct SchedQueue_t *_initQueue(struct SchedTask_t *task);
+struct SchedQueue_t *_initQueue();
 
 /**
  * @brief Append a task to the queue.
@@ -156,9 +150,11 @@ struct SchedQueue_t *_initQueue(struct SchedTask_t *task);
  * @param task A pointer to the SchedTask_t instance that will be appended.
  *
  * @return Pointer to @p queue.
- * @retval NULL Memory error or param nullity fallback.
+ * @retval NULL Memory error.
+ * @retval NULL @p queue or @p task nullity fallback.
  *
  * @note Caller owns the created node, and must release it's memory.
+ * @note The new task might be the head too if the queue is empty.
  *
  * @pre @p queue being a valid pointer to a valid SchedQueue_t instance.
  * @pre @p task being a valid pointer to a valid SchedTask_t instance.
@@ -177,9 +173,11 @@ void *_appendQueue(struct SchedQueue_t *queue, struct SchedTask_t *task);
  * @param task A pointer to the SchedTask_t instance that will be appended.
  *
  * @return Pointer to @p queue.
- * @retval NULL Memory error or param nullity fallback.
+ * @retval NULL Memory error.
+ * @retval NULL @p queue or @p task nullity fallback.
  *
  * @note Caller owns the created node, and must release it's memory.
+ * @note The new task might be the tail too if the queue is empty.
  *
  * @pre @p queue being a valid pointer to a valid SchedQueue_t instance.
  * @pre @p task being a valid pointer to a valid SchedTask_t instance.
