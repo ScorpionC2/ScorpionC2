@@ -33,15 +33,15 @@ struct SchedContext_t {
  * @param new Pointer to the SchedContext_t instance that will be swapped with the
  *        old context, being the new context.
  */
-extern void _context_get_linux_amd64(struct SchedContext_t *ctx);
+extern void _context_swap_linux_amd64(struct SchedContext_t *old,
+                                      struct SchedContext_t *new);
 
 /**
  * @brief Context getting for linux amd64 architecture.
  *
  * @param ctx The SchedContext_t instance that'll receive the current context.
  */
-extern void _context_swap_linux_amd64(struct SchedContext_t *old,
-                                      struct SchedContext_t *new);
+extern void _context_get_linux_amd64(struct SchedContext_t *ctx);
 
 /**
  * @brief Context setting for linux amd64 architecture.
