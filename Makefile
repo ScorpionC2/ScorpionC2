@@ -37,6 +37,9 @@ I_FLAGS 		:=  -I. \
 LDFLAGS := 
 LDLIBS := -lm
 
+# e.g.: make debug OPT_FLAGS="-DFLAG_DEBUG" or anyother gcc setting
+OPT_FLAGS :=
+
 # Optimize and debug may not work together
 OPTIMIZE_FLAGS 	:= 	-O3 -march=native -flto
 DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb3 -Wall -Wextra -Wformat=2 -Wshadow -Wundef \
@@ -93,6 +96,7 @@ build: ## Build the project to build/scorpionc2-server
 	
 	$(CC) \
 		$(CC_FLAGS) \
+		$(OPT_FLAGS) \
 		-o $(TARGET) \
 		$(SRC_ENTRYPOINT) \
 		$(AS_OBJ) \
@@ -110,6 +114,7 @@ debug: ## Build the project to build/scorpionc2-server-debug with debug flags
 	
 	$(CC) \
 		$(I_FLAGS) $(DEBUG_FLAGS) \
+		$(OPT_FLAGS) \
 		-o $(DEBUG_TARGET) \
 		$(SRC_ENTRYPOINT) \
 		$(AS_OBJ) \
@@ -132,6 +137,7 @@ rebuild: ## Remove old build and build again
 	
 	$(CC) \
 		$(CC_FLAGS) \
+		$(OPT_FLAGS) \
 		-o $(TARGET) \
 		$(SRC_ENTRYPOINT) \
 		$(AS_OBJ) \
@@ -150,6 +156,7 @@ run: ## Run the project in a tmp file
 	
 	$(CC) \
 		$(CC_FLAGS) \
+		$(OPT_FLAGS) \
 		-o $(RUN_TARGET) \
 		$(SRC_ENTRYPOINT) \
 		$(AS_OBJ) \
@@ -176,6 +183,7 @@ run-valgrind: ## Run the project in a tmp file and check it with valgrind
 	
 	$(CC) \
 		$(CC_FLAGS) \
+		$(OPT_FLAGS) \
 		-o $(RUN_TARGET) \
 		$(SRC_ENTRYPOINT) \
 		$(AS_OBJ) \
@@ -193,6 +201,7 @@ run-debug: ## Run the project in a tmp file with debug flags
 	
 	$(CC) \
 		$(DEBUG_CC_FLAGS) \
+		$(OPT_FLAGS) \
 		-o $(RUN_TARGET) \
 		$(SRC_ENTRYPOINT) \
 		$(AS_OBJ) \
@@ -224,6 +233,7 @@ test: ## Run the project's tests
 	
 	$(CC) \
 		-fsanitize=address \
+		$(OPT_FLAGS) \
 		-g $(TEST_I_FLAGS) \
 		-o $(TEST_TARGET) \
 		$(TEST_SRC) \
