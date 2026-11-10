@@ -5,12 +5,13 @@
 # This file uses provided code at https://gist.github.com/prwhite/8168133?permalink_comment_id=4160255#gistcomment-4160255 for the help target
 #
 
-.PHONY: build clean help rebuild run test FORCE
-.SILENT: build help rebuild run run-valgrind run-debug test
+.PHONY: build debug clean help rebuild run test FORCE
+.SILENT: build debug help rebuild run run-valgrind run-debug test
 
 I_FLAGS 		:=  -I. \
 								-Isrc \
 								-Isrc/core \
+								-Isrc/core/config \
 								-Isrc/core/domain/encoders/services/xor \
 								-Isrc/core/domain/encoders/types \
 								-Isrc/core/shared/types \
@@ -33,26 +34,16 @@ I_FLAGS 		:=  -I. \
 								-Isrc/core/infra/sched/tasks \
 								-Isrc/core/infra/sched/tasks/stack \
 
-LDFLAGS :=
+LDFLAGS := 
 LDLIBS := -lm
 
-OPTIMIZE_FLAGS 	:= 	-O3 -march=native -flto
-DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb -Wall -Wextra -Wformat=2 -Wshadow -Wundef
-
-USE_DEBUG		:= 	false
-USE_OPTIMIZE	:=	true
-
 # Optimize and debug may not work together
+OPTIMIZE_FLAGS 	:= 	-O3 -march=native -flto
+DEBUG_FLAGS 	:= 	-Og -dA -dD -ggdb3 -Wall -Wextra -Wformat=2 -Wshadow -Wundef \
+									-fsanitize=address -fno-omit-frame-pointer -no-pie -fno-inline
 
 CC				:= 	gcc
-CC_FLAGS		:=	$(I_FLAGS)
-ifeq ($(USE_DEBUG),true)
-	CC_FLAGS 	+=	$(DEBUG_FLAGS)
-endif
-
-ifeq ($(USE_OPTIMIZE),true)
-	CC_FLAGS	+=	$(OPTIMIZE_FLAGS)
-endif
+CC_FLAGS		:=	$(I_FLAGS) $(OPTIMIZE_FLAGS)
 
 TARGET_DIR		:=	build/
 TARGET			:=	$(TARGET_DIR)scorpionc2-server
@@ -108,6 +99,24 @@ build: ## Build the project to build/scorpionc2-server
 		$(LDLIBS)
 	
 	rm -rf $(AS_OBJ)
+
+DEBUG_TARGET_DIR := build/
+DEBUG_TARGET := $(DEBUG_TARGET_DIR)scorpionc2-server-debug
+
+debug: ## Build the project to build/scorpionc2-server-debug with debug flags
+	mkdir -p $(DEBUG_TARGET_DIR) $(AS_OBJ_DIR)
+	@$(MAKE) --no-print-directory $(AS_OBJS)
+	ld -r $(AS_OBJS) -o $(AS_OBJ)
+	
+	$(CC) \
+		$(I_FLAGS) $(DEBUG_FLAGS) \
+		-o $(DEBUG_TARGET) \
+		$(SRC_ENTRYPOINT) \
+		$(AS_OBJ) \
+		$(LDLIBS)
+	
+	rm -rf $(AS_OBJ)
+
 
 clean: ## Remove build binary
 	rm -rf $(TARGET)
