@@ -10,49 +10,43 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-void warn(const char *self) {
-    printf(FG_YELLOW_BOLD "[!]" RESET FG_YELLOW_ITALIC " %s" RESET, self);
-}
+#define WARN_FORMAT FG_YELLOW_BOLD "[!]" RESET FG_GREY_DARK_ITALIC " "
+#define INFO_FORMAT FG_GREEN "[?]" RESET FG_GREEN_ITALIC " "
+#define DEBUG_FORMAT FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " "
+#define ERROR_FORMAT                                                           \
+    BG_YELLOW_DARK FG_RED_BOLD "[*]" RESET BG_YELLOW FG_RED_ITALIC " "
 
-void info(const char *self) {
-    printf(FG_GREEN "[?]" FG_GREEN_ITALIC " %s" RESET, self);
-}
+#define _PLAIN_HELPER(name, x)                                                 \
+    void f_##name(const char *str) { printf(x "%s" RESET, str); }
 
-void error(const char *self) {
-    printf(BG_YELLOW FG_RED_BOLD "[*]" RESET BG_YELLOW FG_RED_ITALIC
-                                 " %s" RESET,
-           self);
-}
-
-void debug(const char *self) {
-    printf(FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " %s" RESET, self);
-}
+_PLAIN_HELPER(warn, WARN_FORMAT)
+_PLAIN_HELPER(info, INFO_FORMAT)
+_PLAIN_HELPER(error, ERROR_FORMAT)
+_PLAIN_HELPER(debug, DEBUG_FORMAT)
 
 void logger_print(const char *self) { printf("%s", self); }
 
-void warnln(const char *self) {
-    printf(FG_YELLOW_BOLD "[!]" RESET FG_YELLOW_ITALIC " %s\n" RESET, self);
-}
+#define _LN_HELPER(name, x)                                                    \
+    void f_##name(const char *str) {                                           \
+        flockfile(stdout);                                                     \
+                                                                               \
+        printf(x "%s\n" RESET, str);                                           \
+                                                                               \
+        funlockfile(stdout);                                                   \
+    }
 
-void infoln(const char *self) {
-    printf(FG_GREEN "[?]" FG_GREEN_ITALIC " %s\n" RESET, self);
-}
-
-void errorln(const char *self) {
-    printf(BG_YELLOW FG_RED_BOLD "[*]" RESET BG_YELLOW FG_RED_ITALIC
-                                 " %s\n" RESET,
-           self);
-}
-
-void debugln(const char *self) {
-    printf(FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " %s\n" RESET, self);
-}
+_LN_HELPER(warnln, WARN_FORMAT)
+_LN_HELPER(infoln, INFO_FORMAT)
+_LN_HELPER(errorln, ERROR_FORMAT)
+_LN_HELPER(debugln, DEBUG_FORMAT)
 
 void logger_println(const char *self) { printf("%s\n", self); }
 
 #define _FORMATF_HELPER(name, x)                                               \
     __attribute__((format(printf, 1, 2))) void f_##name(const char *fmt,       \
                                                         ...) {                 \
+        flockfile(stdout);                                                     \
+                                                                               \
         va_list arg;                                                           \
         va_start(arg, fmt);                                                    \
                                                                                \
@@ -61,19 +55,24 @@ void logger_println(const char *self) { printf("%s\n", self); }
         printf(RESET);                                                         \
                                                                                \
         va_end(arg);                                                           \
+        funlockfile(stdout);                                                   \
     }
 
-_FORMATF_HELPER(warnf, FG_YELLOW_BOLD "[!]" RESET FG_GREY_DARK_ITALIC " ")
-_FORMATF_HELPER(infof, FG_GREEN "[?]" RESET FG_GREEN_ITALIC " ")
-_FORMATF_HELPER(errorf, BG_YELLOW_DARK FG_RED_BOLD
-                "[*]" RESET BG_YELLOW FG_RED_ITALIC " ")
-_FORMATF_HELPER(debugf, FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " ")
+_FORMATF_HELPER(warnf, WARN_FORMAT)
+_FORMATF_HELPER(infof, INFO_FORMAT)
+_FORMATF_HELPER(errorf, ERROR_FORMAT)
+_FORMATF_HELPER(debugf, DEBUG_FORMAT)
 
 __attribute__((format(printf, 1, 2))) void logger_printf(const char *fmt, ...) {
+    flockfile(stdout);
+
     va_list arg;
     va_start(arg, fmt);
+
     vprintf(fmt, arg);
+
     va_end(arg);
+    funlockfile(stdout);
 }
 
 /*
@@ -91,6 +90,7 @@ __attribute__((format(printf, 1, 2))) void logger_printf(const char *fmt, ...) {
  *  %p wants pointer to anything (generic void* type)
  */
 void bytesf(const char *fmt, ...) {
+    flockfile(stdout);
     va_list args;
     va_start(args, fmt);
     for (const char *p = fmt; *p; p++) {
@@ -144,11 +144,15 @@ void bytesf(const char *fmt, ...) {
                 break;
         }
     }
+
+    funlockfile(stdout);
 }
 
 #define _F_FORMATF_HELPER(name, x)                                             \
     __attribute__((format(printf, 2, 3))) void f_##name(                       \
         FILE *file, const char *fmt, ...) {                                    \
+        flockfile(file);                                                       \
+                                                                               \
         va_list arg;                                                           \
         va_start(arg, fmt);                                                    \
                                                                                \
@@ -157,38 +161,43 @@ void bytesf(const char *fmt, ...) {
         fprintf(file, RESET);                                                  \
                                                                                \
         va_end(arg);                                                           \
+        funlockfile(file);                                                     \
     }
 
-_F_FORMATF_HELPER(fwarnf, FG_YELLOW_BOLD "[!]" RESET FG_GREY_DARK_ITALIC " ")
-_F_FORMATF_HELPER(finfof, FG_GREEN "[?]" RESET FG_GREEN_ITALIC " ")
-_F_FORMATF_HELPER(ferrorf, BG_YELLOW_DARK FG_RED_BOLD
-                  "[*]" RESET BG_YELLOW FG_RED_ITALIC " ")
-_F_FORMATF_HELPER(fdebugf, FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " ")
+_F_FORMATF_HELPER(fwarnf, WARN_FORMAT)
+_F_FORMATF_HELPER(finfof, INFO_FORMAT)
+_F_FORMATF_HELPER(ferrorf, ERROR_FORMAT)
+_F_FORMATF_HELPER(fdebugf, DEBUG_FORMAT)
 
 __attribute__((format(printf, 2, 3))) void
 logger_fprintf(FILE *file, const char *fmt, ...) {
+    flockfile(file);
+
     va_list arg;
     va_start(arg, fmt);
+
     vfprintf(file, fmt, arg);
+
     va_end(arg);
+    funlockfile(file);
 }
 
 const LoggerInstance Logger = {
     .plain =
         {
-            .debug = debug,
-            .error = error,
-            .info = info,
+            .debug = f_debug,
+            .error = f_error,
+            .info = f_info,
             .print = logger_print,
-            .warn = warn,
+            .warn = f_warn,
         },
     .newLine =
         {
-            .debugln = debugln,
-            .errorln = errorln,
-            .infoln = infoln,
+            .debugln = f_debugln,
+            .errorln = f_errorln,
+            .infoln = f_infoln,
             .println = logger_println,
-            .warnln = warnln,
+            .warnln = f_warnln,
         },
     .fmt =
         {
