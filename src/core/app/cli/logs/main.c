@@ -3,8 +3,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "main.h"
+#include "src/core/config/main.h"
 #include "src/core/app/cli/colors/main.h"
+#include "src/core/app/cli/logs/main.h"
 #include "src/core/shared/types/main.h"
 
 #include <stdarg.h>
@@ -61,7 +62,24 @@ void logger_println(const char *self) { printf("%s\n", self); }
 _FORMATF_HELPER(warnf, WARN_FORMAT)
 _FORMATF_HELPER(infof, INFO_FORMAT)
 _FORMATF_HELPER(errorf, ERROR_FORMAT)
-_FORMATF_HELPER(debugf, DEBUG_FORMAT)
+
+__attribute__((format(printf, 1, 2))) void f_debugf(const char *fmt, ...) {
+    // TODO: If i create any verbosity flag in the cli, must change this.
+    if (USE_DEBUG == FALSE)
+        return;
+
+    flockfile(stdout);
+
+    va_list arg;
+    va_start(arg, fmt);
+
+    printf(DEBUG_FORMAT);
+    vprintf(fmt, arg);
+    printf(RESET);
+
+    va_end(arg);
+    funlockfile(stdout);
+}
 
 __attribute__((format(printf, 1, 2))) void logger_printf(const char *fmt, ...) {
     flockfile(stdout);

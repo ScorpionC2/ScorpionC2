@@ -5,4 +5,14 @@
 
 #pragma once
 
-#define MAX_SCHED_PROCESSORS 1
+#include "src/core/shared/types/main.h"
+
+#ifndef MAX_SCHED_PROCESSORS
+#define MAX_SCHED_PROCESSORS 4
+#endif
+
+#ifndef FLAG_DEBUG
+#define USE_DEBUG (bool_t)(FALSE)
+#else
+#define USE_DEBUG (bool_t)(TRUE)
+#endif
