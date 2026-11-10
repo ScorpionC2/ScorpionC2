@@ -6,6 +6,7 @@
 #pragma once
 
 #include "main.h"
+#include "src/core/config/main.h"
 #include "src/core/infra/sched/context/main.h"
 #include "src/core/infra/sched/queue/main.h"
 #include "src/core/infra/sched/tasks/main.h"
