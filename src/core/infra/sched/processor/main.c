@@ -4,13 +4,18 @@
 //
 
 #include "src/core/infra/sched/processor/main.h"
-#include "infra/sched/context/main.h"
-#include "infra/sched/queue/main.h"
-#include "infra/sched/tasks/main.h"
 #include "main.h"
+#include "src/core/app/cli/logs/main.h"
+#include "src/core/infra/sched/context/main.h"
+#include "src/core/infra/sched/main.h"
+#include "src/core/infra/sched/queue/main.h"
+#include "src/core/infra/sched/tasks/main.h"
+
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/select.h>
 #include <threads.h>
+#include <unistd.h>
 
 /**
  * @brief Current processor pointer.
@@ -23,26 +28,34 @@ _Thread_local struct Sched_Processor_t *currentProcessor = NULL;
 /**
  * @brief Initialize the processor.
  *
+ * @param id The processor ID.
+ * @param sched A pointer to the Scheduler.
+ *
  * @reutrn Pointer to the new Processor.
  * @retval NULL Memory error.
+ * @retval NULL Param fallback nullity.
  *
  * @note Caller owns the new Sched_Processor_t instance and must release it with _exitProcessor().
  */
-struct Sched_Processor_t *_initProcessor() {
+struct Sched_Processor_t *_initProcessor(uint64_t id, void *sched) {
+    if (sched == NULL)
+        return NULL;
+
     struct Sched_Processor_t *out = malloc(sizeof(struct Sched_Processor_t));
     if (out == NULL)
         return NULL;
 
+    out->id = id;
     out->context = (struct SchedContext_t){0x00};
     out->runnable = _initQueue();
     if (out->runnable == NULL)
         return NULL;
 
-    out->current = out->runnable->cursor->task;
+    out->current = NULL;
     out->currentRunning = FALSE;
+    out->scheduler = sched;
 
     mtx_init(&out->runnableMu, mtx_plain);
-    mtx_init(&out->wakeMu, mtx_plain);
     mtx_init(&out->stoppedMu, mtx_plain);
 
     cnd_init(&out->wake);
@@ -129,56 +142,85 @@ struct SchedTask_t *_nextTask(struct Sched_Processor_t *processor) {
  * @brief Run a given Sched_Processor_t.
  *
  * @param processor A pointer to the Sched_Processor_t instance to be run.
- * @param firstTask A pointer to the SchedTask_t instance that'll be the first task executed.
  *
- * @return Execution Success (boolean).
- * @retval FALSE Param nullity fallback.
- * @retval FALSE Can't create the runnable queue.
- * @retval FALSE Can't insert the @p firstTask.
+ * @return Execution Success.
+ * @retval 0 Successfully executed.
+ * @retval -1 Param nullity fallback.
+ * @retval -1 Can't create the runnable queue.
+ * @retval -1 Can't insert the @p firstTask.
  *
  * @note The per-thread global Sched_Processor_t instance (a.k.a. currentProcessor) will be set as
  *       the @p processor parameter.
  *
  * @pre @p processor and @p firstTask both being valid pointers to valid instances of itself's structs.
  */
-bool_t _runProcessor(struct Sched_Processor_t *processor) {
-    if (processor == NULL)
+int _runProcessor(void *arg) {
+    if (arg == NULL)
         return FALSE;
 
+    struct Sched_Processor_t *processor = (struct Sched_Processor_t *)(arg);
     currentProcessor = processor;
-
-    processor->runnable->cursor = processor->runnable->head;
-    processor->current = processor->runnable->cursor->task;
 
     processor->currentRunning = TRUE;
     while (TRUE) {
-        _context_get_linux_amd64(&processor->current->ctx);
+        // Save processor ctx
+        _context_get_linux_amd64(&processor->context);
+        processor->current = processor->runnable->cursor
+                                 ? processor->runnable->cursor->task
+                                 : NULL;
 
+        // Mutex-containerized accesses
         mtx_lock(&processor->runnableMu);
-        if (processor->runnable->cursor->prev->task->state == DEAD)
+
+        // If cursor = NULL
+        while (processor->runnable->cursor == NULL &&
+               processor->currentRunning == TRUE) {
+            if (processor->runnable->head != NULL) {
+                processor->runnable->cursor = processor->runnable->head;
+                processor->current = processor->runnable->cursor->task;
+                break;
+            }
+
+            cnd_wait(&processor->wake, &processor->runnableMu);
+        }
+
+        if (processor->currentRunning == FALSE) {
+            mtx_unlock(&processor->runnableMu);
+            break;
+        }
+
+        // If dead (returning from _exitTask()), clean stack
+        if (processor->runnable->cursor->prev &&
+            processor->runnable->cursor->prev->task->state == DEAD) {
             _cleanStack(&processor->runnable->cursor->prev->task->stack);
+            _decrementTasks((struct Sched_t *)(processor->scheduler));
+        }
 
         mtx_unlock(&processor->runnableMu);
-        if (processor->current->state != DEAD)
-            _context_set_linux_amd64(&processor->current->ctx);
 
-        if (currentProcessor->runnable->cursor->next == NULL)
-            cnd_wait(&processor->wake, &processor->wakeMu);
+        // Swap to task.
+        if (processor->current->state != DEAD)
+            _context_swap_linux_amd64(&processor->context,
+                                      &processor->current->ctx);
 
         mtx_lock(&processor->runnableMu);
-        struct SchedTask_t *t = _setNextCursor(currentProcessor->runnable);
-        if (t == NULL)
-            return FALSE;
 
-        _deleteNode(currentProcessor->runnable->cursor->prev);
+        // Set next cursor and check
+        struct SchedTask_t *t = _setNextCursor(currentProcessor->runnable);
+        if (t == NULL) {
+            mtx_unlock(&processor->runnableMu);
+            continue;
+        }
+
+        // Keep running
         processor->current = processor->runnable->cursor->task;
         mtx_unlock(&processor->runnableMu);
-
-        if (processor->currentRunning == FALSE)
-            break;
     }
 
+    mtx_lock(&processor->stoppedMu);
     cnd_broadcast(&processor->stopped);
+    mtx_unlock(&processor->stoppedMu);
+
     return TRUE;
 }
 
@@ -195,17 +237,25 @@ void _exitProcessor(struct Sched_Processor_t *processor) {
         return;
 
     processor->currentRunning = FALSE;
+    mtx_lock(&processor->stoppedMu);
+
+    mtx_lock(&processor->runnableMu);
+    cnd_broadcast(&processor->wake);
+    mtx_unlock(&processor->runnableMu);
+
     cnd_wait(&processor->stopped, &processor->stoppedMu);
+    mtx_unlock(&processor->stoppedMu);
 
     mtx_lock(&processor->runnableMu);
     if (processor->runnable->head != NULL &&
         processor->runnable->tail != NULL) {
         processor->runnable->cursor = processor->runnable->head;
-
         struct SchedQueue_Node_t *cur = processor->runnable->cursor;
+
         while (cur != NULL) {
             struct SchedQueue_Node_t *next = cur->next;
-            _deleteNode(cur);
+            _deleteNode(cur, processor->runnable);
+
             cur = next;
         }
     }
@@ -215,7 +265,6 @@ void _exitProcessor(struct Sched_Processor_t *processor) {
     mtx_unlock(&processor->runnableMu);
     mtx_destroy(&processor->runnableMu);
     mtx_destroy(&processor->stoppedMu);
-    mtx_destroy(&processor->wakeMu);
 
     cnd_destroy(&processor->wake);
     cnd_destroy(&processor->stopped);

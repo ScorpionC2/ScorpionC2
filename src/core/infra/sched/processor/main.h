@@ -5,13 +5,14 @@
 
 #pragma once
 
-#include "main.h"
 #include "src/core/config/main.h"
 #include "src/core/infra/sched/context/main.h"
 #include "src/core/infra/sched/queue/main.h"
 #include "src/core/infra/sched/tasks/main.h"
+#include "src/core/shared/types/main.h"
 
 #include <stdint.h>
+#include <sys/types.h>
 #include <threads.h>
 
 #ifndef MAX_SCHED_PROCESSORS
@@ -51,12 +52,15 @@ struct Sched_Processor_t {
 
     /**
      * @brief Condition Variable for notifying _exitProcessor() when the _runProcessor() stop.
+     * @note Must be initialized by _initProcessor().
      */
     cnd_t stopped;
 
     /**
      * @brief Mutex for the stopped cnd_t.
-     * @note Used by _exitProcessor(), by the graceful shutdown, 
+     *
+     * @note Must be initialized by _initProcessor().
+     * @note Used by _exitProcessor(), by the graceful shutdown,
      *       to ensure that the processor isn't running any task or loop/check.
      */
     mtx_t stoppedMu;
@@ -69,25 +73,43 @@ struct Sched_Processor_t {
 
     /**
      * @brief Condition variable that wakes up the processor when a new task arrives.
-     * @note Must be initialized by _initProcessor().
+     * @note must be initialized by _initprocessor().
      */
     cnd_t wake;
 
     /**
-     * @brief Mutex for the wake cnd_t.
+     * @brief Thread descriptor.
+     * @note Must be initialized by _initSched().
      */
-    mtx_t wakeMu;
+    thrd_t thread;
+
+    /*
+     * @brief Processor ID.
+     * @note Must be initialized by _initSched().
+     */
+    uint64_t id;
+
+    /**
+     * @brief Scheduler Pointer.
+     *
+     * This pointer is used to decrement the Sched_t->tasksCount using it's mutex, safely.
+     * The only application yet is that, by using _decrementTasks().
+     */
+    void *scheduler;
 };
 
 /**
  * @brief Initialize the processor.
+ *
+ * @param id The processor ID.
+ * @param sched A pointer to the Scheduler.
  *
  * @reutrn Pointer to the new Processor.
  * @retval NULL Memory error.
  *
  * @note Caller owns the new Sched_Processor_t instance and must release it with _exitProcessor().
  */
-struct Sched_Processor_t *_initProcessor();
+struct Sched_Processor_t *_initProcessor(uint64_t id, void *sched);
 
 /**
  * @brief Insert a new task to the processor's queue.
@@ -145,19 +167,19 @@ struct SchedTask_t *_nextTask(struct Sched_Processor_t *processor);
  * @brief Run a given Sched_Processor_t.
  *
  * @param processor A pointer to the Sched_Processor_t instance to be run.
- * @param firstTask A pointer to the SchedTask_t instance that'll be the first task executed.
  *
- * @return Execution Success (boolean).
- * @retval FALSE Param nullity fallback.
- * @retval FALSE Can't create the runnable queue.
- * @retval FALSE Can't insert the @p firstTask.
+ * @return Execution Success.
+ * @retval 0 Successfully executed.
+ * @retval -1 Param nullity fallback.
+ * @retval -1 Can't create the runnable queue.
+ * @retval -1 Can't insert the @p firstTask.
  *
  * @note The per-thread global Sched_Processor_t instance (a.k.a. currentProcessor) will be set as
  *       the @p processor parameter.
  *
  * @pre @p processor and @p firstTask both being valid pointers to valid instances of itself's structs.
  */
-bool_t _runProcessor(struct Sched_Processor_t *processor);
+int _runProcessor(void *processor);
 
 /**
  * @brief Cleanly exits the processor.
