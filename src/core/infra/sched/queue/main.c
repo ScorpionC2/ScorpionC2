@@ -384,7 +384,7 @@ struct SchedTask_t *_setCursor(struct SchedQueue_t *queue,
         return NULL;
 
     if (queue->cursor == NULL) {
-        void *a = _prependQueue(queue, task);
+        const void *a = _prependQueue(queue, task);
         if (a == NULL)
             return NULL;
 

@@ -89,7 +89,7 @@ struct SchedTask_t *_insertTask(struct SchedTask_t *task,
     if (task == NULL || processor == NULL)
         return NULL;
 
-    struct SchedTask_t *t = _appendQueue(processor->runnable, task);
+    const struct SchedTask_t *t = _appendQueue(processor->runnable, task);
     if (t == NULL)
         return NULL;
 
@@ -206,7 +206,8 @@ int _runProcessor(void *arg) {
         mtx_lock(&processor->runnableMu);
 
         // Set next cursor and check
-        struct SchedTask_t *t = _setNextCursor(currentProcessor->runnable);
+        const struct SchedTask_t *t =
+            _setNextCursor(currentProcessor->runnable);
         if (t == NULL) {
             mtx_unlock(&processor->runnableMu);
             continue;

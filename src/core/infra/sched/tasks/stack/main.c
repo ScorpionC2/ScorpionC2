@@ -94,7 +94,7 @@ struct SchedTask_Stack_t *_initStack() {
     if (buf == NULL)
         return NULL;
 
-    void *commit =
+    const void *commit =
         _vmcommitRW(buf, out->cap, out->commited, DEFAULT_STACK_EXPAND_SIZE);
     if (commit == NULL)
         return NULL;
