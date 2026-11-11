@@ -11,11 +11,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define WARN_FORMAT FG_YELLOW_BOLD "[!]" RESET FG_GREY_DARK_ITALIC " "
-#define INFO_FORMAT FG_GREEN "[?]" RESET FG_GREEN_ITALIC " "
+#define WARN_FORMAT FG_YELLOW_BOLD "[WARN]" RESET FG_GREY_DARK_ITALIC " "
+#define INFO_FORMAT FG_GREEN "[INFO]" RESET FG_GREEN_ITALIC " "
 #define DEBUG_FORMAT FG_GREY_DARK "[DEBUG]" FG_GREY_DARK_ITALIC " "
 #define ERROR_FORMAT                                                           \
-    BG_YELLOW_DARK FG_RED_BOLD "[*]" RESET BG_YELLOW FG_RED_ITALIC " "
+    BG_YELLOW_DARK FG_RED_BOLD "[ERROR]" RESET BG_YELLOW FG_RED_ITALIC " "
 
 #define _PLAIN_HELPER(name, x)                                                 \
     void f_##name(const char *str) { printf(x "%s" RESET, str); }
