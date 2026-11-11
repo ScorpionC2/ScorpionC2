@@ -5,8 +5,8 @@
 # This file uses provided code at https://gist.github.com/prwhite/8168133?permalink_comment_id=4160255#gistcomment-4160255 for the help target
 #
 
-.PHONY: build debug clean help rebuild run test FORCE
-.SILENT: build debug help rebuild run run-valgrind run-debug test
+.PHONY: build debug clean help rebuild run run-debug run-valgrind run-gdb test FORCE
+.SILENT: build debug help rebuild run run-valgrind run-debug run-gdb test
 
 I_FLAGS 		:=  -I. \
 								-Isrc \
@@ -209,6 +209,26 @@ run-debug: ## Run the project in a tmp file with debug flags
 	
 	rm -rf $(AS_OBJ)
 	$(RUN_TARGET)
+	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
+
+GDB_PATH := "/usr/bin/gdb"
+
+run-gdb: ## Run the project in a tmp file with debug flags over GDB for debugging
+	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
+	mkdir -p $(RUN_TARGET_DIR) $(AS_OBJ_DIR)
+	@$(MAKE) --no-print-directory $(AS_OBJS)
+	ld -r $(AS_OBJS) -o $(AS_OBJ)
+	
+	$(CC) \
+		$(DEBUG_CC_FLAGS) \
+		$(OPT_FLAGS) \
+		-o $(RUN_TARGET) \
+		$(SRC_ENTRYPOINT) \
+		$(AS_OBJ) \
+		$(LDLIBS)
+	
+	rm -rf $(AS_OBJ)
+	$(GDB_PATH) $(RUN_TARGET)
 	rm -rf $(RUN_TARGET) $(RUN_TARGET_DIR)
 
 TEST_TARGET_DIR := /tmp/scorpion-tests/$(shell date --iso=seconds)
