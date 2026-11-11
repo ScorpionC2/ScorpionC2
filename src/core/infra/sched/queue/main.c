@@ -3,9 +3,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "src/core/infra/sched/queue/main.h"
+#include "src/core/app/cli/logs/main.h"
 #include "infra/sched/tasks/stack/main.h"
 #include "main.h"
+#include "src/core/app/cli/colors/main.h"
+#include "src/core/infra/sched/queue/main.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -20,34 +22,38 @@ struct SchedTask_t *_findTask(struct SchedQueue_t *queue, uint64_t id);
  * don't "see" the removed node.
  *
  * @param node Pointer to the node to be removed.
+ * @param queue Pointer to the node's queue.
  *
  * @return Pointer to the removed node.
  * @retval NULL Parameter nullity fallback.
  *
  * @note The node aren't deleted, just aren't visible in the DLL.
+ * @note If the @p node is the unique @p queue's node, the @p queue become NULL.
  *
  * @pre @p node being a valid pointer to a SchedQueue_Node_t instance.
+ * @pre @p queue being a valid pointer to a valid SchedQueue_t instance that must be the @p node queue.
+ *
  * @post @p node not visible by other nodes in the DLL.
+ * @post @p queue without @p node.
  */
-void *_removeNode(struct SchedQueue_Node_t *node) {
-    if (node == NULL)
+void *_removeNode(struct SchedQueue_Node_t *node, struct SchedQueue_t *queue) {
+    if (node == NULL || queue == NULL)
         return NULL;
 
-    // @p node isn't head
-    if (node->prev != NULL) {
-        // @p node isn't tail
-        if (node->next != NULL)
-            node->prev->next = node->next;
-        else
-            node->prev->next = NULL;
-    }
+    // @p node is head
+    if (node->prev == NULL)
+        queue->head = node->next;
+    else
+        node->prev->next = NULL;
 
-    if (node->next != NULL) {
-        if (node->prev != NULL)
-            node->next->prev = node->prev;
-        else
-            node->next->prev = NULL;
-    }
+    // @p node is tail
+    if (node->next == NULL)
+        queue->tail = node->prev;
+    else
+        node->next->prev = NULL;
+
+    node->prev = NULL;
+    node->next = NULL;
 
     return node;
 }
@@ -56,17 +62,21 @@ void *_removeNode(struct SchedQueue_Node_t *node) {
  * @brief Delete a node from the DLL.
  *
  * @param node Pointer to the node to be deleted.
+ * @param queue Pointer to the node's queue.
  *
  * @note The node is permanentely deleted and it's memory released.
  *
  * @pre @p node being a valid pointer to a SchedQueue_Node_t instance.
+ * @pre @p queue being a valid pointer to a valid SchedQueue_t instance that must be the @p node queue.
+ *
  * @post @p node deleted.
+ * @post @p queue without @p node.
  */
-void _deleteNode(struct SchedQueue_Node_t *node) {
-    if (node == NULL)
+void _deleteNode(struct SchedQueue_Node_t *node, struct SchedQueue_t *queue) {
+    if (node == NULL || queue == NULL)
         return;
 
-    if (_removeNode(node) == NULL)
+    if (_removeNode(node, queue) == NULL)
         return;
 
     if (_cleanStack(&node->task->stack) == FALSE)
@@ -479,7 +489,6 @@ struct SchedTask_t *_setNextCursor(struct SchedQueue_t *queue) {
         return NULL;
 
     if (queue->cursor->next == NULL) {
-        queue->cursor = NULL;
         return NULL;
     }
 

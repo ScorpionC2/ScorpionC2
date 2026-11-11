@@ -42,37 +42,6 @@ struct SchedQueue_Node_t {
 };
 
 /**
- * @brief Remove a node from the DLL.
- *
- * Remove a node by updating next and
- * previous node in the struct so they
- * don't "see" the removed node.
- *
- * @param node Pointer to the node to be removed.
- *
- * @return Pointer to the removed node.
- * @retval NULL Parameter nullity fallback.
- *
- * @note The node aren't deleted, just aren't visible in the DLL.
- *
- * @pre @p node being a valid pointer to a SchedQueue_Node_t instance.
- * @post @p node not visible by other nodes in the DLL.
- */
-void *_removeNode(struct SchedQueue_Node_t *node);
-
-/**
- * @brief Delete a node from the DLL.
- *
- * @param node Pointer to the node to be deleted.
- *
- * @note The node is permanentely deleted and it's memory released.
- *
- * @pre @p node being a valid pointer to a SchedQueue_Node_t instance.
- * @post @p node deleted.
- */
-void _deleteNode(struct SchedQueue_Node_t *node);
-
-/**
  * @brief The tasks queue.
  *
  * @note Must be initialized by _initQueue().
@@ -130,6 +99,46 @@ struct SchedQueue_t {
      */
     uint64_t nextID;
 };
+
+/**
+ * @brief Remove a node from the DLL.
+ *
+ * Remove a node by updating next and
+ * previous node in the struct so they
+ * don't "see" the removed node.
+ *
+ * @param node Pointer to the node to be removed.
+ * @param queue Pointer to the node's queue.
+ *
+ * @return Pointer to the removed node.
+ * @retval NULL Parameter nullity fallback.
+ *
+ * @note The node aren't deleted, just aren't visible in the DLL.
+ * @note If the @p node is the unique @p queue's node, the @p queue become NULL.
+ *
+ * @pre @p node being a valid pointer to a SchedQueue_Node_t instance.
+ * @pre @p queue being a valid pointer to a valid SchedQueue_t instance that must be the @p node queue.
+ *
+ * @post @p node not visible by other nodes in the DLL.
+ * @post @p queue without @p node.
+ */
+void *_removeNode(struct SchedQueue_Node_t *node, struct SchedQueue_t *queue);
+
+/**
+ * @brief Delete a node from the DLL.
+ *
+ * @param node Pointer to the node to be deleted.
+ * @param queue Pointer to the node's queue.
+ *
+ * @note The node is permanentely deleted and it's memory released.
+ *
+ * @pre @p node being a valid pointer to a SchedQueue_Node_t instance.
+ * @pre @p queue being a valid pointer to a valid SchedQueue_t instance that must be the @p node queue.
+ *
+ * @post @p node deleted.
+ * @post @p queue without @p node.
+ */
+void _deleteNode(struct SchedQueue_Node_t *node, struct SchedQueue_t *queue);
 
 /**
  * @brief Initializate a new queue.
