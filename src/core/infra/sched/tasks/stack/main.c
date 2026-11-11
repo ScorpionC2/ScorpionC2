@@ -3,14 +3,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "src/core/infra/sched/tasks/main.h"
+#include "src/core/app/cli/logs/main.h"
 #include "main.h"
+#include "src/core/infra/sched/tasks/main.h"
 #include "src/core/infra/sched/tasks/stack/main.h"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 /**
  * @brief Allocates virtual PROT_NONE memory.
@@ -155,16 +158,19 @@ void *_handleTaskStack(struct SchedTask_Stack_t *stack, uint64_t rsp) {
  * @pre @p stack being a valid pointer to a valid SchedTask_Stack_t instance.
  * @post @p stack cleaned and it's memory released.
  */
-bool_t _cleanStack(struct SchedTask_Stack_t *stack) {
-    if (stack == NULL)
+bool_t _cleanStack(struct SchedTask_Stack_t **stackptr) {
+    if (stackptr == NULL || *stackptr == NULL)
         return FALSE;
 
-    // Virtual-memory cleaning
-    if (stack->buf == NULL)
-        return FALSE;
+    struct SchedTask_Stack_t *stack = *stackptr;
+    if (stack->buf != NULL) {
+        if (munmap(stack->buf, stack->size) != 0)
+            return FALSE;
+    }
 
-    if (munmap(stack->buf, stack->size) != 0)
-        return FALSE;
+    stack->buf = NULL;
+    *stackptr = NULL;
 
+    free(stack);
     return TRUE;
 }

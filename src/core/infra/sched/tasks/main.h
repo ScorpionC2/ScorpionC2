@@ -47,7 +47,7 @@ struct SchedTask_t {
      * @note Don't initialize manually, must be created by _initTask(), that
      *       will call _initStack() to handle stack creating.
      */
-    struct SchedTask_Stack_t stack;
+    struct SchedTask_Stack_t *stack;
 
     /**
      * @brief Task state.

@@ -89,4 +89,4 @@ void *_handleTaskStack(struct SchedTask_Stack_t *stack, uint64_t rsp);
  * @pre @p stack being a valid pointer to a valid SchedTask_Stack_t instance.
  * @post @p stack cleaned and it's memory released.
  */
-bool_t _cleanStack(struct SchedTask_Stack_t *stack);
+bool_t _cleanStack(struct SchedTask_Stack_t **stack);
