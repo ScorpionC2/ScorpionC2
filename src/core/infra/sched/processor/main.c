@@ -190,7 +190,7 @@ int _runProcessor(void *arg) {
         }
 
         // If dead (returning from _exitTask()), clean stack
-        if (processor->runnable->cursor->prev &&
+        if (processor->runnable->cursor && processor->runnable->cursor->prev &&
             processor->runnable->cursor->prev->task->state == DEAD) {
             _cleanStack(&processor->runnable->cursor->prev->task->stack);
             _decrementTasks((struct Sched_t *)(processor->scheduler));
