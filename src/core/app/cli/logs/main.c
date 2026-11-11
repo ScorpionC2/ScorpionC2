@@ -32,6 +32,7 @@ void logger_print(const char *self) { printf("%s", self); }
         flockfile(stdout);                                                     \
                                                                                \
         printf(x "%s\n" RESET, str);                                           \
+        fflush(stdout);                                                        \
                                                                                \
         funlockfile(stdout);                                                   \
     }
@@ -41,7 +42,10 @@ _LN_HELPER(infoln, INFO_FORMAT)
 _LN_HELPER(errorln, ERROR_FORMAT)
 _LN_HELPER(debugln, DEBUG_FORMAT)
 
-void logger_println(const char *self) { printf("%s\n", self); }
+void logger_println(const char *self) {
+    printf("%s\n", self);
+    fflush(stdout);
+}
 
 #define _FORMATF_HELPER(name, x)                                               \
     __attribute__((format(printf, 1, 2))) void f_##name(const char *fmt,       \
@@ -54,6 +58,7 @@ void logger_println(const char *self) { printf("%s\n", self); }
         printf(x);                                                             \
         vprintf(fmt, arg);                                                     \
         printf(RESET);                                                         \
+        fflush(stdout);                                                        \
                                                                                \
         va_end(arg);                                                           \
         funlockfile(stdout);                                                   \
@@ -76,6 +81,7 @@ __attribute__((format(printf, 1, 2))) void f_debugf(const char *fmt, ...) {
     printf(DEBUG_FORMAT);
     vprintf(fmt, arg);
     printf(RESET);
+    fflush(stdout);
 
     va_end(arg);
     funlockfile(stdout);
@@ -88,6 +94,7 @@ __attribute__((format(printf, 1, 2))) void logger_printf(const char *fmt, ...) {
     va_start(arg, fmt);
 
     vprintf(fmt, arg);
+    fflush(stdout);
 
     va_end(arg);
     funlockfile(stdout);
@@ -177,6 +184,7 @@ void bytesf(const char *fmt, ...) {
         fprintf(file, x);                                                      \
         vfprintf(file, fmt, arg);                                              \
         fprintf(file, RESET);                                                  \
+        fflush(stdout);                                                        \
                                                                                \
         va_end(arg);                                                           \
         funlockfile(file);                                                     \
