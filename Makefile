@@ -237,7 +237,8 @@ TEST_SRC := $(CORE_SRC) \
 						src/tests/engine/main.c \
 						src/tests/engine/unit/main.c \
 						src/tests/unit/encoders/xor.c \
-						src/tests/unit/hash/djb2.c
+						src/tests/unit/hash/djb2.c \
+						src/tests/unit/scheduler.c
 
 TEST_I_FLAGS := $(I_FLAGS) \
 								-Isrc/tests/engine \
