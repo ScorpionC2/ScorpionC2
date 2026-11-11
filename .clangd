@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-I.]
+  Add: [-I., -std=c23, -D_POSIX_C_SOURCE=200809L]

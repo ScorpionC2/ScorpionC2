@@ -3,13 +3,29 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "tests/engine/main.h"
+#include "src/tests/engine/main.h"
 #include "src/core/app/cli/colors/main.h"
 #include "src/core/app/cli/logs/main.h"
+#include "src/core/infra/sched/main.h"
 #include "src/core/shared/types/main.h"
-#include "tests/engine/unit/main.h"
+#include "src/core/shared/utils/random/main.h"
+#include "src/tests/engine/unit/main.h"
+
 #include <inttypes.h>
 #include <stdint.h>
+#include <time.h>
+
+void initTests() {
+    Scheduler = _initSched(Scheduler);
+
+    Random.seed((int)time(NULL));
+    Random.seed((int)Random.rand());
+}
+
+void finishTests() {
+    _exitSched(Scheduler, FALSE);
+    Logger.fmt.debugf(_DPSPEC "Successfully finished\n", _DPDATA);
+}
 
 bool_t run(void) {
     Logger.newLine.infoln(FG_WHITE_ITALIC "Starting" RESET " " FG_CYAN_ITALIC
@@ -25,6 +41,14 @@ bool_t run(void) {
 }
 
 int main(void) {
+    initTests();
+
     Logger.newLine.infoln(FG_WHITE_ITALIC "Starting Tests" RESET);
-    return run() == FALSE;
+    bool_t res = run() == FALSE;
+
+    waitTasks(Scheduler);
+    finishTests();
+
+    Logger.newLine.infoln(FG_WHITE_ITALIC "Finished Tests" RESET);
+    return res;
 }

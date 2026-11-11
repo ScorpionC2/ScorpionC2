@@ -16,14 +16,9 @@
 //  https://en.wikipedia.org/wiki/Random_number_generation
 //  https://en.wikipedia.org/wiki/Randomness_extractor?utm_source=google.com
 //
-// ps: removed the large "docs" because it's useless
-//
-// Last upgrades (aka rdseed and rdrand use) is very inspired by my friend's video: https://youtu.be/fyBr9iKZrZo?si=eBSlXBXzTRLL4isi
-//
 
 #include "src/core/shared/utils/random/main.h"
 
-#include <immintrin.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <unistd.h>

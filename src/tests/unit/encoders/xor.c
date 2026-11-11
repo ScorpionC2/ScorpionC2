@@ -9,7 +9,6 @@
 #include "tests/engine/main.h"
 #include "tests/engine/unit/main.h"
 
-#include <iso646.h>
 #include <stdlib.h>
 #include <string.h>
 

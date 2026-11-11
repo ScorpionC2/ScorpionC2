@@ -3,8 +3,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "src/core/app/cli/colors/main.h"
-#include "src/core/app/cli/logs/main.h"
 #include "src/core/infra/hash/main.h"
 #include "src/core/shared/types/main.h"
 #include "tests/engine/main.h"

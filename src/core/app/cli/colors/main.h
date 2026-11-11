@@ -3,11 +3,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-/*
- * After using any BOLD color, needs to use RESET to remove BOLD mod
- * Same thing to ITALIC colors
- */
-
 #pragma once
 
 #define _PREFIX "\x1b["
