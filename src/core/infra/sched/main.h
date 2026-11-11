@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "main.h"
 #include "src/core/infra/sched/context/main.h"
 #include "src/core/infra/sched/processor/main.h"
 
@@ -14,33 +15,25 @@
 
 /**
  * TODO:
- *      1. _initSched implementation that creates the main thread running the void _runSched();
- *      2. _initProcessor must initialize it's mutexes;
- *      3. _initSched must initialize the processor threads;
- *      4. I need to create _exitSched();
- *      5. Need some way to cleanly exit threads, I can easily control this for processor threads and
- *         scheduler threads but how do I exit a running task without context control? Need analysis.
+ * 1. Refactor `#include "main.h"` across the source to follow the project spec `"src/.../.../main.h"`.
+ */
+
+/**
+ * INVESTIGATION NOTES:
+ *                      There is two main execution flows that leads for infinity loops:
+ *                          1st: stoppedMu DO NOT broadcasted;
+ *                          2nd: Some other thing after stoppedMu;
+ *                          3rd: I just found a 3rd state, rarer than the others, it's a memleak. I found it when debugging with gdb, so idk where the leak is yet;
+ *                      
+ *                      Yupiii, I just solved 1st one by locking/unlocking the stoppedMu before and after cnd_wait and cnd_broadcast.
+ *                      Fixed 1st and 2nd by doing the same thing: adding mutexes. One good point is: I needed to lock/unlock the runnableMu (processors) inside a locked stoppedMu.
+ *                      I don't find another memleak, so I'll ignore this.
  */
 
 /**
  * NOTE:
- *      1. The scheduler dispatcher must reallocate tasks from the Sched_t->queue to the Sched_Processor_t->queue;
- *      2. The task reallocation must check for ID re-use.
- *      3. The _runSched dispatcher must check for queue length for each processor;
- *      4. The _initSched will NOT fully initialize every processor and it's threads as it needs a initial task;
- *      5. The _initSched will NOT initialize the Sched_t->queue as it needs a initial task;
- *      6. The _runSched() will be a dispatcher that dispatches tasks from the Scheduler->queue to the processor runnable queues and wakes up the processor using cnd_t;
- *      7. The same _runSched() must use the processor mtx_t mu and cnd_t wake;
- *      8. The _processorRun() dispatcher MUST use mutexes to containerize runnable queue accesses.
- */
-
-/**
- * MORE NOTES:
- *      There is some problems that I need to fix: The 1st one is about how we create the stack memory, if we allocate 512KiB
+ *      There is some problems that I need to fix: The 1st one is about how we create the stack memory, if we already mmap 512KiB
  *      of stack, why the heck we need to commit everything everytime. Require deep analysis.
- *       
- *      How will we solve the NOTE->4 and NOTE->5 issues? I don't know yet but we might need a check control flow branch in the scorpionDo function.
- *      About the problem, I have an idea: what if I modify the queue initializer to use NULL init and handle everything with the append/prepend utils?
  */
 
 /**
@@ -64,6 +57,14 @@ struct Sched_t {
     struct SchedQueue_t *queue;
 
     /**
+     * @brief The queue mutex lock;
+     *
+     * @note The _initSched must initialize it;
+     * @note The _exitSched must destroy it;
+     */
+    mtx_t queueMu;
+
+    /**
      * @brief The thread identifier.
      *
      * @note The _initSched() must initialize it against _runSched().
@@ -76,6 +77,50 @@ struct Sched_t {
      * @note Initialized as TRUE by _initSched.
      */
     atomic_bool running;
+
+    /**
+     * @brief Condition Variable for notifying _exitSched() when the _runSched() stop.
+     * @note Must be initialized by _initSched().
+     */
+    cnd_t stopped;
+
+    /**
+     * @brief Mutex for the stopped cnd_t.
+     *
+     * @note Must be initialized by _initSched().
+     * @note Used by _exitSched(), by the graceful shutdown logic.
+     */
+    mtx_t stoppedMu;
+
+    /**
+     * @brief Condition Variable for waking up the _runSched() thread when a new task arrives.
+     * @note Must be initialized by _initSched().
+     */
+    cnd_t newTask;
+
+    /**
+     * @brief Mutex for the newTask cnd_t.
+     * @note Must be initialized by _initSched().
+     */
+    mtx_t newTaskMu;
+
+    /**
+     * @brief Active tasks count, used for synchronizing (waiting for) tasks execution
+     * @note Must be initialized by _initSched().
+     */
+    int64_t taskCount;
+
+    /**
+     * @brief Active tasks cnd_t, used to wait for every active task to stop.
+     * @note Must be initialized by _initSched().
+     */
+    cnd_t active;
+
+    /**
+     * @brief Mutex for the active cnd_t.
+     * @note Must be initialized by _initSched().
+     */
+    mtx_t activeMu;
 };
 
 /**
@@ -93,9 +138,15 @@ struct Sched_t {
  * @post @p sched unchanged.
  */
 struct Sched_t *_initSched(struct Sched_t *sched);
-int _runSched(void *sched);
-void _exitSched(struct Sched_t *sched);
 
-void scorpionDo(struct Sched_t *self, void (*func)(void *), void *arg);
+//TODO: doxygen docs here
+int _runSched(void *sched);
+void _exitSched(struct Sched_t *sched, bool_t graceful);
+
+bool_t scorpionDo(struct Sched_t *sched, void (*func)(void *), void *arg);
+
+void _decrementTasks(struct Sched_t *sched);
+void _incrementTasks(struct Sched_t *sched);
+void waitTasks(struct Sched_t *sched);
 
 extern struct Sched_t *Scheduler;
