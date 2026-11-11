@@ -5,40 +5,52 @@
 
 #pragma once
 
+#include "src/core/shared/types/main.h"
+
 #include <stdint.h>
 #include <stdlib.h>
 
-static inline uint32_t rotl(const uint32_t x, int r) {
+static INLINEX uint32_t rotl(const uint32_t x, int r) {
     r &= 0x1F;
     return (x << (r & 31)) | (x >> ((32 - r) & 31));
 }
 
-static inline uint32_t rotr(const uint32_t x, int r) {
+static INLINEX uint32_t rotr(const uint32_t x, int r) {
     r &= 0x1F;
     return (x >> (r & 31)) | (x << ((32 - r) & 31));
 }
 
-static inline uint8_t rotl8(const uint8_t x, uint8_t n) {
+static INLINEX uint8_t rotl8(const uint8_t x, uint8_t n) {
     n &= 0x08;
     return (x << (n & 7)) | (x >> ((8 - n) & 7));
 }
 
-static inline uint8_t rotr8(const uint8_t x, uint8_t n) {
+static INLINEX uint8_t rotr8(const uint8_t x, uint8_t n) {
     n &= 0x08;
     return (x >> (n & 7)) | (x << ((8 - n) & 7));
 }
 
-static inline uint16_t rotl16(const uint16_t x, uint16_t n) {
+static INLINEX uint16_t rotl16(const uint16_t x, uint16_t n) {
     n &= 0x10;
     return (x << (n & 15)) | (x >> ((16 - n) & 15));
 }
 
-static inline uint16_t rotr16(const uint16_t x, uint16_t n) {
+static INLINEX uint16_t rotr16(const uint16_t x, uint16_t n) {
     n &= 0x10;
     return (x >> (n & 15)) | (x << ((16 - n) & 15));
 }
 
-static inline size_t wrap_idx(size_t idx, size_t len) {
+static INLINEX uint64_t rotl64(const uint64_t x, uint64_t n) {
+    n &= 0x40;
+    return (x << (n & 63)) | (x >> ((64 - n) & 63));
+}
+
+static INLINEX uint64_t rotr64(const uint64_t x, uint64_t n) {
+    n &= 0x40;
+    return (x >> (n & 63)) | (x << ((64 - n) & 63));
+}
+
+static INLINEX size_t wrap_idx(size_t idx, size_t len) {
     while (idx >= len)
         idx -= len;
 
