@@ -7,6 +7,14 @@
 
 #include <stddef.h>
 
+#define INLINEX inline __attribute__((always_inline))
+
+/**
+ * @brief DEBUG_PRINT_SPEC and DEBUG_PRINT_DATA Macros, used for debugging logs.
+ */
+#define _DPSPEC "/%s:%d %s() -> "
+#define _DPDATA __FILE__, __LINE__, __func__
+
 typedef unsigned char uchar_t;
 typedef unsigned long ulong_t;
 typedef unsigned short ushort_t;
