@@ -15,7 +15,8 @@
 
 /**
  * TODO:
- * 1. Refactor `#include "main.h"` across the source to follow the project spec `"src/.../.../main.h"`.
+ * 1. Refactor `#include "main.h"` across the source to follow the project spec `"src/.../.../main.h"`;
+ * 2. Doc functions.
  */
 
 /**
@@ -139,14 +140,89 @@ struct Sched_t {
  */
 struct Sched_t *_initSched(struct Sched_t *sched);
 
-//TODO: doxygen docs here
+/**
+ * @brief Run the scheduler.
+ *
+ * @param sched A pointer to the Sched_t instance that'll run.
+ *
+ * @return Exection status.
+ * @retval 0 Successfully executed.
+ * @retval -1 Param nullity fallback.
+ *
+ * @pre @p sched being a valid pointer to a valid Sched_t instance.
+ *
+ * WHILE Workflow:
+ *       1. Check head, if NULL cnd_wait on newTask;
+ *       2. Check sched->running, if FALSE it breaks the loop;
+ *       3. mtx_lock on [iter]->runnableMu;
+ *       4. Insert new task on [iter]->runnable;
+ *       5. Remove task node from local queue, pointing it to rnode;
+ *       6. Free rnode instance;
+ *       7. cnd_signal [iter]->wake;
+ *       8. mtx_unlock [iter]->runnableMu;
+ *       9. iter++ cap MAX_SCHED_PROCESSORS;
+ */
 int _runSched(void *sched);
+
+/**
+ * @brief Exit the scheduler.
+ *
+ * @param sched A pointer to the Sched_t instance that'll be finished.
+ * @param graceful Decides if the exiting process will wait for every task to finish.
+ *
+ * @warning You praobably do not want to exit the scheduler mid-run your app, think a bit before calling this function.
+ *
+ * @pre @p sched being a valid pointer to a valid Sched_t instance.
+ * @post @p sched and it's child resources released.
+ */
 void _exitSched(struct Sched_t *sched, bool_t graceful);
 
+/**
+ * @brief Add a new task to the Sched_t->queue.
+ *
+ * @param sched A pointer to the scheduler (Sched_t) instance that'll receive the new task.
+ * @param func The task function.
+ * @param arg The task argument, nullable by design.
+ *
+ * @return Execution status.
+ * @retval FALSE Null Sched_t *sched argument received.
+ * @retval FALSE Can't initialize the task.
+ * @retval FALSE Can't append the @p sched->queue.
+ *
+ * @pre @p sched being a valid pointer to a valid Sched_t instance.
+ * @pre @p func being a valid function.
+ * @pre @p arg being a valid pointer to any data type OR NULL.
+ *
+ * @post The task created and inserted in @p sched->queue tasks queue.
+ */
 bool_t scorpionDo(struct Sched_t *sched, void (*func)(void *), void *arg);
 
+/**
+ * @brief Atomically decrement sched->taskCount.
+ *
+ * @p sched A pointer to the Sched_t instance that'll have it's taskCount decremented.
+ *
+ * @note Broadcasts @p sched->active cnd_t if taskCount reach 0.
+ * @pre @p sched being a valid pointer to a valid Sched_t instance.
+ */
 void _decrementTasks(struct Sched_t *sched);
+
+/**
+ * @brief Atomically increment sched->taskCount.
+ *
+ * @p sched A pointer to the Sched_t instance that'll have it's taskCount incremented.
+ * @pre @p sched being a valid pointer to a valid Sched_t instance.
+ */
 void _incrementTasks(struct Sched_t *sched);
+
+/**
+ * @brief Wait until all active tasks stop.
+ *
+ * @param sched A pointer to the Sched_t instance that'll have it's taskCount and active(Mu) used.
+ * @pre @p sched being a valid pointer to a valid Sched_t instance.
+ *
+ * @note May block execution.
+ */
 void waitTasks(struct Sched_t *sched);
 
 extern struct Sched_t *Scheduler;
