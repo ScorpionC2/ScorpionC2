@@ -163,10 +163,8 @@ bool_t _cleanStack(struct SchedTask_Stack_t **stackptr) {
         return FALSE;
 
     struct SchedTask_Stack_t *stack = *stackptr;
-    if (stack->buf != NULL) {
-        if (munmap(stack->buf, stack->size) != 0)
-            return FALSE;
-    }
+    if (stack->buf != NULL && munmap(stack->buf, stack->size) != 0)
+        return FALSE;
 
     stack->buf = NULL;
     *stackptr = NULL;

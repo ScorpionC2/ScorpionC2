@@ -220,10 +220,8 @@ struct SchedTask_t *_findTask(struct SchedQueue_t *queue, uint64_t id) {
     // This is a control flow optimization.
     // If the user tries to find the cursor
     // by it's ID, this ensure fast returning.
-    if (queue->cursor != NULL) {
-        if (id == queue->cursor->id)
-            return queue->cursor->task;
-    }
+    if (queue->cursor != NULL && id == queue->cursor->id)
+        return queue->cursor->task;
 
     struct SchedQueue_Node_t *current = queue->head;
     while (current != NULL) {
@@ -314,10 +312,8 @@ struct SchedTask_t *_nextByID(struct SchedQueue_t *queue, uint64_t id) {
 
     // This is the same control flow optimization
     // seen in _findTask().
-    if (queue->cursor != NULL) {
-        if (id == queue->cursor->id)
-            return queue->cursor->task;
-    }
+    if (queue->cursor != NULL && id == queue->cursor->id)
+        return queue->cursor->task;
 
     struct SchedQueue_Node_t *current = queue->head;
     while (current != NULL) {
@@ -350,10 +346,8 @@ struct SchedTask_t *_prevByID(struct SchedQueue_t *queue, uint64_t id) {
 
     // This is the same control flow optimization
     // seen in _findTask().
-    if (queue->cursor != NULL) {
-        if (id == queue->cursor->id)
-            return queue->cursor->task;
-    }
+    if (queue->cursor != NULL && id == queue->cursor->id)
+        return queue->cursor->task;
 
     struct SchedQueue_Node_t *current = queue->head;
     while (current != NULL) {
@@ -449,10 +443,8 @@ struct SchedTask_t *_setCursorByID(struct SchedQueue_t *queue, uint64_t id) {
     // This is a control flow optimization.
     // If the user tries to set the cursor
     // by it's own ID, this ensure fast returning.
-    if (queue->cursor != NULL) {
-        if (id == queue->cursor->id)
-            return queue->cursor->task;
-    }
+    if (queue->cursor != NULL && id == queue->cursor->id)
+        return queue->cursor->task;
 
     struct SchedQueue_Node_t *current = queue->head;
     while (current != NULL) {
