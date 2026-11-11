@@ -59,10 +59,10 @@ struct SchedTask_t *_initTask(void (*func)(void *), void *arg) {
     // Adds the func to the stack so the ret op can handle it
     // Adds the arg and the _exitTask too
     uint64_t *stack_top = (uint64_t *)out->stack->top;
-    *(--stack_top) = (uint64_t)_exitTask;
+    *(--stack_top) = (uint64_t)&_exitTask;
     *(--stack_top) = (uint64_t)out->func;
     *(--stack_top) = (uint64_t)out->arg;
-    *(--stack_top) = (uint64_t)_task_entry_trampoline;
+    *(--stack_top) = (uint64_t)&_task_entry_trampoline;
 
     // Every register turns to 0x00000000 and set rsp
     memset(&out->ctx, 0x00, sizeof(struct SchedContext_t));
