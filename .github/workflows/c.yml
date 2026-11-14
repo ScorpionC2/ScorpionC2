@@ -2,48 +2,40 @@ name: C Actions
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: ["main", "dev"]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-test:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc]
+
+    name: Build & Test (${{ matrix.compiler }})
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
+      - name: Install dependencies
+        run: |
           sudo apt-get update
-          sudo apt-get install -y nasm
+          sudo apt-get install -y \
+            build-essential \
+            clang \
+            nasm \
+            valgrind
 
-    - name: build
-      run: make build
+      - name: Build
+        run: make CC=${{ matrix.compiler }} build
 
-  valgrind-check:
-    runs-on: ubuntu-latest
+      - name: Run tests
+        run: make CC=${{ matrix.compiler }} test
 
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install dependencies
-      run: |
-          sudo apt-get update
-          sudo apt-get install -y valgrind nasm
-
-    - name: Valgrind-check
-      run: make run-valgrind OPT_FLAGS="-march=x86-64-v3"
-
-  run-tests:
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install dependencies
-      run: |
-          sudo apt-get update
-          sudo apt-get install -y nasm
-
-    - name: Run tests
-      run: make test
+      - name: Valgrind check
+        run: |
+          make CC=${{ matrix.compiler }} run-valgrind \
+            OPT_FLAGS="-march=x86-64-v3"
