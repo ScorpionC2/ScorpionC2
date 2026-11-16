@@ -2,12 +2,11 @@
 
 ## Improvements
 
-1. Add blocking I/O handling to ScorpionDo Task Scheduler;
-    1.1. Implement yield;
-    1.2. Implement processor blocked-threads yielding;
-    1.3. Wire-up the _handleTaskStack using SIGSEGV/SIGBUS signal listeners;
-    1.4. Implement processor next-task algorithm based in round-robin.
-
+1. Add blocking I/O handling to ScorpionDo Task Scheduler;<br/>
+    1.1. Implement yield;<br/>
+    1.2. Implement processor blocked-threads yielding;<br/>
+    1.3. Wire-up the _handleTaskStack using SIGSEGV/SIGBUS signal listeners;<br/>
+    1.4. Implement processor next-task algorithm based in round-robin.<br/>
 2. Add variable trash size to xor (https://github.com/ScorpionC2/ScorpionC2/issues/71);
 3. Documents everything (https://github.com/ScorpionC2/ScorpionC2/issues/78).
 
