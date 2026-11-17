@@ -12,27 +12,27 @@ I_FLAGS 		:=  -I. \
 								-Isrc \
 								-Isrc/core \
 								-Isrc/core/config \
-								-Isrc/core/domain/encoders/services/xor \
-								-Isrc/core/domain/encoders/types \
 								-Isrc/core/shared/types \
+								-Isrc/core/shared/utils/math \
+								-Isrc/core/shared/utils/mixers \
+								-Isrc/core/shared/utils/comparision \
 								-Isrc/core/app/cli/colors \
 								-Isrc/core/app/cli/loading \
 								-Isrc/core/app/cli/logs \
 								-Isrc/core/app/cli/ui/box \
 								-Isrc/core/app/cli/input/readMode \
 								-Isrc/core/app/cli/input/safeget \
+								-Isrc/core/app/cli/input \
 								-Isrc/core/infra/fs \
 								-Isrc/core/infra/hash \
-								-Isrc/core/app/cli/input \
-								-Isrc/core/shared/utils/math \
-								-Isrc/core/shared/utils/mixers \
-								-Isrc/core/shared/utils/comparision \
 								-Isrc/core/infra/sched \
 								-Isrc/core/infra/sched/context \
 								-Isrc/core/infra/sched/processor \
 								-Isrc/core/infra/sched/queue \
 								-Isrc/core/infra/sched/tasks \
 								-Isrc/core/infra/sched/tasks/stack \
+								-Isrc/core/domain/encoders \
+								-Isrc/core/domain/encoders/xor \
 
 LDFLAGS := 
 LDLIBS := -lm
@@ -51,17 +51,17 @@ CC_FLAGS		:=	$(I_FLAGS) $(OPTIMIZE_FLAGS)
 TARGET_DIR		:=	build/
 TARGET			:=	$(TARGET_DIR)scorpionc2-server
 CORE_SRC :=		\
-							src/core/app/cli/logs/main.c \
 							src/core/shared/utils/random/main.c \
-							src/core/infra/hash/main.c \
-							src/core/domain/encoders/services/main.c \
-							src/core/domain/encoders/services/xor/main.c \
+							src/core/shared/utils/mixers/main.c \
+							src/core/app/cli/logs/main.c \
 							src/core/app/cli/ui/box/main.c \
 							src/core/app/cli/input/readMode/main.c \
 							src/core/app/cli/input/safeget/main.c \
 							src/core/app/cli/input/main.c \
+							src/core/domain/encoders/main.c \
+							src/core/domain/encoders/xor/main.c \
 							src/core/infra/fs/main.c \
-							src/core/shared/utils/mixers/main.c \
+							src/core/infra/hash/main.c \
 							src/core/infra/sched/main.c \
 							src/core/infra/sched/tasks/main.c \
 							src/core/infra/sched/tasks/stack/main.c \
