@@ -57,8 +57,8 @@ typedef struct {
  */
 #define BREAK_64_32(src)                                                       \
     {                                                                          \
-        (uint32_t)src & 0xFFFFFFFF,                                            \
-        ((uint32_t)src >> 32) & 0xFFFFFFFF,                                    \
+        src & 0xFFFFFFFF,                                                      \
+        (src >> 32) & 0xFFFFFFFF,                                              \
     }
 
 /*
@@ -68,10 +68,10 @@ typedef struct {
  */
 #define BREAK_64_16(src)                                                       \
     {                                                                          \
-        (uint16_t)src & 0xFFFF,                                                \
-        ((uint16_t)src >> 16) & 0xFFFF,                                        \
-        ((uint16_t)src >> 32) & 0xFFFF,                                        \
-        ((uint16_t)src >> 48) & 0xFFFF,                                        \
+        src & 0xFFFF,                                                          \
+        (src >> 16) & 0xFFFF,                                                  \
+        (src >> 32) & 0xFFFF,                                                  \
+        (src >> 48) & 0xFFFF,                                                  \
     }
 
 /**
@@ -81,9 +81,9 @@ typedef struct {
  */
 #define BREAK_64_8(src)                                                        \
     {                                                                          \
-        (uint8_t)src & 0xFF,         (src >> 8) & 0xFF,  (src >> 16) & 0xFF,   \
-        ((uint8_t)src >> 24) & 0xFF, (src >> 32) & 0xFF, (src >> 40) & 0xFF,   \
-        ((uint8_t)src >> 48) & 0xFF, (src >> 56) & 0xFF,                       \
+        src & 0xFF,         (src >> 8) & 0xFF,  (src >> 16) & 0xFF,            \
+        (src >> 24) & 0xFF, (src >> 32) & 0xFF, (src >> 40) & 0xFF,            \
+        (src >> 48) & 0xFF, (src >> 56) & 0xFF,                                \
     }
 
 /**
@@ -93,8 +93,8 @@ typedef struct {
  */
 #define BREAK_32_16(src)                                                       \
     {                                                                          \
-        (uint16_t)src & 0xFFFF,                                                \
-        ((uint16_t)src >> 16) & 0xFFFF,                                        \
+        src & 0xFFFF,                                                          \
+        (src >> 16) & 0xFFFF,                                                  \
     }
 
 /**
@@ -104,10 +104,10 @@ typedef struct {
  */
 #define BREAK_32_8(src)                                                        \
     {                                                                          \
-        (uint8_t)src & 0xFF,                                                   \
-        ((uint8_t)src >> 8) & 0xFF,                                            \
-        ((uint8_t)src >> 16) & 0xFF,                                           \
-        ((uint8_t)src >> 24) & 0xFF,                                           \
+        src & 0xFF,                                                            \
+        (src >> 8) & 0xFF,                                                     \
+        (src >> 16) & 0xFF,                                                    \
+        (src >> 24) & 0xFF,                                                    \
     }
 
 /**
@@ -117,6 +117,6 @@ typedef struct {
  */
 #define BREAK_16_8(src)                                                        \
     {                                                                          \
-        (uint8_t)src & 0xFF,                                                   \
-        ((uint8_t)src >> 8) & 0xFF,                                            \
+        (src) & 0xFF,                                                          \
+        (src >> 8) & 0xFF,                                                     \
     }
