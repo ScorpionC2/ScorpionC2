@@ -11,6 +11,7 @@
 #include <math.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -131,7 +132,6 @@ bytes_t _xorEncode(bytes_t src) {
     bytes_t nonceXor = xor(nonce, nonceKey);
 
     // Init and copy trashLenBytes
-
     uchar_t trashLenBytesRaw[8] = BREAK_64_8(trashLen);
     bytes_t trashLenBytes = {
         .len = sizeof(trashLenBytesRaw),
@@ -142,9 +142,9 @@ bytes_t _xorEncode(bytes_t src) {
     bytes_t out = {
         .len = nonceKey.len + trashLenBytes.len + _xorConf.nonceSize + src.len +
                trashLen,
-
-        .b = malloc(out.len),
     };
+
+    out.b = malloc(out.len);
 
     memcpy(out.b, nonceKey.b, nonceKey.len);
     memcpy(out.b + nonceKey.len, trashLenBytes.b, trashLenBytes.len);
@@ -173,11 +173,9 @@ bytes_t _xorDecode(bytes_t src) {
            _xorConf.nonceSize);
 
     // Trash len parsing
-    size_t trashLen =
-        (uint32_t)(src.b[TRASH_BYTES_LEN_SIZE + NONCE_KEY_SIZE] << 24) |
-        (uint32_t)(src.b[TRASH_BYTES_LEN_SIZE + NONCE_KEY_SIZE + 1] << 16) |
-        (uint32_t)(src.b[TRASH_BYTES_LEN_SIZE + NONCE_KEY_SIZE + 2] << 8) |
-        (uint32_t)(src.b[TRASH_BYTES_LEN_SIZE + NONCE_KEY_SIZE + 3] << 0);
+    size_t trashLen = 0;
+    for (int i = 0; i < TRASH_BYTES_LEN_SIZE; i++)
+        trashLen |= (uint64_t)src.b[NONCE_KEY_SIZE + i] << (i * 8);
 
     // Unxor nonce
     bytes_t nonceKey;
