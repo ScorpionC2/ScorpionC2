@@ -3,7 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 //
 
-#include "src/core/domain/encoders/services/main.h"
+#include "src/core/domain/encoders/main.h"
+#include "src/core/infra/hash/main.h"
 #include "src/core/shared/types/main.h"
 #include "src/core/shared/utils/random/main.h"
 #include "tests/engine/main.h"
@@ -13,16 +14,16 @@
 #include <string.h>
 
 #define _XOR_SIZE_HELPER(size)                                                 \
-    scorpionSettings old = *Xor->settings->hashScorpionSettings;               \
-    Xor->settings->hashScorpionSettings->hashSize = size;                      \
+    scorpionSettings old = Encoder.Xor.settings->scorpionxSettings;            \
+    Encoder.Xor.settings->scorpionxSettings.hashSize = size;                   \
                                                                                \
     uchar_t rawSource[5] = {0xff, 0xf3, 0x0a, 0x00, 0x61};                     \
     bytes_t source = {.b = (uchar_t *)rawSource, .len = sizeof(rawSource)};    \
                                                                                \
-    bytes_t encodedSource = Xor->encode(source);                               \
-    bytes_t decodedSource = Xor->decode(encodedSource);                        \
+    bytes_t encodedSource = Encoder.Xor.encode(source);                        \
+    bytes_t decodedSource = Encoder.Xor.decode(encodedSource);                 \
                                                                                \
-    *Xor->settings->hashScorpionSettings = old;                                \
+    Encoder.Xor.settings->scorpionxSettings = old;                             \
                                                                                \
     bool_t out = TEST_EQUAL_BYTES(source, decodedSource)                       \
                                                                                \
@@ -35,8 +36,8 @@ bool_t xor_base(void) {
     uchar_t rawSource[5] = {0xff, 0xf3, 0x0a, 0x00, 0x61};
     bytes_t source = {.b = (uchar_t *)rawSource, .len = sizeof(rawSource)};
 
-    bytes_t encodedSource = Xor->encode(source);
-    bytes_t decodedSource = Xor->decode(encodedSource);
+    bytes_t encodedSource = Encoder.Xor.encode(source);
+    bytes_t decodedSource = Encoder.Xor.decode(encodedSource);
 
     bool_t out = TEST_EQUAL_BYTES(source, decodedSource)
 
@@ -47,16 +48,16 @@ bool_t xor_base(void) {
 }
 
 bool_t xor_changeNonceLen(void) {
-    int oldNonceLen = Xor->settings->num;
-    Xor->settings->num = Random.randr(100, 300);
+    int oldNonceLen = Encoder.Xor.settings->nonceSize;
+    Encoder.Xor.settings->nonceSize = Random.randr(100, 300);
 
     uchar_t rawSource[5] = {0xff, 0xf3, 0x0a, 0x00, 0x61};
     bytes_t source = {.b = (uchar_t *)rawSource, .len = sizeof(rawSource)};
 
-    bytes_t encodedSource = Xor->encode(source);
-    bytes_t decodedSource = Xor->decode(encodedSource);
+    bytes_t encodedSource = Encoder.Xor.encode(source);
+    bytes_t decodedSource = Encoder.Xor.decode(encodedSource);
 
-    Xor->settings->num = oldNonceLen;
+    Encoder.Xor.settings->nonceSize = oldNonceLen;
 
     bool_t out = TEST_EQUAL_BYTES(source, decodedSource)
 
@@ -67,16 +68,16 @@ bool_t xor_changeNonceLen(void) {
 }
 
 bool_t xor_changeHashAlgorithm(void) {
-    char *oldHashAlgorithm = Xor->settings->string;
-    Xor->settings->string = "djb2";
+    int oldHashAlgorithm = Encoder.Xor.settings->hashAlg;
+    Encoder.Xor.settings->hashAlg = DJB2;
 
     uchar_t rawSource[5] = {0xff, 0xf3, 0x0a, 0x00, 0x61};
     bytes_t source = {.b = (uchar_t *)rawSource, .len = sizeof(rawSource)};
 
-    bytes_t encodedSource = Xor->encode(source);
-    bytes_t decodedSource = Xor->decode(encodedSource);
+    bytes_t encodedSource = Encoder.Xor.encode(source);
+    bytes_t decodedSource = Encoder.Xor.decode(encodedSource);
 
-    Xor->settings->string = oldHashAlgorithm;
+    Encoder.Xor.settings->hashAlg = oldHashAlgorithm;
 
     bool_t out = TEST_EQUAL_BYTES(source, decodedSource)
 
@@ -90,11 +91,11 @@ bool_t xor_ensureNonceRandomness(void) {
     uchar_t rawSource[5] = {0xff, 0xf3, 0x0a, 0x00, 0x61};
     bytes_t source = {.b = (uchar_t *)rawSource, .len = sizeof(rawSource)};
 
-    bytes_t encodedSource = Xor->encode(source);
-    bytes_t encodedSource_2 = Xor->encode(source);
+    bytes_t encodedSource = Encoder.Xor.encode(source);
+    bytes_t encodedSource_2 = Encoder.Xor.encode(source);
 
-    bytes_t nonceA = {.len = Xor->settings->num};
-    bytes_t nonceB = {.len = Xor->settings->num};
+    bytes_t nonceA = {.len = Encoder.Xor.settings->nonceSize};
+    bytes_t nonceB = {.len = Encoder.Xor.settings->nonceSize};
 
     nonceA.b = malloc(nonceA.len);
     if (nonceA.b == NULL)
@@ -120,26 +121,6 @@ bool_t xor_ensureNonceRandomness(void) {
     return out;
 }
 
-bool_t xor_changeTrashSize(void) {
-    short oldTrashSize = Xor->settings->shortNum;
-    Xor->settings->shortNum = Random.randr(100, 500);
-
-    uchar_t rawSource[5] = {0xff, 0xf3, 0x0a, 0x00, 0x61};
-    bytes_t source = {.b = (uchar_t *)rawSource, .len = sizeof(rawSource)};
-
-    bytes_t encodedSource = Xor->encode(source);
-    bytes_t decodedSource = Xor->decode(encodedSource);
-
-    Xor->settings->shortNum = oldTrashSize;
-
-    bool_t out = TEST_EQUAL_BYTES(source, decodedSource)
-
-        free(encodedSource.b);
-    free(decodedSource.b);
-
-    return out;
-}
-
 bool_t xor_hashSizeSmall(void){_XOR_SIZE_HELPER(small)}
 
 bool_t xor_hashSizeMedium(void){_XOR_SIZE_HELPER(medium)}
@@ -154,7 +135,6 @@ TESTS_UNIT_REGISTER(xor_base, "Xor Test");
 TESTS_UNIT_REGISTER(xor_changeNonceLen, "Xor With Changed Nonce Size");
 TESTS_UNIT_REGISTER(xor_changeHashAlgorithm, "Xor With Changed Hash Algorithm");
 TESTS_UNIT_REGISTER(xor_ensureNonceRandomness, "Xor Ensure Nonce Randomness");
-TESTS_UNIT_REGISTER(xor_changeTrashSize, "Xor With Changed Trash Size");
 TESTS_UNIT_REGISTER(xor_hashSizeSmall, "Xor With Small Size Hash");
 TESTS_UNIT_REGISTER(xor_hashSizeMedium, "Xor With Medium Size Hash");
 TESTS_UNIT_REGISTER(xor_hashSizeBig, "Xor With Big Size Hash");
