@@ -19,7 +19,6 @@ I_FLAGS 		:=  -I. \
 								-Isrc/core/app/cli/colors \
 								-Isrc/core/app/cli/loading \
 								-Isrc/core/app/cli/logs \
-								-Isrc/core/app/cli/ui/box \
 								-Isrc/core/app/cli/input/readMode \
 								-Isrc/core/app/cli/input/safeget \
 								-Isrc/core/app/cli/input \
@@ -54,7 +53,6 @@ CORE_SRC :=		\
 							src/core/shared/utils/random/main.c \
 							src/core/shared/utils/mixers/main.c \
 							src/core/app/cli/logs/main.c \
-							src/core/app/cli/ui/box/main.c \
 							src/core/app/cli/input/readMode/main.c \
 							src/core/app/cli/input/safeget/main.c \
 							src/core/app/cli/input/main.c \
