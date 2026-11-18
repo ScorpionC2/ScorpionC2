@@ -15,6 +15,7 @@ static inline uint32_t fmix32(uint32_t h) {
     h ^= h >> 13;
     h *= 0xc2b2ae35;
     h ^= h >> 16;
+
     return h;
 }
 
@@ -40,17 +41,13 @@ static inline uint32_t seed_helper(uint32_t x, uint32_t seed, uint32_t shift) {
 }
 
 static inline void arxmix8(uint8_t *word, uint32_t srcWord) {
-    uint8_t msw0 = srcWord & 0xFF;
-    uint8_t msw1 = (srcWord >> 8) & 0xFF;
-    uint8_t msw2 = (srcWord >> 16) & 0xFF;
-    uint8_t msw3 = (srcWord >> 24) & 0xFF;
-
+    uint8_t msw[4] = BREAK_32_8(srcWord);
     uint8_t w = *word;
     uint8_t old = w;
 
-    w ^= rotl8(msw0, w);
-    w += msw2 ^ rotl8(w, msw0);
-    w ^= msw3 * rotr8(msw1, w + 1);
+    w ^= rotl8(msw[0], w);
+    w += msw[2] ^ rotl8(w, msw[0]);
+    w ^= msw[3] * rotr8(msw[1], w + 1);
 
     w ^= old;
     *word = w;
@@ -64,29 +61,25 @@ static inline void minimix32(const struct minimix_src src, uint32_t *pword) {
     uint32_t word = *pword;
     word *= 0x39D652DB;
 
-    uint8_t mw0 = word & 0xFF;
-    uint8_t mw1 = (word >> 8) & 0xFF;
-    uint8_t mw2 = (word >> 16) & 0xFF;
-    uint8_t mw3 = (word >> 24) & 0xFF;
+    uint8_t mw[4] = BREAK_32_8(word);
 
-    arxmix8(&mw0, src.src[1]);
-    arxmix8(&mw1, src.src[0]);
-    arxmix8(&mw2, src.src[2]);
-    arxmix8(&mw3, word);
+    arxmix8(&mw[0], src.src[1]);
+    arxmix8(&mw[1], src.src[0]);
+    arxmix8(&mw[2], src.src[2]);
+    arxmix8(&mw[3], word);
 
-    *pword = mw0 | (mw1 << 8) | (mw2 << 16) | (mw3 << 24);
+    *pword = mw[0] | (mw[1] << 8) | (mw[2] << 16) | (mw[3] << 24);
 }
 
 static inline void minimix16(const struct minimix_src src, uint16_t *pword) {
     uint16_t word = *pword;
 
-    uint8_t mw0 = word & 0xFF;
-    uint8_t mw1 = (word >> 8) & 0xFF;
+    uint8_t mw[2] = BREAK_16_8(word);
 
-    arxmix8(&mw0, src.src[1]);
-    arxmix8(&mw1, src.src[0]);
+    arxmix8(&mw[0], src.src[1]);
+    arxmix8(&mw[1], src.src[0]);
 
-    *pword = mw0 | (uint16_t)(mw1 << 8);
+    *pword = mw[0] | (uint16_t)(mw[1] << 8);
 }
 
 void arxmix32(uint32_t *state, const int *_r, const int *_i, int wordLen);
