@@ -283,16 +283,13 @@ bytes_t _xorDecode(bytes_t src) {
 
     // Xor the src without nonce (i need to change this shit name btw); Init and copy the result to out
     bytes_t unxor = xor(srcWithoutXor, hash);
-    bytes_t out = {.len = unxor.len, .b = malloc(unxor.len)};
-    memcpy(out.b, unxor.b, out.len);
 
     // Free everything
     free(nonce.b);
     free(srcWithoutXor.b);
     free(hash.b);
-    free(unxor.b);
     free(nonceKey.b);
     free(nonceUnxored.b);
 
-    return out;
+    return unxor;
 };
