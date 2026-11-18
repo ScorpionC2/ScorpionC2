@@ -6,6 +6,9 @@
 #include "src/core/domain/encoders/main.h"
 #include "src/core/domain/encoders/xor/main.h"
 
+/**
+ * @brief Global EncoderInstance instance.
+ */
 EncoderInstance Encoder = {
     .Xor =
         {

@@ -14,10 +14,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define TRASH_BYTES_LEN_SIZE 8
 #define NONCE_KEY_SIZE 4
 
+/**
+ * @brief Global xor encoder settings.
+ */
 XorSettings _xorConf = {
     .scorpionxSettings =
         {
@@ -29,8 +33,25 @@ XorSettings _xorConf = {
     .hashAlg = SCORPIONX,
 };
 
+/**
+ * @brief Mutate xor encoding.
+ *
+ * @param src Source bytes.
+ * @param key Key bytes.
+ *
+ * @return The encoded data.
+ * @retval {.len = 0, .b = NULL} Memory allocation error.
+ *
+ * This algorithm works by mixing the source with the key, mutating the key while mixing.
+ *
+ * @pre @p src.b being a valid bytes_t instance with non-zero data length.
+ * @pre @p key.b being a valid bytes_t instance with non-zero data length.
+ */
 bytes_t xor(bytes_t src, bytes_t key) {
     uchar_t *keyCopy = malloc(key.len);
+    if (keyCopy == NULL)
+        return (bytes_t){.len = 0, .b = NULL};
+
     memcpy(keyCopy, key.b, key.len);
 
     // Initialize out and iterate over it
@@ -48,23 +69,41 @@ bytes_t xor(bytes_t src, bytes_t key) {
 
     // Init output and copy
     bytes_t output = {.len = src.len, .b = malloc(src.len)};
-    memcpy(output.b, out, src.len);
+    if (output.b == NULL)
+        return (bytes_t){.len = 0, .b = NULL};
 
+    memcpy(output.b, out, src.len);
     free(keyCopy);
+
     return output;
 }
 
+/**
+ * @brief Get a hash function defined at encoder settings.
+ *
+ * @return Hash function pointer.
+ * @note ScorpionX is the default algorithm.
+ */
 void *getHashFunction() {
-    // str == "djb2"
     if (_xorConf.hashAlg == DJB2)
         return Hash.djb2;
 
-    // Default is using scorpionx
-    // Set settings
+    // Default alg is scorpionx
     Hash.settings = &_xorConf.scorpionxSettings;
     return Hash.ScorpionX;
 }
 
+/**
+ * @brief Get the trash length.
+ *
+ * This function is responsible for determining the trashLen based in the source lenght.
+ * It works by determining the min/max for each srcLen and returning a random number in this range.
+ *
+ * @param srcLen The source length.
+ *
+ * @return The trash length.
+ * @retval 0 @p srcLen is 0.
+ */
 size_t getTrashLen(size_t srcLen) {
     if (srcLen < 1)
         return 0;
@@ -90,6 +129,22 @@ size_t getTrashLen(size_t srcLen) {
     return trashLen;
 }
 
+/**
+ * @brief Xor Encoder.
+ *
+ * The data is encoded using the xor() function, the key being a hash derived from random data (nonce).
+ *
+ * Output payload scheme:
+ * [4 bytes nonceKey][8 bytes trashLen][xored nonce][xored data][length-variable trash]
+ *
+ * @param src The source bytes_t instance.
+ *
+ * @return Encoded data.
+ * @retval {.len = 0, .b = NULL} Memory allocation error.
+ *
+ * @note The same source WILL GIVE DIFFERENT OUTPUTS.
+ * @pre @p src being a valid bytes_t instance with non-zero data length.
+ */
 bytes_t _xorEncode(bytes_t src) {
     // Init nonce and fill with random bytes
     uchar_t nonceRaw[_xorConf.nonceSize];
@@ -145,6 +200,8 @@ bytes_t _xorEncode(bytes_t src) {
     };
 
     out.b = malloc(out.len);
+    if (out.b == NULL)
+        return (bytes_t){.len = 0, .b = NULL};
 
     memcpy(out.b, nonceKey.b, nonceKey.len);
     memcpy(out.b + nonceKey.len, trashLenBytes.b, trashLenBytes.len);
@@ -164,11 +221,24 @@ bytes_t _xorEncode(bytes_t src) {
     return out;
 };
 
+/**
+ * @brief Xor Decoder.
+ *
+ * @param src Encoded data.
+ *
+ * @return Decoded data.
+ * @retval {.len = 0, .b = NULL} Memory allocation error.
+ *
+ * @note A valid payload may fail decoding IF the encoder settings change.
+ * @pre @p src being a valid bytes_t with non-zero data length.
+ */
 bytes_t _xorDecode(bytes_t src) {
     // Nonce parsing
-    bytes_t nonce;
-    nonce.len = _xorConf.nonceSize;
+    bytes_t nonce = {.len = _xorConf.nonceSize};
     nonce.b = malloc(_xorConf.nonceSize);
+    if (nonce.b == NULL)
+        return (bytes_t){.len = 0, .b = NULL};
+
     memcpy(nonce.b, src.b + NONCE_KEY_SIZE + TRASH_BYTES_LEN_SIZE,
            _xorConf.nonceSize);
 
