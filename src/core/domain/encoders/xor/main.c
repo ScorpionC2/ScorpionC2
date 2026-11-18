@@ -141,11 +141,17 @@ size_t getTrashLen(size_t srcLen) {
  *
  * @return Encoded data.
  * @retval {.len = 0, .b = NULL} Memory allocation error.
+ * @retval {.len = 0, .b = NULL} Empty input.
  *
  * @note The same source WILL GIVE DIFFERENT OUTPUTS.
+ * @warning A empty @p src will also return NULL.
+ *
  * @pre @p src being a valid bytes_t instance with non-zero data length.
  */
 bytes_t _xorEncode(bytes_t src) {
+    if (src.len == 0 || src.b == NULL)
+        return (bytes_t){.len = 0, .b = NULL};
+
     // Init nonce and fill with random bytes
     uchar_t nonceRaw[_xorConf.nonceSize];
     for (size_t i = 0; i < _xorConf.nonceSize; i++)
@@ -228,11 +234,17 @@ bytes_t _xorEncode(bytes_t src) {
  *
  * @return Decoded data.
  * @retval {.len = 0, .b = NULL} Memory allocation error.
+ * @retval {.len = 0, .b = NULL} Empty input.
  *
  * @note A valid payload may fail decoding IF the encoder settings change.
+ * @warning A empty @p src will also return NULL.
+ *
  * @pre @p src being a valid bytes_t with non-zero data length.
  */
 bytes_t _xorDecode(bytes_t src) {
+    if (src.len == 0 || src.b == NULL)
+        return (bytes_t){.len = 0, .b = NULL};
+
     // Nonce parsing
     bytes_t nonce = {.len = _xorConf.nonceSize};
     nonce.b = malloc(_xorConf.nonceSize);
